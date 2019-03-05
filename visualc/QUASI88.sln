@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual C++ Express 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QUASI88_sdl", "QUASI88_sdl.vcproj", "{655181F1-1D31-4343-A6D4-B04D98F9196F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QUASI88_win32", "QUASI88_win32.vcproj", "{0C50D901-AF65-4ACE-88F6-1F4B5A10350E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Monitor|Win32 = Monitor|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{655181F1-1D31-4343-A6D4-B04D98F9196F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{655181F1-1D31-4343-A6D4-B04D98F9196F}.Debug|Win32.Build.0 = Debug|Win32
+		{655181F1-1D31-4343-A6D4-B04D98F9196F}.Monitor|Win32.ActiveCfg = Monitor|Win32
+		{655181F1-1D31-4343-A6D4-B04D98F9196F}.Monitor|Win32.Build.0 = Monitor|Win32
+		{655181F1-1D31-4343-A6D4-B04D98F9196F}.Release|Win32.ActiveCfg = Release|Win32
+		{655181F1-1D31-4343-A6D4-B04D98F9196F}.Release|Win32.Build.0 = Release|Win32
+		{0C50D901-AF65-4ACE-88F6-1F4B5A10350E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0C50D901-AF65-4ACE-88F6-1F4B5A10350E}.Debug|Win32.Build.0 = Debug|Win32
+		{0C50D901-AF65-4ACE-88F6-1F4B5A10350E}.Monitor|Win32.ActiveCfg = Release|Win32
+		{0C50D901-AF65-4ACE-88F6-1F4B5A10350E}.Monitor|Win32.Build.0 = Release|Win32
+		{0C50D901-AF65-4ACE-88F6-1F4B5A10350E}.Release|Win32.ActiveCfg = Release|Win32
+		{0C50D901-AF65-4ACE-88F6-1F4B5A10350E}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
