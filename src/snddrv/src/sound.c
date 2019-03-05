@@ -103,11 +103,14 @@ static sound_info sound[MAX_SOUND];
 static int totalspeakers;
 static speaker_info speaker[MAX_SPEAKER];
 
-static INT16 *finalmix;
 static INT32 *leftmix, *rightmix;
-static int samples_this_frame;
 static int global_sound_enabled;
 static int nosound_mode;
+
+#ifndef __LIBRETRO__
+static INT16 *finalmix;
+static int samples_this_frame;
+#endif
 
 static wav_file *wavfile;
 

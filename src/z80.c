@@ -547,7 +547,7 @@ enum CodesED
 
 /*---------------------------------------------------------------------------*/
 
-INLINE	void	z80_code_CB( z80arch *z80 )
+static	void	z80_code_CB( z80arch *z80 )
 {
   int	opcode;
   byte	I;
@@ -565,7 +565,7 @@ INLINE	void	z80_code_CB( z80arch *z80 )
 }
 
 
-INLINE	void	z80_code_ED( z80arch *z80 )
+static	void	z80_code_ED( z80arch *z80 )
 {
   int	opcode;
   byte	I;
@@ -586,7 +586,7 @@ INLINE	void	z80_code_ED( z80arch *z80 )
 }
 
 
-INLINE	void	z80_code_DD( z80arch *z80 )
+static	void	z80_code_DD( z80arch *z80 )
 {
   int	opcode;
   byte	I;
@@ -627,7 +627,7 @@ INLINE	void	z80_code_DD( z80arch *z80 )
 }
 
 
-INLINE	void	z80_code_FD( z80arch *z80 )
+static	void	z80_code_FD( z80arch *z80 )
 {
   int	opcode;
   byte	I;
@@ -711,7 +711,7 @@ static	int	z80_im0_interrupt( z80arch *z80, int level )
 }
 
 
-INLINE	void	z80_interrupt( z80arch *z80 )
+static	void	z80_interrupt( z80arch *z80 )
 {
   int level;
 
