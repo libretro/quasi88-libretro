@@ -1,13 +1,12 @@
-QUASI88_DIR = src
-LIBRETRO_COMM_DIR = $(QUASI88_DIR)/LIBRETRO/libretro-common
+LIBRETRO_COMM_DIR = $(CORE_DIR)/LIBRETRO/libretro-common
 
-INCFLAGS := -I$(QUASI88_DIR) \
-   -I$(QUASI88_DIR)/snddrv/quasi88 \
-   -I$(QUASI88_DIR)/snddrv/src \
-   -I$(QUASI88_DIR)/snddrv/src/sound \
-   -I$(QUASI88_DIR)/snddrv/quasi88 \
-   -I$(QUASI88_DIR)/fmgen \
-   -I$(QUASI88_DIR)/LIBRETRO
+INCFLAGS := -I$(CORE_DIR) \
+   -I$(CORE_DIR)/snddrv/quasi88 \
+   -I$(CORE_DIR)/snddrv/src \
+   -I$(CORE_DIR)/snddrv/src/sound \
+   -I$(CORE_DIR)/snddrv/quasi88 \
+   -I$(CORE_DIR)/fmgen \
+   -I$(CORE_DIR)/LIBRETRO
 
 INCFLAGS += -I$(LIBRETRO_COMM_DIR)/include \
    -I$(LIBRETRO_COMM_DIR)/include/compat \
@@ -30,62 +29,62 @@ CFLAGS += -DROM_DIR='"$(ROMDIR)"' -DDISK_DIR='"$(DISKDIR)"' -DTAPE_DIR='"$(TAPED
 
 CXXFLAGS += $(CFLAGS)
 
-SOURCES_C := $(QUASI88_DIR)/quasi88.c \
-   $(QUASI88_DIR)/emu.c \
-   $(QUASI88_DIR)/memory.c \
-   $(QUASI88_DIR)/status.c \
-   $(QUASI88_DIR)/getconf.c \
-   $(QUASI88_DIR)/pc88main.c \
-   $(QUASI88_DIR)/crtcdmac.c \
-   $(QUASI88_DIR)/soundbd.c \
-   $(QUASI88_DIR)/pio.c \
-   $(QUASI88_DIR)/screen.c \
-   $(QUASI88_DIR)/intr.c \
-   $(QUASI88_DIR)/pc88sub.c \
-   $(QUASI88_DIR)/fdc.c \
-   $(QUASI88_DIR)/image.c \
-   $(QUASI88_DIR)/monitor.c \
-   $(QUASI88_DIR)/basic.c \
-   $(QUASI88_DIR)/menu.c \
-   $(QUASI88_DIR)/menu-screen.c \
-   $(QUASI88_DIR)/q8tk.c \
-   $(QUASI88_DIR)/q8tk-glib.c \
-   $(QUASI88_DIR)/suspend.c \
-   $(QUASI88_DIR)/keyboard.c \
-   $(QUASI88_DIR)/romaji.c \
-   $(QUASI88_DIR)/pause.c \
-   $(QUASI88_DIR)/z80.c \
-   $(QUASI88_DIR)/z80-debug.c \
-   $(QUASI88_DIR)/snapshot.c \
-   $(QUASI88_DIR)/screen-8bpp.c \
-   $(QUASI88_DIR)/screen-16bpp.c \
-   $(QUASI88_DIR)/screen-32bpp.c \
-   $(QUASI88_DIR)/screen-snapshot.c \
-   $(QUASI88_DIR)/MINI/event.c \
-   $(QUASI88_DIR)/MINI/graph.c \
-   $(QUASI88_DIR)/MINI/main.c \
-   $(QUASI88_DIR)/MINI/wait.c \
-   $(QUASI88_DIR)/MINI/audio.c \
-   $(QUASI88_DIR)/utf16.c \
-   $(QUASI88_DIR)/LIBRETRO/libretro.c \
-   $(QUASI88_DIR)/snddrv/quasi88/mame-quasi88.c \
-   $(QUASI88_DIR)/snddrv/quasi88/beepintf.c \
-   $(QUASI88_DIR)/snddrv/quasi88/beep.c \
-   $(QUASI88_DIR)/snddrv/src/driver.c \
-   $(QUASI88_DIR)/snddrv/src/restrack.c \
-   $(QUASI88_DIR)/snddrv/src/sound.c \
-   $(QUASI88_DIR)/snddrv/src/sndintrf.c \
-   $(QUASI88_DIR)/snddrv/src/streams.c \
-   $(QUASI88_DIR)/snddrv/src/sound/flt_vol.c \
-   $(QUASI88_DIR)/snddrv/src/sound/flt_rc.c \
-   $(QUASI88_DIR)/snddrv/src/sound/wavwrite.c \
-   $(QUASI88_DIR)/snddrv/src/sound/2203intf.c \
-   $(QUASI88_DIR)/snddrv/src/sound/2608intf.c \
-   $(QUASI88_DIR)/snddrv/src/sound/ay8910.c \
-   $(QUASI88_DIR)/snddrv/src/sound/fm.c \
-   $(QUASI88_DIR)/snddrv/src/sound/ymdeltat.c \
-   $(QUASI88_DIR)/snddrv/src/sound/samples.c \
-   $(QUASI88_DIR)/LIBRETRO/file-op.c \
+SOURCES_C := $(CORE_DIR)/quasi88.c \
+   $(CORE_DIR)/emu.c \
+   $(CORE_DIR)/memory.c \
+   $(CORE_DIR)/status.c \
+   $(CORE_DIR)/getconf.c \
+   $(CORE_DIR)/pc88main.c \
+   $(CORE_DIR)/crtcdmac.c \
+   $(CORE_DIR)/soundbd.c \
+   $(CORE_DIR)/pio.c \
+   $(CORE_DIR)/screen.c \
+   $(CORE_DIR)/intr.c \
+   $(CORE_DIR)/pc88sub.c \
+   $(CORE_DIR)/fdc.c \
+   $(CORE_DIR)/image.c \
+   $(CORE_DIR)/monitor.c \
+   $(CORE_DIR)/basic.c \
+   $(CORE_DIR)/menu.c \
+   $(CORE_DIR)/menu-screen.c \
+   $(CORE_DIR)/q8tk.c \
+   $(CORE_DIR)/q8tk-glib.c \
+   $(CORE_DIR)/suspend.c \
+   $(CORE_DIR)/keyboard.c \
+   $(CORE_DIR)/romaji.c \
+   $(CORE_DIR)/pause.c \
+   $(CORE_DIR)/z80.c \
+   $(CORE_DIR)/z80-debug.c \
+   $(CORE_DIR)/snapshot.c \
+   $(CORE_DIR)/screen-8bpp.c \
+   $(CORE_DIR)/screen-16bpp.c \
+   $(CORE_DIR)/screen-32bpp.c \
+   $(CORE_DIR)/screen-snapshot.c \
+   $(CORE_DIR)/MINI/event.c \
+   $(CORE_DIR)/MINI/graph.c \
+   $(CORE_DIR)/MINI/main.c \
+   $(CORE_DIR)/MINI/wait.c \
+   $(CORE_DIR)/MINI/audio.c \
+   $(CORE_DIR)/utf16.c \
+   $(CORE_DIR)/LIBRETRO/libretro.c \
+   $(CORE_DIR)/snddrv/quasi88/mame-quasi88.c \
+   $(CORE_DIR)/snddrv/quasi88/beepintf.c \
+   $(CORE_DIR)/snddrv/quasi88/beep.c \
+   $(CORE_DIR)/snddrv/src/driver.c \
+   $(CORE_DIR)/snddrv/src/restrack.c \
+   $(CORE_DIR)/snddrv/src/sound.c \
+   $(CORE_DIR)/snddrv/src/sndintrf.c \
+   $(CORE_DIR)/snddrv/src/streams.c \
+   $(CORE_DIR)/snddrv/src/sound/flt_vol.c \
+   $(CORE_DIR)/snddrv/src/sound/flt_rc.c \
+   $(CORE_DIR)/snddrv/src/sound/wavwrite.c \
+   $(CORE_DIR)/snddrv/src/sound/2203intf.c \
+   $(CORE_DIR)/snddrv/src/sound/2608intf.c \
+   $(CORE_DIR)/snddrv/src/sound/ay8910.c \
+   $(CORE_DIR)/snddrv/src/sound/fm.c \
+   $(CORE_DIR)/snddrv/src/sound/ymdeltat.c \
+   $(CORE_DIR)/snddrv/src/sound/samples.c \
+   $(CORE_DIR)/LIBRETRO/file-op.c \
    $(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
    $(LIBRETRO_COMM_DIR)/compat/compat_strcasestr.c \
    $(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
@@ -95,9 +94,9 @@ SOURCES_C := $(QUASI88_DIR)/quasi88.c \
    $(LIBRETRO_COMM_DIR)/string/stdstring.c \
    $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
    
-SOURCES_CXX := $(QUASI88_DIR)/fmgen/fmgen.o \
-   $(QUASI88_DIR)/fmgen/fmtimer.o \
-   $(QUASI88_DIR)/fmgen/opna.o \
-   $(QUASI88_DIR)/fmgen/psg.o \
-   $(QUASI88_DIR)/snddrv/quasi88/2203fmgen.cpp \
-   $(QUASI88_DIR)/snddrv/quasi88/2608fmgen.cpp
+SOURCES_CXX := $(CORE_DIR)/fmgen/fmgen.o \
+   $(CORE_DIR)/fmgen/fmtimer.o \
+   $(CORE_DIR)/fmgen/opna.o \
+   $(CORE_DIR)/fmgen/psg.o \
+   $(CORE_DIR)/snddrv/quasi88/2203fmgen.cpp \
+   $(CORE_DIR)/snddrv/quasi88/2608fmgen.cpp
