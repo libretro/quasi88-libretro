@@ -94,9 +94,9 @@ SOURCES_C := $(CORE_DIR)/quasi88.c \
    $(LIBRETRO_COMM_DIR)/string/stdstring.c \
    $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
    
-SOURCES_CXX := $(CORE_DIR)/fmgen/fmgen.o \
-   $(CORE_DIR)/fmgen/fmtimer.o \
-   $(CORE_DIR)/fmgen/opna.o \
-   $(CORE_DIR)/fmgen/psg.o \
+SOURCES_CXX := $(CORE_DIR)/fmgen/fmgen.cpp \
+   $(CORE_DIR)/fmgen/fmtimer.cpp \
+   $(CORE_DIR)/fmgen/opna.cpp \
+   $(CORE_DIR)/fmgen/psg.cpp \
    $(CORE_DIR)/snddrv/quasi88/2203fmgen.cpp \
    $(CORE_DIR)/snddrv/quasi88/2608fmgen.cpp
