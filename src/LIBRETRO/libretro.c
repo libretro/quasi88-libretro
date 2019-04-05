@@ -10,6 +10,7 @@
 #include "pc88main.h"
 #include "pc88sub.h"
 #include "memory.h"
+#include "font.h"
 #include "emu.h"
 #include "drive.h"
 #include "event.h"
@@ -31,6 +32,7 @@ bool save_to_disk_image = false;
 
 #define FRAMES_BEFORE_AUDIO 30
 
+/* libretro callbacks */
 static retro_audio_sample_t audio_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
 static retro_environment_t environ_cb;
@@ -358,6 +360,38 @@ void retro_init(void)
       load_system_file("n88knj1.rom",  kanji_rom[0][0], 0x20000);
       load_system_file("n88knj2.rom",  kanji_rom[1][0], 0x20000);
       load_system_file("n88jisho.rom", jisho_rom[0],    0x80000);
+
+      /* == Font files == */
+      /* Font 1 */
+      if (load_system_file("font.rom", font_mem, 0x01000))
+      {
+         font_loaded |= 1;
+         memcpy(&font_mem[0x000], &kanji_rom[0][(1<<11)][0], 0x800);
+         memcpy(&font_mem[0x800], &built_in_font_graph[0],   0x800);
+      }
+      else
+         memcpy(&font_mem[0x000], &built_in_font_ANK[0],     0x800);
+
+      /* Font 2 */
+      if (load_system_file("font2.rom", font_mem2, 0x01000))
+      {
+         font_loaded |= 2;
+         memcpy(&font_mem2[0x000], &built_in_font_ANH[0],    0x800);
+      }
+      else
+      {
+         memcpy(&font_mem2[0x000], &built_in_font_ANH[0],    0x800);
+         memcpy(&font_mem2[0x800], &built_in_font_graph[0],  0x800);
+      }
+
+      /* Font 3 */
+      if (load_system_file("font3.rom", font_mem3, 0x01000))
+      {
+         font_loaded |= 4;
+         memcpy(&font_mem3[0x800], &built_in_font_graph[0],  0x800);
+      }
+      else
+         memset(&font_mem3[0], 0, 0x1000);
    }
 
    /* Assume false if the path exists, this is updated after */
