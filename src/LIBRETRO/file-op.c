@@ -117,10 +117,11 @@ int osd_kanji_code(void)
 
 struct OSD_FILE_STRUCT
 {
-   RFILE   *fp;                     /* NULL when not in use             */
-   uint8_t  mode;                   /* VFS file open flags (libretro.h) */
-   char     path[OSD_MAX_FILENAME]; /* Path to opened file              */
-   uint8_t  type;                   /* File type (file-op.h)            */
+   RFILE   *fp;                     /* NULL when not in use                     */
+   RFILE   *sfp;                    /* File to store differences saved to disks */
+   uint8_t  mode;                   /* VFS file open flags (libretro.h)         */
+   char     path[OSD_MAX_FILENAME]; /* Path to opened file                      */
+   uint8_t  type;                   /* File type (file-op.h)                    */
 };
 
 #define  MAX_STREAM  8
@@ -223,6 +224,21 @@ OSD_FILE *osd_fopen(int type, const char *path, const char *mode)
          current_stream->mode = retro_mode;
          snprintf(current_stream->path, OSD_MAX_FILENAME, "%s", path);
          current_stream->type = type;
+
+         /* Set up diff file if the loaded file is a disk */
+         if (type == FTYPE_DISK)
+         {
+            char save_name[OSD_MAX_FILENAME];
+
+            snprintf(save_name, OSD_MAX_FILENAME, "%s%c%s.srm", save_path, SLASH, path_remove_extension(path_basename(path)));
+            /* Create diff file if it does not already exist */
+            if (osd_file_stat(save_name) != FILE_STAT_FILE)
+               filestream_write_file(save_name, 0, 0);
+            current_stream->sfp = filestream_open(save_name, retro_mode, 0);
+         }
+         else
+            current_stream->sfp = NULL;
+
          if (retro_mode & RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING)
             osd_fseek(current_stream, 0, RETRO_VFS_SEEK_POSITION_END);
 
@@ -266,14 +282,67 @@ void osd_rewind(OSD_FILE *stream)
    osd_fflush(stream);
 }
 
+size_t osd_fread_diff(void *ptr, size_t size, OSD_FILE *stream)
+{
+   if (!stream->fp)
+      return 0;
+   else
+   {
+      int8_t *diff;
+      size_t  diff_size;
+
+      /* Offset to the position that the read attempt was made at */
+      filestream_seek(stream->sfp, filestream_tell(stream->fp), SEEK_SET);
+      size      = filestream_read(stream->fp,  ptr,  size);
+      diff      = (int8_t*)calloc(size, sizeof(int8_t));
+      diff_size = filestream_read(stream->sfp, diff, size);
+
+      /* Add difference of each byte to read buffer*/
+      for (; diff_size != 0; diff_size--)
+         ((uint8_t*)ptr)[diff_size] = ((uint8_t*)ptr)[diff_size] + diff[diff_size];
+
+      free(diff);
+      return size;
+   }
+}
+
+size_t osd_fwrite_diff(const void *ptr, uint32_t size, OSD_FILE *stream)
+{
+   void     *diff;
+   uint32_t  diff_offset;
+   size_t    diff_size;
+
+   /* Backup the current position, then read data from disk into buffer */
+   diff        = (void*)calloc(size, sizeof(int8_t));
+   diff_offset = filestream_tell(stream->fp);
+   diff_size   = filestream_read(stream->fp, diff, size);
+
+   /* Write difference of each byte to file */
+   for (; diff_size != 0; diff_size--)
+      ((int8_t*)diff)[diff_size] = ((uint8_t*)ptr)[diff_size] - ((uint8_t*)diff)[diff_size];
+   filestream_seek(stream->sfp, diff_offset, SEEK_SET);
+   filestream_write(stream->sfp, diff, size);
+
+   free(diff);
+   return size;
+}
+
+#define SAVE_DIFF !save_to_disk_image && stream->type == FTYPE_DISK && stream->sfp
+
 size_t osd_fread(void *ptr, size_t size, size_t nobj, OSD_FILE *stream)
 {
-   return filestream_read(stream->fp, ptr, size * nobj);
+   if (SAVE_DIFF)
+      return osd_fread_diff(ptr, size * nobj, stream);
+   else
+      return filestream_read(stream->fp, ptr, size * nobj);
 }
 
 size_t osd_fwrite(const void *ptr, size_t size, size_t nobj, OSD_FILE *stream)
 {
-   return filestream_write(stream->fp, ptr, size * nobj);
+   if (SAVE_DIFF)
+      return osd_fwrite_diff(ptr, size * nobj, stream);
+   else
+      return filestream_write(stream->fp, ptr, size * nobj);
 }
 
 int osd_fputc(int c, OSD_FILE *stream)

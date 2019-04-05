@@ -290,7 +290,7 @@ void init_variables()
 
    var.key = "q88_save_to_disk_image";
 
-   if (save_to_disk_image && environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   if (!save_to_disk_image && environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
       save_to_disk_image = (!strcmp(var.value, "enabled")) ? true : false;
   
    var.key = "q88_rumble";
@@ -395,7 +395,7 @@ void retro_init(void)
    }
 
    /* Assume false if the path exists, this is updated after */
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &save_path) && !string_is_empty(dir))
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &save_path) && !string_is_empty(save_path))
       save_to_disk_image = false;
    else
       save_to_disk_image = true;
@@ -533,7 +533,7 @@ void retro_set_environment(retro_environment_t cb)
       { "q88_cpu_clock", "CPU clock; 4 MHz|8 MHz|16 MHz (overclock)|32 MHz (overclock)|64 MHz (overclock)|1 MHz (underclock)|2 MHz (underclock)" },
       { "q88_use_fdc_wait", "Use FDC-Wait; disabled|enabled"},
       { "q88_pcg-8100", "Use PCG-8100; disabled|enabled"},
-      /*{ "q88_save_to_disk_image", "Save to disk image; disabled|enabled"}, not yet implemented*/
+      { "q88_save_to_disk_image", "Save to disk image; disabled|enabled"},
 	   { "q88_rumble", "Rumble on disk access; enabled|disabled"},
       { NULL, NULL },
    };
