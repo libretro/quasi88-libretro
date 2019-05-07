@@ -193,14 +193,26 @@ void handle_input()
    /* Alphabet */
    for (i = 0; i < 26; i++)
       handle_key(KEY88_A + i, RETROK_a + i);
-  
+
    /* Function keys */
-   for (i = 0; i < 5; i++)
-   {
-      handle_key(KEY88_F1  + i, RETROK_F1  + i);
-      handle_key(KEY88_F6  + i, RETROK_F6  + i);
-      handle_key(KEY88_F11 + i, RETROK_F11 + i);
-   }
+   for (i = 0; i < 8; i++)
+      handle_key(KEY88_F6 + i, RETROK_F1 + i);
+
+   /* Joypads */
+   mouse_mode = 3;
+   handle_pad(KEY88_PAD1_UP,    RETRO_DEVICE_ID_JOYPAD_UP,    0);
+   handle_pad(KEY88_PAD1_DOWN,  RETRO_DEVICE_ID_JOYPAD_DOWN,  0);
+   handle_pad(KEY88_PAD1_LEFT,  RETRO_DEVICE_ID_JOYPAD_LEFT,  0);
+   handle_pad(KEY88_PAD1_RIGHT, RETRO_DEVICE_ID_JOYPAD_RIGHT, 0);
+   handle_pad(KEY88_PAD1_A,     RETRO_DEVICE_ID_JOYPAD_A,     0);
+   handle_pad(KEY88_PAD1_B,     RETRO_DEVICE_ID_JOYPAD_B,     0);
+   
+   handle_pad(KEY88_PAD2_UP,    RETRO_DEVICE_ID_JOYPAD_UP,    1);
+   handle_pad(KEY88_PAD2_DOWN,  RETRO_DEVICE_ID_JOYPAD_DOWN,  1);
+   handle_pad(KEY88_PAD2_LEFT,  RETRO_DEVICE_ID_JOYPAD_LEFT,  1);
+   handle_pad(KEY88_PAD2_RIGHT, RETRO_DEVICE_ID_JOYPAD_RIGHT, 1);
+   handle_pad(KEY88_PAD2_A,     RETRO_DEVICE_ID_JOYPAD_A,     1);
+   handle_pad(KEY88_PAD2_B,     RETRO_DEVICE_ID_JOYPAD_B,     1);
 }
 
 void handle_rumble()
