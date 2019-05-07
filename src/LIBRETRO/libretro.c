@@ -2,6 +2,8 @@
 #include <string.h>
 
 #include <libretro.h>
+#include <file/file_path.h>
+#include <lists/dir_list.h>
 #include <streams/file_stream.h>
 #include <string/stdstring.h>
 
@@ -407,7 +409,7 @@ void retro_init(void)
    }
 
    /* Assume false if the path exists, this is updated after */
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &save_path) && !string_is_empty(save_path))
+   if (!string_is_empty(save_path))
       save_to_disk_image = false;
    else
       save_to_disk_image = true;
@@ -537,8 +539,44 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 {
 }
 
+#define USER_DISKS_STRING_SIZE 4096
+bool init_user_disk_list(char *user_disks_string)
+{
+   if (!environ_cb)
+      return false;
+   else
+   {
+      char user_disks_temp[USER_DISKS_STRING_SIZE];
+	  
+	  strncpy(user_disks_string, "User disk; ", USER_DISKS_STRING_SIZE);
+	  user_disks_temp[0] = '\0';
+	  environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &save_path);
+	  if (!string_is_empty(save_path))
+      {
+         struct string_list* user_disks = dir_list_new(save_path, "d88", false, false, false, false);
+
+         /* Trim fullpath from all filenames */
+         for (uint8_t i = 0; i < user_disks->size; i++)
+            string_list_set(user_disks, i, path_basename(user_disks->elems[i].data));
+	 
+         /* Convert list of files to string */
+         string_list_join_concat(user_disks_temp, USER_DISKS_STRING_SIZE, user_disks, "|");
+         strncat(user_disks_string, user_disks_temp, USER_DISKS_STRING_SIZE);
+      }
+      else
+         return false;
+   }
+   
+   return true;
+}
+
 void retro_set_environment(retro_environment_t cb)
 {
+   static char user_disks_string[USER_DISKS_STRING_SIZE];
+
+   environ_cb = cb;
+   user_disks_string[0] = '\0';
+   init_user_disk_list(user_disks_string);
    static const struct retro_variable vars[] = 
    {
       { "q88_basic_mode", "Basic mode; N88 V2|N88 V1H|N88 V1S|N" },
@@ -546,7 +584,8 @@ void retro_set_environment(retro_environment_t cb)
       { "q88_use_fdc_wait", "Use FDC-Wait; disabled|enabled"},
       { "q88_pcg-8100", "Use PCG-8100; disabled|enabled"},
       { "q88_save_to_disk_image", "Save to disk image; disabled|enabled"},
-	   { "q88_rumble", "Rumble on disk access; enabled|disabled"},
+      { "q88_user_disk", user_disks_string },
+      { "q88_rumble", "Rumble on disk access; enabled|disabled"},
       { NULL, NULL },
    };
    static const struct retro_controller_description port[] = {
