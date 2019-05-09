@@ -62,10 +62,10 @@ SOURCES_C := $(CORE_DIR)/quasi88.c \
    $(CORE_DIR)/screen-snapshot.c \
    $(CORE_DIR)/MINI/event.c \
    $(CORE_DIR)/MINI/graph.c \
-   $(CORE_DIR)/MINI/main.c \
    $(CORE_DIR)/MINI/wait.c \
    $(CORE_DIR)/MINI/audio.c \
    $(CORE_DIR)/utf16.c \
+   $(CORE_DIR)/LIBRETRO/main.c \
    $(CORE_DIR)/LIBRETRO/libretro.c \
    $(CORE_DIR)/snddrv/quasi88/mame-quasi88.c \
    $(CORE_DIR)/snddrv/quasi88/beepintf.c \
