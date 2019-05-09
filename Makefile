@@ -1,5 +1,4 @@
 DEBUG = 0
-FRONTEND_SUPPORTS_RGB565 = 1
 
 CORE_DIR := src
 
@@ -29,10 +28,6 @@ ifeq ($(shell uname -p),powerpc)
 else
    arch = intel
 endif
-
-
-NEED_BPP = 16
-NEED_BLIP = 1
 
 prefix := /usr
 libdir := $(prefix)/lib
