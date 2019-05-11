@@ -67,6 +67,7 @@ SOURCES_C := $(CORE_DIR)/quasi88.c \
    $(CORE_DIR)/utf16.c \
    $(CORE_DIR)/LIBRETRO/main.c \
    $(CORE_DIR)/LIBRETRO/libretro.c \
+   $(CORE_DIR)/LIBRETRO/file-op.c \
    $(CORE_DIR)/snddrv/quasi88/mame-quasi88.c \
    $(CORE_DIR)/snddrv/quasi88/beepintf.c \
    $(CORE_DIR)/snddrv/quasi88/beep.c \
@@ -83,8 +84,10 @@ SOURCES_C := $(CORE_DIR)/quasi88.c \
    $(CORE_DIR)/snddrv/src/sound/ay8910.c \
    $(CORE_DIR)/snddrv/src/sound/fm.c \
    $(CORE_DIR)/snddrv/src/sound/ymdeltat.c \
-   $(CORE_DIR)/snddrv/src/sound/samples.c \
-   $(CORE_DIR)/LIBRETRO/file-op.c \
+   $(CORE_DIR)/snddrv/src/sound/samples.c
+
+ifneq ($(STATIC_LINKING), 1)
+SOURCES_C += \
    $(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
    $(LIBRETRO_COMM_DIR)/compat/compat_strcasestr.c \
    $(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
@@ -93,6 +96,7 @@ SOURCES_C := $(CORE_DIR)/quasi88.c \
    $(LIBRETRO_COMM_DIR)/streams/file_stream.c \
    $(LIBRETRO_COMM_DIR)/string/stdstring.c \
    $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
+endif
    
 SOURCES_CXX := $(CORE_DIR)/fmgen/fmgen.cpp \
    $(CORE_DIR)/fmgen/fmtimer.cpp \
