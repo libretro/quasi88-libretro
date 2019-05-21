@@ -120,8 +120,8 @@ void handle_input()
    handle_pad(KEY88_KP_2,   RETRO_DEVICE_ID_JOYPAD_DOWN,   0);
    handle_pad(KEY88_KP_4,   RETRO_DEVICE_ID_JOYPAD_LEFT,   0);
    handle_pad(KEY88_KP_6,   RETRO_DEVICE_ID_JOYPAD_RIGHT,  0);
-   handle_pad(KEY88_Z,      RETRO_DEVICE_ID_JOYPAD_A,      0);
-   handle_pad(KEY88_X,      RETRO_DEVICE_ID_JOYPAD_B,      0);
+   handle_pad(KEY88_X,      RETRO_DEVICE_ID_JOYPAD_A,      0);
+   handle_pad(KEY88_Z,      RETRO_DEVICE_ID_JOYPAD_B,      0);
    handle_pad(KEY88_SPACE,  RETRO_DEVICE_ID_JOYPAD_Y,      0);
    handle_pad(KEY88_RETURN, RETRO_DEVICE_ID_JOYPAD_START,  0);
    handle_pad(KEY88_I,      RETRO_DEVICE_ID_JOYPAD_SELECT, 0);
@@ -144,11 +144,9 @@ void handle_input()
    handle_key(KEY88_HOME,        RETROK_HOME);
    handle_key(KEY88_UP,          RETROK_UP);
    handle_key(KEY88_RIGHT,       RETROK_RIGHT);
-   /* What do these do? How do we best map them to the keyboard?
-   handle_key(KEY88_INS_DEL,     RETROK_);
-   handle_key(KEY88_GRAPH,       RETROK_);
-   handle_key(KEY88_KANA,        RETROK_);
-   */
+   handle_key(KEY88_INS_DEL,     RETROK_BACKSPACE);
+   handle_key(KEY88_GRAPH,       RETROK_LALT);
+   handle_key(KEY88_KANA,        RETROK_LSUPER);
    handle_key(KEY88_SHIFT,       RETROK_RSHIFT);
    handle_key(KEY88_CTRL,        RETROK_RCTRL);
    handle_key(KEY88_STOP,        RETROK_BREAK);
@@ -156,24 +154,20 @@ void handle_input()
    handle_key(KEY88_TAB,         RETROK_TAB);
    handle_key(KEY88_DOWN,        RETROK_DOWN);
    handle_key(KEY88_LEFT,        RETROK_LEFT);
-   /*
-   handle_key(KEY88_HELP,        RETROK_);
-   handle_key(KEY88_COPY,        RETROK_);
-   */
+   handle_key(KEY88_HELP,        RETROK_END);
+   handle_key(KEY88_COPY,        RETROK_PRINT);
    handle_key(KEY88_CAPS,        RETROK_CAPSLOCK);
-   /*
-   handle_key(KEY88_ROLLUP,      RETROK_);
-   handle_key(KEY88_ROLLDOWN,    RETROK_);
-   */
+   handle_key(KEY88_ROLLUP,      RETROK_PAGEUP);
+   handle_key(KEY88_ROLLDOWN,    RETROK_PAGEDOWN);
    handle_key(KEY88_BS,          RETROK_BACKSPACE);
    handle_key(KEY88_INS,         RETROK_INSERT);
    handle_key(KEY88_DEL,         RETROK_DELETE);
+   handle_key(KEY88_HENKAN,      RETROK_AMPERSAND);
    /*
-   handle_key(KEY88_HENKAN,      RETROK_);
    handle_key(KEY88_KETTEI,      RETROK_);
    handle_key(KEY88_PC,          RETROK_);
-   handle_key(KEY88_ZENKAKU,     RETROK_);
    */
+   handle_key(KEY88_ZENKAKU,     RETROK_RALT);
    handle_key(KEY88_RETURNL,     RETROK_RETURN);
    handle_key(KEY88_RETURNR,     RETROK_RETURN);
    handle_key(KEY88_SHIFTL,      RETROK_LSHIFT);
@@ -200,19 +194,19 @@ void handle_input()
 
    /* Joypads */
    mouse_mode = 3;
-   handle_pad(KEY88_PAD1_UP,    RETRO_DEVICE_ID_JOYPAD_UP,    0);
-   handle_pad(KEY88_PAD1_DOWN,  RETRO_DEVICE_ID_JOYPAD_DOWN,  0);
-   handle_pad(KEY88_PAD1_LEFT,  RETRO_DEVICE_ID_JOYPAD_LEFT,  0);
-   handle_pad(KEY88_PAD1_RIGHT, RETRO_DEVICE_ID_JOYPAD_RIGHT, 0);
-   handle_pad(KEY88_PAD1_A,     RETRO_DEVICE_ID_JOYPAD_A,     0);
-   handle_pad(KEY88_PAD1_B,     RETRO_DEVICE_ID_JOYPAD_B,     0);
+   handle_key(KEY88_PAD1_UP,    RETRO_DEVICE_ID_JOYPAD_UP);
+   handle_key(KEY88_PAD1_DOWN,  RETRO_DEVICE_ID_JOYPAD_DOWN);
+   handle_key(KEY88_PAD1_LEFT,  RETRO_DEVICE_ID_JOYPAD_LEFT);
+   handle_key(KEY88_PAD1_RIGHT, RETRO_DEVICE_ID_JOYPAD_RIGHT);
+   handle_key(KEY88_PAD1_A,     RETRO_DEVICE_ID_JOYPAD_A);
+   handle_key(KEY88_PAD1_B,     RETRO_DEVICE_ID_JOYPAD_B);
    
-   handle_pad(KEY88_PAD2_UP,    RETRO_DEVICE_ID_JOYPAD_UP,    1);
-   handle_pad(KEY88_PAD2_DOWN,  RETRO_DEVICE_ID_JOYPAD_DOWN,  1);
-   handle_pad(KEY88_PAD2_LEFT,  RETRO_DEVICE_ID_JOYPAD_LEFT,  1);
-   handle_pad(KEY88_PAD2_RIGHT, RETRO_DEVICE_ID_JOYPAD_RIGHT, 1);
-   handle_pad(KEY88_PAD2_A,     RETRO_DEVICE_ID_JOYPAD_A,     1);
-   handle_pad(KEY88_PAD2_B,     RETRO_DEVICE_ID_JOYPAD_B,     1);
+   handle_key(KEY88_PAD2_UP,    RETRO_DEVICE_ID_JOYPAD_UP);
+   handle_key(KEY88_PAD2_DOWN,  RETRO_DEVICE_ID_JOYPAD_DOWN);
+   handle_key(KEY88_PAD2_LEFT,  RETRO_DEVICE_ID_JOYPAD_LEFT);
+   handle_key(KEY88_PAD2_RIGHT, RETRO_DEVICE_ID_JOYPAD_RIGHT);
+   handle_key(KEY88_PAD2_A,     RETRO_DEVICE_ID_JOYPAD_A);
+   handle_key(KEY88_PAD2_B,     RETRO_DEVICE_ID_JOYPAD_B);
 }
 
 void handle_rumble()
@@ -417,8 +411,8 @@ void retro_init(void)
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up Keypad" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "Down Keypad" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Right Keypad" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "Z Key" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "X Key" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "X Key" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "Z Key" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Space Key" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Return Key" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "I Key" },
@@ -546,7 +540,7 @@ void retro_set_environment(retro_environment_t cb)
       { "q88_use_fdc_wait", "Use FDC-Wait; disabled|enabled"},
       { "q88_pcg-8100", "Use PCG-8100; disabled|enabled"},
       { "q88_save_to_disk_image", "Save to disk image; disabled|enabled"},
-	   { "q88_rumble", "Rumble on disk access; enabled|disabled"},
+      { "q88_rumble", "Rumble on disk access; enabled|disabled"},
       { NULL, NULL },
    };
    static const struct retro_controller_description port[] = {
