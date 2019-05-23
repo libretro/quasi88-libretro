@@ -162,8 +162,8 @@ void handle_input()
    handle_key(KEY88_BS,          RETROK_BACKSPACE);
    handle_key(KEY88_INS,         RETROK_INSERT);
    handle_key(KEY88_DEL,         RETROK_DELETE);
-   handle_key(KEY88_HENKAN,      RETROK_AMPERSAND);
    /*
+   handle_key(KEY88_HENKAN,      RETROK_);
    handle_key(KEY88_KETTEI,      RETROK_);
    handle_key(KEY88_PC,          RETROK_);
    */
