@@ -20,6 +20,7 @@
 #include "z80.h"
 #include "intr.h"
 #include "fdc.h"
+#include "soundbd.h"
 
 #define INT16 int16_t
 #include "../snddrv/src/sound.h"
@@ -293,6 +294,20 @@ void init_variables()
       fdc_wait = (!strcmp(var.value, "enabled")) ? TRUE : FALSE;
    else
       fdc_wait = false;
+  
+   var.key = "q88_sound_board";
+   
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      sound_board = (!strcmp(var.value, "OPNA")) ? SOUND_II : SOUND_I;
+   else
+      sound_board = SOUND_I;
+  
+   var.key = "q88_use_pcg-8100";
+   
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      use_pcg = (!strcmp(var.value, "enabled")) ? TRUE : FALSE;
+   else
+      use_pcg = FALSE;
 
    var.key = "q88_save_to_disk_image";
 
@@ -538,6 +553,7 @@ void retro_set_environment(retro_environment_t cb)
       { "q88_basic_mode", "Basic mode; N88 V2|N88 V1H|N88 V1S|N" },
       { "q88_cpu_clock", "CPU clock; 4 MHz|8 MHz|16 MHz (overclock)|32 MHz (overclock)|64 MHz (overclock)|1 MHz (underclock)|2 MHz (underclock)" },
       { "q88_use_fdc_wait", "Use FDC-Wait; disabled|enabled"},
+      { "q88_sound_board", "Sound board; OPN|OPNA"},
       { "q88_pcg-8100", "Use PCG-8100; disabled|enabled"},
       { "q88_save_to_disk_image", "Save to disk image; disabled|enabled"},
       { "q88_rumble", "Rumble on disk access; enabled|disabled"},
