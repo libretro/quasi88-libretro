@@ -12,15 +12,17 @@
 
 /* このシステム専用の QUASI88 のための識別用 (必要なら) */
 
-#ifndef	QUASI88_MINI
-#define	QUASI88_MINI
+#ifndef	QUASI88_LIBRETRO
+#define	QUASI88_LIBRETRO
 #endif
 
 
 
-/* エンディアンネス。これを定義しなければ、ビッグエンディアンになる */
-
-#define	LSB_FIRST
+/* Platform endianness; the libretro makefile sets MSB_FIRST if the 
+   target is big-endian, so flip that here if needed */
+#ifndef MSB_FIRST
+#define LSB_FIRST
+#endif
 
 
 
@@ -32,9 +34,9 @@
 
 /* 画面の bpp の定義。最低でもどれか一つは定義しなくてはならない */
 
-#define	SUPPORT_8BPP
+#undef	SUPPORT_8BPP
 #define	SUPPORT_16BPP
-#define	SUPPORT_32BPP
+#undef	SUPPORT_32BPP
 
 
 

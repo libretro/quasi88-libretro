@@ -56,12 +56,10 @@ SOURCES_C := $(CORE_DIR)/quasi88.c \
    $(CORE_DIR)/z80.c \
    $(CORE_DIR)/z80-debug.c \
    $(CORE_DIR)/snapshot.c \
-   $(CORE_DIR)/screen-8bpp.c \
    $(CORE_DIR)/screen-16bpp.c \
-   $(CORE_DIR)/screen-32bpp.c \
    $(CORE_DIR)/screen-snapshot.c \
    $(CORE_DIR)/MINI/event.c \
-   $(CORE_DIR)/MINI/graph.c \
+   $(CORE_DIR)/LIBRETRO/graph.c \
    $(CORE_DIR)/MINI/wait.c \
    $(CORE_DIR)/MINI/audio.c \
    $(CORE_DIR)/utf16.c \

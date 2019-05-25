@@ -570,12 +570,14 @@ void retro_set_environment(retro_environment_t cb)
       { NULL, 0 },
    };
    bool no_game = true;
+   enum retro_pixel_format rgb565 = RETRO_PIXEL_FORMAT_RGB565;
    
    environ_cb = cb;
    cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
-   cb(RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO, (void*)subsystems);
+   cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT,    &rgb565);
+   cb(RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO,  (void*)subsystems);
    cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &no_game);
-   cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
+   cb(RETRO_ENVIRONMENT_SET_VARIABLES,       (void*)vars);
 }
 
 void retro_set_audio_sample(retro_audio_sample_t cb)
