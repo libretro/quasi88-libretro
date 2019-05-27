@@ -21,6 +21,7 @@
 #include "intr.h"
 #include "fdc.h"
 #include "soundbd.h"
+#include "pc88cpu.h"
 
 #define INT16 int16_t
 #include "../snddrv/src/sound.h"
@@ -607,23 +608,46 @@ void retro_set_video_refresh(retro_video_refresh_t cb)
 
 size_t retro_serialize_size(void)
 {
-   return 0;
+   /* main_ram + main_vram + main_high_ram + main_cpu + sub_cpu */
+   return 0x21000 + sizeof(z80arch) * 2;
 }
 
+/* TODO: Not safe across endianness yet! */
 bool retro_serialize(void *data, size_t size)
 {
-   return false;
+   memcpy(&((uint8_t*)data)[0x00000], main_ram,  0x10000);
+   memcpy(&((uint8_t*)data)[0x10000], main_vram, 0x10000);
+   memcpy(&((uint8_t*)data)[0x20000], main_high_ram, 0x1000);
+   memcpy(&((uint8_t*)data)[0x21000], &z80main_cpu, sizeof(z80arch));
+   memcpy(&((uint8_t*)data)[0x21000 + sizeof(z80arch)], &z80sub_cpu, sizeof(z80arch));
+
+   return true;
 }
 
 bool retro_unserialize(const void *data, size_t size)
 {
-   return false;
+   pc88main_term();
+   pc88sub_term();
+
+   memcpy(main_ram,      &((uint8_t*)data)[0x00000], 0x10000);
+   memcpy(main_vram,     &((uint8_t*)data)[0x10000], 0x10000);
+   memcpy(main_high_ram, &((uint8_t*)data)[0x20000], 0x01000);
+   memcpy(&z80main_cpu,  &((uint8_t*)data)[0x21000], sizeof(z80arch));
+   memcpy(&z80sub_cpu,   &((uint8_t*)data)[0x21000 + sizeof(z80arch)], sizeof(z80arch));
+   screen_update_immidiate();
+
+   pc88main_init(INIT_STATELOAD);
+   pc88sub_init(INIT_STATELOAD);
+
+   return true;
 }
 
 void *retro_get_memory_data(unsigned type)
 {
    if (type == RETRO_MEMORY_SYSTEM_RAM)
       return main_ram;
+   else if (type == RETRO_MEMORY_VIDEO_RAM)
+      return main_vram;
    else
       return NULL;
 }
@@ -631,6 +655,8 @@ void *retro_get_memory_data(unsigned type)
 size_t retro_get_memory_size(unsigned type)
 {
    if (type == RETRO_MEMORY_SYSTEM_RAM)
+      return 0x10000;
+   else if (type == RETRO_MEMORY_VIDEO_RAM)
       return 0x10000;
    else
       return 0;
