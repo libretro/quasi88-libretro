@@ -479,7 +479,7 @@ void YM_DELTAT_savestate(const char *statename,int num,YM_DELTAT *DELTAT)
 	else if ( val < min ) val = min;	\
 }
 
-INLINE void YM_DELTAT_synthesis_from_external_memory(YM_DELTAT *DELTAT)
+static INLINE void YM_DELTAT_synthesis_from_external_memory(YM_DELTAT *DELTAT)
 {
 	UINT32 step;
 	int data;
@@ -571,7 +571,7 @@ INLINE void YM_DELTAT_synthesis_from_external_memory(YM_DELTAT *DELTAT)
 
 
 
-INLINE void YM_DELTAT_synthesis_from_CPU_memory(YM_DELTAT *DELTAT)
+static INLINE void YM_DELTAT_synthesis_from_CPU_memory(YM_DELTAT *DELTAT)
 {
 	UINT32 step;
 	int data;
