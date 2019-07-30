@@ -10,9 +10,16 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <dirent.h>
+#ifdef _WIN32
+#include <direct.h>
+#else
 #include <unistd.h>
+#endif
 #include <errno.h>
+
+#ifdef _MSC_VER
+#include <compat/msvc.h>
+#endif
 
 #include <file/file_path.h>
 #include <streams/file_stream.h>

@@ -1983,7 +1983,7 @@ void OPNB::SetVolumeADPCMB(int db)
 {
 	db = Min(db, 20);
 	if (db > -192)
-		adpcmvol = int(65536.0 * pow(10, db / 40.0));
+		adpcmvol = int(65536.0 * powf(10, db / 40.0));
 	else
 		adpcmvol = 0;
 }

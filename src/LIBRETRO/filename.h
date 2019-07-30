@@ -1,7 +1,7 @@
 #ifndef	FILENAME_H_INCLUDED
 #define	FILENAME_H_INCLUDED
 
-#include <stdbool.h>
+#include <boolean.h>
 
 #ifndef	QUASI88_FLIBRETRO
 #define	QUASI88_FLIBRETRO

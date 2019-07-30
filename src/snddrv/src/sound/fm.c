@@ -112,6 +112,10 @@
 #include "support.h"		/* use RAINE */
 #endif
 
+#ifdef __LIBRETRO__
+#include <retro_math.h>
+#endif
+
 #include "ay8910.h"
 #include "fm.h"
 
