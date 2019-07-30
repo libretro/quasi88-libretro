@@ -269,7 +269,7 @@ static	byte	*write_mem_f000_ffff;
 /*		ext_rom_bank, misc_ctrl により変化	*/
 /*------------------------------------------------------*/
 #if 1
-INLINE	void	main_memory_mapping_0000_7fff( void )
+static INLINE	void	main_memory_mapping_0000_7fff( void )
 {
   highspeed_n88rom = FALSE;	/* デフォルト */
 
