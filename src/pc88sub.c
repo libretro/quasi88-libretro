@@ -337,7 +337,7 @@ void	pc88sub_term( void )
 /************************************************************************/
 /* ブレークポイント関連							*/
 /************************************************************************/
-INLINE	void	check_break_point( int type, word addr, char *str )
+static INLINE	void	check_break_point( int type, word addr, char *str )
 {
   int	i;
 
