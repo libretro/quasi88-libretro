@@ -126,8 +126,8 @@ else ifneq (,$(findstring ios,$(platform)))
      CC = cc -arch arm64 -isysroot $(IOSSDK)
      CXX = c++ -arch arm64 -isysroot $(IOSSDK)
    else
-     CC = cc -arch arm64 -isysroot $(IOSSDK)
-     CXX = c++ -arch arm64 -isysroot $(IOSSDK)
+     CC = cc -arch armv7 -isysroot $(IOSSDK)
+     CXX = c++ -arch armv7 -isysroot $(IOSSDK)
    endif
    IPHONEMINVER :=
    ifeq ($(platform),$(filter $(platform),ios9 ios-arm64))
