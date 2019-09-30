@@ -60,11 +60,12 @@ static const struct retro_subsystem_info subsystems[] = {
    { NULL }
 };
 
-static uint32_t  frames           = 0;
-static bool     *key_buffer       = NULL;
-static bool     *pad_buffer       = NULL;
-static bool      rumble_enabled   = true;
-static char      system_dir[4096] = { '\0' };
+static uint32_t  frames                 = 0;
+static bool     *key_buffer             = NULL;
+static bool     *pad_buffer             = NULL;
+static bool      rumble_enabled         = true;
+static char      download_dir[PATH_MAX] = { '\0' };
+static char      system_dir[PATH_MAX]   = { '\0' };
 
 void display_message(const char *msg)
 {
@@ -332,11 +333,29 @@ void init_variables()
 
 bool load_system_file(char *filename, byte *rom_data, uint32_t rom_size)
 {
-   char rom_filename[4096];
+   char rom_filename[PATH_MAX];
 
-   snprintf(rom_filename, 4096, "%s%cquasi88%c%s", system_dir, SLASH, SLASH, filename);
-   rom_filename[sizeof(rom_filename) - 1] = '\0';
-   if (filestream_exists(rom_filename))
+   /* Look in the download directory first... */
+   if (!filestream_exists(rom_filename) && !string_is_empty(download_dir))
+      snprintf(rom_filename, sizeof(rom_filename), "%s%c%s", download_dir, SLASH, filename);
+
+   /* ...then try system/quasi88... */
+   if (!string_is_empty(system_dir))
+      snprintf(rom_filename, sizeof(rom_filename), "%s%cquasi88%c%s", system_dir, SLASH, SLASH, filename);
+
+   /* ...then the system folder itself. */
+   if (!filestream_exists(rom_filename) && !string_is_empty(system_dir))
+      snprintf(rom_filename, sizeof(rom_filename), "%s%c%s", system_dir, SLASH, filename);
+
+   /* File still wasn't found, give up */
+   if (!filestream_exists(rom_filename))
+   {
+      if (log_cb)
+         log_cb(RETRO_LOG_ERROR, "[QUASI88]: Couldn't find %s\n", filename);
+
+      return false;
+   }
+   else
    {
       RFILE *file = filestream_open(rom_filename, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 
@@ -346,13 +365,7 @@ bool load_system_file(char *filename, byte *rom_data, uint32_t rom_size)
          filestream_close(file);
       }
       if (log_cb)
-         log_cb(RETRO_LOG_INFO, "[QUASI88]: Loaded %s from system_dir (0x%08X)\n", filename, rom_size);
-   }
-   else
-   {
-      if (log_cb)
-         log_cb(RETRO_LOG_ERROR, "[QUASI88]: Couldn't find %s in system_dir\n", filename);
-      return false;
+         log_cb(RETRO_LOG_INFO, "[QUASI88]: Loaded %s (0x%08X)\n", rom_filename, rom_size);
    }
   
   return true;
@@ -363,6 +376,7 @@ bool load_system_file(char *filename, byte *rom_data, uint32_t rom_size)
 void retro_init(void)
 {
    char *dir = NULL;
+
    struct retro_input_descriptor desc[] = {
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left Keypad" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up Keypad" },
@@ -383,62 +397,70 @@ void retro_init(void)
 
       { 0 },
    };
-   
+
+   /* Set up paths */
    if (!environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log_cb))
       log_cb = NULL;
-   if (!environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) || !dir)
+   if (!environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir))
    {
       if (log_cb)
          log_cb(RETRO_LOG_ERROR, "[QUASI88]: Couldn't find system dir\n");
    }
    else
+      snprintf(system_dir, PATH_MAX, "%s", dir);
+
+   if (!environ_cb(RETRO_ENVIRONMENT_GET_CORE_ASSETS_DIRECTORY, &dir))
    {
-      snprintf(system_dir, sizeof(system_dir), "%s", dir);
-      memory_allocate();
-      if (!load_system_file("n88.rom", main_rom, 0x08000))
-         display_message("Main BIOS not in system/quasi88");
-      load_system_file("n88_0.rom",    main_rom_ext[0], 0x02000);
-      load_system_file("n88_1.rom",    main_rom_ext[1], 0x02000);
-      load_system_file("n88_2.rom",    main_rom_ext[2], 0x02000);
-      load_system_file("n88_3.rom",    main_rom_ext[3], 0x02000);
-      load_system_file("n88n.rom",     main_rom_n,      0x08000);
-      load_system_file("disk.rom",     sub_romram,      0x02000);
-      load_system_file("n88knj1.rom",  kanji_rom[0][0], 0x20000);
-      load_system_file("n88knj2.rom",  kanji_rom[1][0], 0x20000);
-      load_system_file("n88jisho.rom", jisho_rom[0],    0x80000);
-
-      /* == Font files == */
-      /* Font 1 */
-      if (load_system_file("font.rom", font_mem, 0x01000))
-      {
-         font_loaded |= 1;
-         memcpy(&font_mem[0x000], &kanji_rom[0][(1<<11)][0], 0x800);
-         memcpy(&font_mem[0x800], &built_in_font_graph[0],   0x800);
-      }
-      else
-         memcpy(&font_mem[0x000], &built_in_font_ANK[0],     0x800);
-
-      /* Font 2 */
-      if (load_system_file("font2.rom", font_mem2, 0x01000))
-      {
-         font_loaded |= 2;
-         memcpy(&font_mem2[0x000], &built_in_font_ANH[0],    0x800);
-      }
-      else
-      {
-         memcpy(&font_mem2[0x000], &built_in_font_ANH[0],    0x800);
-         memcpy(&font_mem2[0x800], &built_in_font_graph[0],  0x800);
-      }
-
-      /* Font 3 */
-      if (load_system_file("font3.rom", font_mem3, 0x01000))
-      {
-         font_loaded |= 4;
-         memcpy(&font_mem3[0x800], &built_in_font_graph[0],  0x800);
-      }
-      else
-         memset(&font_mem3[0], 0, 0x1000);
+      if (log_cb)
+         log_cb(RETRO_LOG_ERROR, "[QUASI88]: Couldn't find download dir\n");
    }
+   else
+      snprintf(download_dir, PATH_MAX, "%s", dir);
+
+   memory_allocate();
+   if (!load_system_file("n88.rom", main_rom, 0x08000))
+      display_message("Main BIOS not in system/quasi88");
+   load_system_file("n88_0.rom",    main_rom_ext[0], 0x02000);
+   load_system_file("n88_1.rom",    main_rom_ext[1], 0x02000);
+   load_system_file("n88_2.rom",    main_rom_ext[2], 0x02000);
+   load_system_file("n88_3.rom",    main_rom_ext[3], 0x02000);
+   load_system_file("n88n.rom",     main_rom_n,      0x08000);
+   load_system_file("disk.rom",     sub_romram,      0x00800);
+   load_system_file("n88knj1.rom",  kanji_rom[0][0], 0x20000);
+   load_system_file("n88knj2.rom",  kanji_rom[1][0], 0x20000);
+   load_system_file("n88jisho.rom", jisho_rom[0],    0x80000);
+
+   /* == Font files == */
+   /* Font 1 */
+   if (load_system_file("font.rom", font_mem, 0x01000))
+   {
+      font_loaded |= 1;
+      memcpy(&font_mem[0x000], &kanji_rom[0][(1<<11)][0], 0x800);
+      memcpy(&font_mem[0x800], &built_in_font_graph[0],   0x800);
+   }
+   else
+      memcpy(&font_mem[0x000], &built_in_font_ANK[0],     0x800);
+
+   /* Font 2 */
+   if (load_system_file("font2.rom", font_mem2, 0x01000))
+   {
+      font_loaded |= 2;
+      memcpy(&font_mem2[0x000], &built_in_font_ANH[0],    0x800);
+   }
+   else
+   {
+      memcpy(&font_mem2[0x000], &built_in_font_ANH[0],    0x800);
+      memcpy(&font_mem2[0x800], &built_in_font_graph[0],  0x800);
+   }
+
+   /* Font 3 */
+   if (load_system_file("font3.rom", font_mem3, 0x01000))
+   {
+      font_loaded |= 4;
+      memcpy(&font_mem3[0x800], &built_in_font_graph[0],  0x800);
+   }
+   else
+      memset(&font_mem3[0], 0, 0x1000);
 
    /* Assume false if the path exists, this is updated after */
    if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &save_path) && !string_is_empty(save_path))
