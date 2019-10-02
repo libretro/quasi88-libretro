@@ -60,12 +60,12 @@ static const struct retro_subsystem_info subsystems[] = {
    { NULL }
 };
 
-static uint32_t  frames                 = 0;
-static bool     *key_buffer             = NULL;
-static bool     *pad_buffer             = NULL;
-static bool      rumble_enabled         = true;
-static char      download_dir[PATH_MAX] = { '\0' };
-static char      system_dir[PATH_MAX]   = { '\0' };
+static uint32_t  frames                         = 0;
+static bool     *key_buffer                     = NULL;
+static bool     *pad_buffer                     = NULL;
+static bool      rumble_enabled                 = true;
+static char      download_dir[OSD_MAX_FILENAME] = { '\0' };
+static char      system_dir[OSD_MAX_FILENAME]   = { '\0' };
 
 void display_message(const char *msg)
 {
@@ -333,7 +333,7 @@ void init_variables()
 
 bool load_system_file(char *filename, byte *rom_data, uint32_t rom_size)
 {
-   char rom_filename[PATH_MAX];
+   char rom_filename[OSD_MAX_FILENAME];
 
    /* Look in the download directory first... */
    if (!filestream_exists(rom_filename) && !string_is_empty(download_dir))
@@ -407,7 +407,7 @@ void retro_init(void)
          log_cb(RETRO_LOG_ERROR, "[QUASI88]: Couldn't find system dir\n");
    }
    else
-      snprintf(system_dir, PATH_MAX, "%s", dir);
+      snprintf(system_dir, sizeof(system_dir), "%s", dir);
 
    if (!environ_cb(RETRO_ENVIRONMENT_GET_CORE_ASSETS_DIRECTORY, &dir))
    {
@@ -415,7 +415,7 @@ void retro_init(void)
          log_cb(RETRO_LOG_ERROR, "[QUASI88]: Couldn't find download dir\n");
    }
    else
-      snprintf(download_dir, PATH_MAX, "%s", dir);
+      snprintf(download_dir, sizeof(download_dir), "%s", dir);
 
    memory_allocate();
    if (!load_system_file("n88.rom", main_rom, 0x08000))
