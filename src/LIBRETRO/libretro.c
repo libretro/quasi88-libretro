@@ -26,6 +26,7 @@
 #include "fdc.h"
 #include "soundbd.h"
 #include "pc88cpu.h"
+#include "pseudo_bios.h"
 
 #define INT16 int16_t
 #include "../snddrv/src/sound.h"
@@ -418,14 +419,18 @@ void retro_init(void)
       snprintf(download_dir, sizeof(download_dir), "%s", dir);
 
    memory_allocate();
+
+   /* Fallback on pseudo BIOS if needed */
    if (!load_system_file("n88.rom", main_rom, 0x08000))
-      display_message("Main BIOS not in system/quasi88");
+      memcpy(main_rom, &pbios_n88, 0x08000);
+   if (!load_system_file("disk.rom", sub_romram, 0x00800))
+      memcpy(sub_romram, &pbios_disk, 0x00800);
+
    load_system_file("n88_0.rom",    main_rom_ext[0], 0x02000);
    load_system_file("n88_1.rom",    main_rom_ext[1], 0x02000);
    load_system_file("n88_2.rom",    main_rom_ext[2], 0x02000);
    load_system_file("n88_3.rom",    main_rom_ext[3], 0x02000);
    load_system_file("n88n.rom",     main_rom_n,      0x08000);
-   load_system_file("disk.rom",     sub_romram,      0x00800);
    load_system_file("n88knj1.rom",  kanji_rom[0][0], 0x20000);
    load_system_file("n88knj2.rom",  kanji_rom[1][0], 0x20000);
    load_system_file("n88jisho.rom", jisho_rom[0],    0x80000);
