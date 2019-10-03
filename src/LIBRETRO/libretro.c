@@ -27,6 +27,7 @@
 #include "soundbd.h"
 #include "pc88cpu.h"
 #include "pseudo_bios.h"
+#include "disks.h"
 
 #define INT16 int16_t
 #include "../snddrv/src/sound.h"
@@ -52,12 +53,19 @@ static retro_video_refresh_t video_cb;
 static const struct retro_subsystem_rom_info pc88_disk[] = {
    { "Disk 1", "d88", true, false, true, NULL, 1 },
    { "Disk 2", "d88", true, false, true, NULL, 1 },
+   { "Disk 3", "d88", true, false, true, NULL, 1 },
+   { "Disk 4", "d88", true, false, true, NULL, 1 },
+   { "Disk 5", "d88", true, false, true, NULL, 1 },
+   { "Disk 6", "d88", true, false, true, NULL, 1 },
    { NULL }
 };
 
 static const struct retro_subsystem_info subsystems[] = {
    { "2-Disk Game", "pc88_2_disk", pc88_disk, 2, 0x0101 },
-   /* { "Tape", "pc88_tape", pc88_tape, 2, 0x0102 }, TODO */
+   { "3-Disk Game", "pc88_3_disk", pc88_disk, 3, 0x0102 },
+   { "4-Disk Game", "pc88_4_disk", pc88_disk, 4, 0x0103 },
+   { "5-Disk Game", "pc88_5_disk", pc88_disk, 5, 0x0104 },
+   { "6-Disk Game", "pc88_6_disk", pc88_disk, 6, 0x0105 },
    { NULL }
 };
 
@@ -117,22 +125,66 @@ void handle_pad(uint8_t key, uint16_t retro_button, uint8_t pad)
    }
 }
 
+bool handle_disk_swap(bool is_first_drive, uint8_t key)
+{
+   if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, key))
+   {
+      /* On press, start swapper */
+      if (!pad_buffer[key])
+      {
+         retro_disks_start(environ_cb, is_first_drive);
+         pad_buffer[key] = true;
+      }
+      else if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT) && !pad_buffer[RETRO_DEVICE_ID_JOYPAD_RIGHT])
+      {
+         retro_disks_cycle(environ_cb, true);
+         pad_buffer[RETRO_DEVICE_ID_JOYPAD_RIGHT] = true;
+      }
+      else if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT) && !pad_buffer[RETRO_DEVICE_ID_JOYPAD_LEFT])
+      {
+         retro_disks_cycle(environ_cb, false);
+         pad_buffer[RETRO_DEVICE_ID_JOYPAD_LEFT] = true;
+      }
+      else if (!input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT) && !input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
+      {
+         pad_buffer[RETRO_DEVICE_ID_JOYPAD_LEFT] = false;
+         pad_buffer[RETRO_DEVICE_ID_JOYPAD_RIGHT] = false;
+      }
+
+      return true;
+   }
+   else if (pad_buffer[key])
+   {
+      /* On release, set the new disk */
+      pad_buffer[key] = false;
+      retro_disks_set(environ_cb);
+
+      return true;
+   }
+
+   return false;
+}
+
 void handle_input()
 {
    uint8_t i;
    
    input_poll_cb();
 
+   /* Ignore other input while swapping disks */
+   if (handle_disk_swap(true, RETRO_DEVICE_ID_JOYPAD_L) || handle_disk_swap(false, RETRO_DEVICE_ID_JOYPAD_R))
+      return;
+
    /* Simple default remappings for joypad, these are temporary and a bit arbitrary */
-   handle_pad(KEY88_KP_8,   RETRO_DEVICE_ID_JOYPAD_UP,     0);
-   handle_pad(KEY88_KP_2,   RETRO_DEVICE_ID_JOYPAD_DOWN,   0);
-   handle_pad(KEY88_KP_4,   RETRO_DEVICE_ID_JOYPAD_LEFT,   0);
-   handle_pad(KEY88_KP_6,   RETRO_DEVICE_ID_JOYPAD_RIGHT,  0);
-   handle_pad(KEY88_X,      RETRO_DEVICE_ID_JOYPAD_A,      0);
-   handle_pad(KEY88_Z,      RETRO_DEVICE_ID_JOYPAD_B,      0);
-   handle_pad(KEY88_SPACE,  RETRO_DEVICE_ID_JOYPAD_Y,      0);
-   handle_pad(KEY88_RETURN, RETRO_DEVICE_ID_JOYPAD_START,  0);
-   handle_pad(KEY88_I,      RETRO_DEVICE_ID_JOYPAD_SELECT, 0);
+   handle_pad(KEY88_KP_8,    RETRO_DEVICE_ID_JOYPAD_UP,     0);
+   handle_pad(KEY88_KP_2,    RETRO_DEVICE_ID_JOYPAD_DOWN,   0);
+   handle_pad(KEY88_KP_4,    RETRO_DEVICE_ID_JOYPAD_LEFT,   0);
+   handle_pad(KEY88_KP_6,    RETRO_DEVICE_ID_JOYPAD_RIGHT,  0);
+   handle_pad(KEY88_X,       RETRO_DEVICE_ID_JOYPAD_A,      0);
+   handle_pad(KEY88_Z,       RETRO_DEVICE_ID_JOYPAD_B,      0);
+   handle_pad(KEY88_SPACE,   RETRO_DEVICE_ID_JOYPAD_Y,      0);
+   handle_pad(KEY88_RETURNL, RETRO_DEVICE_ID_JOYPAD_START,  0);
+   handle_pad(KEY88_I,       RETRO_DEVICE_ID_JOYPAD_SELECT, 0);
 
    handle_pad(KEY88_R,      RETRO_DEVICE_ID_JOYPAD_UP,     1);
    handle_pad(KEY88_F,      RETRO_DEVICE_ID_JOYPAD_DOWN,   1);
@@ -501,17 +553,26 @@ bool retro_load_game(const struct retro_game_info *info)
 
 bool retro_load_game_special(unsigned type, const struct retro_game_info *info, size_t num_info)
 {
-   if (num_info == 2)
+   uint8_t i;
+
+   init_variables();
+   quasi88_start();
+   quasi88_disk_eject_all();
+
+   for (i = 0; i < num_info; i++)
    {
-      if (!retro_load_game(&info[0]))
-         return false;
-      if (!string_is_empty(info[1].path))
-         quasi88_disk_insert(DRIVE_2, info[1].path, 0, 0);
-      quasi88_reset(NULL);
-      return true;
+      if (info && !string_is_empty(info[i].path))
+         retro_disks_append(info[i].path);
    }
- 
-   return false;
+   for (i = 2; i < num_info; i++)
+      quasi88_disk_insert(DRIVE_1, info[i].path, i - 1, 0);
+
+   quasi88_disk_insert(DRIVE_1, info[0].path, 0, 0);
+   quasi88_disk_insert(DRIVE_2, info[1].path, 0, 0);
+   quasi88_reset(NULL);
+   quasi88_exec();
+
+   return true;
 }
 
 void retro_unload_game()

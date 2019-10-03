@@ -131,7 +131,7 @@ struct OSD_FILE_STRUCT
    uint8_t  type;                   /* File type (file-op.h)                    */
 };
 
-#define  MAX_STREAM  8
+#define  MAX_STREAM  16
 static   OSD_FILE osd_stream[MAX_STREAM];
 
 /* The original code uses strings to decide file access mode. 
@@ -206,12 +206,7 @@ OSD_FILE *osd_fopen(int type, const char *path, const char *mode)
          {
             if (osd_stream[i].fp && string_is_equal(osd_stream[i].path, path))
             {
-               if (osd_stream[i].mode == retro_mode
-                   && osd_stream[i].type == FTYPE_DISK
-                   && type == FTYPE_DISK)
-                  return &osd_stream[i];
-               else
-                  return NULL;
+               return &osd_stream[i];
             }
          }
       }
@@ -258,11 +253,17 @@ OSD_FILE *osd_fopen(int type, const char *path, const char *mode)
 
 int osd_fclose(OSD_FILE *stream)
 {
-   RFILE *fp = stream->fp;
+   /* Leave streams open for disks so we can swap easily */
+   if (stream->type == FTYPE_DISK)
+      return TRUE;
+   else
+   {
+      RFILE *fp  = stream->fp;
 
-   stream->fp = NULL;
+      stream->fp  = NULL;
 
-   return filestream_close(fp);
+      return filestream_close(fp);
+   }
 }
 
 int osd_fflush(OSD_FILE *stream)
