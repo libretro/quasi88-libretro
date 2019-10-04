@@ -1,24 +1,12 @@
+Please refer to the libretro docs for information regarding BIOS and compatibility:
+https://docs.libretro.com/library/quasi88/
+
 # QUASI88-libretro
 A port of QUASI88 to the libretro specification. This is a WIP port with some currently unsupported features:
 
-* Support for games that load more than 2 disks, or swapping disks at runtime
 * Tape support
 * Loading BIOS files from multiple possible filenames
 * Some keys are not mapped to the libretro keyboard yet
-
-# BIOS
-BIOS files should be placed in `/system/quasi88`. The following are supported but not all are required for all software:
-
-* n88.rom
-* n88_0.rom
-* n88_1.rom
-* n88_2.rom
-* n88_3.rom
-* n88n.rom
-* disk.rom
-* n88knj1.rom
-* n88knj2.rom
-* n88jisho.rom
 
 # Copyright
 QUASI88 is an emulator by Showzoh Fukunaga licensed under the BSD 3-Clause license. This libretro port is distributed in the same way.
