@@ -44,8 +44,8 @@ bool is_user_disk(const char *filename)
 void retro_disks_init()
 {
    swap.count   = 0;
-   swap.index_a = 0;
-   swap.index_b = 1;
+   swap.index_a = -1;
+   swap.index_b = -1;
    swap.state   = DRIVE_NONE;
 }
 
@@ -62,6 +62,11 @@ bool retro_disks_append(const char *new_filename)
       new_disk->drive_index = DRIVE_NONE;
       new_disk->is_user_disk = is_user_disk(new_filename);
       swap.count++;
+
+      if (swap.count == 1)
+         swap.index_a = 0;
+      else if (swap.count == 2)
+         swap.index_b = 1;
 
       return true;
    }

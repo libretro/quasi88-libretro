@@ -529,6 +529,7 @@ void retro_init(void)
    key_buffer = (bool*)calloc(KEY88_END, sizeof(bool));
    pad_buffer = (bool*)calloc(KEY88_END, sizeof(bool));
    init_variables();
+   retro_disks_init();
 }
 
 void retro_reset(void)
@@ -544,7 +545,10 @@ bool retro_load_game(const struct retro_game_info *info)
    quasi88_start();
    quasi88_disk_eject_all();
    if (info && !string_is_empty(info->path))
+   {
+      retro_disks_append(info->path);
       quasi88_disk_insert(DRIVE_1, info->path, 0, 0);
+   }
    quasi88_reset(NULL);
    quasi88_exec();
    
@@ -564,6 +568,8 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info *info, 
       if (info && !string_is_empty(info[i].path))
          retro_disks_append(info[i].path);
    }
+
+   /* Preload extra disks so we can swap easily later */
    for (i = 2; i < num_info; i++)
       quasi88_disk_insert(DRIVE_1, info[i].path, i - 1, 0);
 
@@ -643,17 +649,17 @@ void retro_set_environment(retro_environment_t cb)
 {
    static const struct retro_variable vars[] = 
    {
-      { "q88_basic_mode", "Basic mode; N88 V2|N88 V1H|N88 V1S|N" },
-      { "q88_cpu_clock", "CPU clock; 4 MHz|8 MHz|16 MHz (overclock)|32 MHz (overclock)|64 MHz (overclock)|1 MHz (underclock)|2 MHz (underclock)" },
-      { "q88_use_fdc_wait", "Use FDC-Wait; disabled|enabled"},
-      { "q88_sound_board", "Sound board; OPN|OPNA"},
-      { "q88_pcg-8100", "Use PCG-8100; disabled|enabled"},
+      { "q88_basic_mode",         "Basic mode; N88 V2|N88 V1H|N88 V1S|N" },
+      { "q88_cpu_clock",          "CPU clock; 4 MHz|8 MHz|16 MHz (overclock)|32 MHz (overclock)|64 MHz (overclock)|1 MHz (underclock)|2 MHz (underclock)" },
+      { "q88_sound_board",        "Sound board; OPN|OPNA"},
+      { "q88_use_fdc_wait",       "Use FDC-Wait; enabled|disabled"},
+      { "q88_pcg-8100",           "Use PCG-8100; disabled|enabled"},
       { "q88_save_to_disk_image", "Save to disk image; disabled|enabled"},
-      { "q88_rumble", "Rumble on disk access; enabled|disabled"},
+      { "q88_rumble",             "Rumble on disk access; enabled|disabled"},
       { NULL, NULL },
    };
    static const struct retro_controller_description port[] = {
-      { "Retro Joypad", RETRO_DEVICE_JOYPAD },
+      { "Retro Joypad",   RETRO_DEVICE_JOYPAD },
       { "Retro Keyboard", RETRO_DEVICE_KEYBOARD },
       { 0 },
    };
