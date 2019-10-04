@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include <libretro.h>
+#include <file/file_path.h>
 #include <streams/file_stream.h>
 #include <string/stdstring.h>
 
@@ -539,15 +540,77 @@ void retro_reset(void)
    quasi88_reset(NULL);
 }
 
+bool load_m3u(const char *filename)
+{
+   char basedir[OSD_MAX_FILENAME];
+   char line[OSD_MAX_FILENAME];
+   char name[OSD_MAX_FILENAME];
+   char *search_char;
+   uint8_t loaded_disks = 0;
+   OSD_FILE *playlist_file;
+
+   /* Get directory the M3U was loaded from */
+   strcpy(basedir, filename);
+   path_basedir(basedir);
+
+   playlist_file = osd_fopen(0, filename, "r");
+   /* Couldn't open the specified M3U */
+   if (!playlist_file)
+      return false;
+
+   while (osd_fgets(line, sizeof(line), playlist_file))
+   {
+      /* Commented line */
+      if (line[0] == '#')
+         continue;
+
+      /* Find and replace line breaks */
+      search_char = strchr(line, '\r');
+      if (search_char)
+         *search_char = '\0';
+      search_char = strchr(line, '\n');
+      if (search_char)
+         *search_char = '\0';
+
+      if (line[0] != '\0')
+      {
+         /* Try it as a relative path first */
+         snprintf(name, sizeof(name), "%s%s", basedir, line);
+
+         /* Doesn't exist, try as an absolute path now */
+         if (osd_file_stat(name) == FILE_STAT_NOEXIST)
+         {
+            strncpy(name, line, sizeof(name));
+
+            /* Give up */
+            if (osd_file_stat(name) == FILE_STAT_NOEXIST)
+               continue;
+         }
+         retro_disks_append(name);
+         loaded_disks++;
+      }
+   }
+   osd_fclose(playlist_file);
+   retro_disks_ready();
+
+   return loaded_disks != 0;
+}
+
 bool retro_load_game(const struct retro_game_info *info)
 {
    init_variables();
    quasi88_start();
    quasi88_disk_eject_all();
+
    if (info && !string_is_empty(info->path))
    {
-      retro_disks_append(info->path);
-      quasi88_disk_insert(DRIVE_1, info->path, 0, 0);
+      if (strstr(info->path, ".m3u") != NULL)
+         load_m3u(info->path);
+      else
+      {
+         retro_disks_append(info->path);
+         quasi88_disk_insert(DRIVE_1, info->path, 0, 0);
+      }
    }
    quasi88_reset(NULL);
    quasi88_exec();
@@ -568,13 +631,7 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info *info, 
       if (info && !string_is_empty(info[i].path))
          retro_disks_append(info[i].path);
    }
-
-   /* Preload extra disks so we can swap easily later */
-   for (i = 2; i < num_info; i++)
-      quasi88_disk_insert(DRIVE_1, info[i].path, i - 1, 0);
-
-   quasi88_disk_insert(DRIVE_1, info[0].path, 0, 0);
-   quasi88_disk_insert(DRIVE_2, info[1].path, 0, 0);
+   retro_disks_ready();
    quasi88_reset(NULL);
    quasi88_exec();
 
@@ -606,7 +663,7 @@ void retro_get_system_info(struct retro_system_info *info)
    info->library_name     = "QUASI88";
    info->library_version  = "0.6.4";
    info->need_fullpath    = false;
-   info->valid_extensions = "d88";
+   info->valid_extensions = "d88|m3u";
    info->block_extract    = false;
 }
 

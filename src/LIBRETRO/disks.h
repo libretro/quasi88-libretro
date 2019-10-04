@@ -34,6 +34,7 @@ typedef struct drive_swap_t
 void retro_disks_init  ();
 bool retro_disks_append(const char *new_filename);
 void retro_disks_cycle (retro_environment_t cb, bool right);
+void retro_disks_ready ();
 void retro_disks_set   (retro_environment_t cb);
 void retro_disks_start (retro_environment_t cb, bool is_first_drive);
 
