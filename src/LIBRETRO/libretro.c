@@ -369,6 +369,13 @@ void init_variables()
    else
       use_pcg = FALSE;
 
+   var.key = "q88_screen_size";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      screen_size = (!strcmp(var.value, "half")) ? SCREEN_SIZE_HALF : SCREEN_SIZE_FULL;
+   else
+      screen_size = SCREEN_SIZE_FULL;
+
    var.key = "q88_save_to_disk_image";
 
    if (!save_to_disk_image && environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -713,6 +720,11 @@ void retro_set_environment(retro_environment_t cb)
       { "q88_pcg-8100",           "Use PCG-8100; disabled|enabled"},
       { "q88_save_to_disk_image", "Save to disk image; disabled|enabled"},
       { "q88_rumble",             "Rumble on disk access; enabled|disabled"},
+#if defined(PSP) || defined(_3DS)
+      { "q88_screen_size",        "Screen size; half|full"},
+#else
+      { "q88_screen_size",        "Screen size; full|half"},
+#endif
       { NULL, NULL },
    };
    static const struct retro_controller_description port[] = {
