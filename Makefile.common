@@ -65,7 +65,6 @@ SOURCES_C := $(CORE_DIR)/quasi88.c \
    $(CORE_DIR)/utf16.c \
    $(CORE_DIR)/LIBRETRO/main.c \
    $(CORE_DIR)/LIBRETRO/disks.c \
-   $(CORE_DIR)/LIBRETRO/libretro_options.c \
    $(CORE_DIR)/LIBRETRO/libretro.c \
    $(CORE_DIR)/LIBRETRO/file-op.c \
    $(CORE_DIR)/snddrv/quasi88/mame-quasi88.c \

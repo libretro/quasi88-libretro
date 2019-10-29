@@ -29,7 +29,6 @@
 #include "pc88cpu.h"
 #include "pseudo_bios.h"
 #include "disks.h"
-#include "libretro-options.h"
 
 #define INT16 int16_t
 #include "../snddrv/src/sound.h"
@@ -307,12 +306,12 @@ void init_variables()
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       cmt_speed = 0;
-      if (!strncmp(var.value, "4 MHz", 1))
+      if (!strncmp(var.value, "4 MHz", 2))
       {
          boot_clock_4mhz = CLOCK_4MHZ;
          cpu_clock_mhz = CONST_4MHZ_CLOCK;
       }
-      else if (!strncmp(var.value, "8 MHz", 1))
+      else if (!strncmp(var.value, "8 MHz", 2))
       {
          boot_clock_4mhz = CLOCK_8MHZ;
          cpu_clock_mhz = CONST_8MHZ_CLOCK;
@@ -332,12 +331,12 @@ void init_variables()
          boot_clock_4mhz = CLOCK_8MHZ;
          cpu_clock_mhz = CONST_8MHZ_CLOCK * 8.0;
       }
-      else if (!strncmp(var.value, "1 MHz (underclock)", 1))
+      else if (!strncmp(var.value, "1 MHz (underclock)", 2))
       {
          boot_clock_4mhz = CLOCK_4MHZ;
          cpu_clock_mhz = CONST_4MHZ_CLOCK * 0.25;
       }
-      else if (!strncmp(var.value, "2 MHz (underclock)", 1))
+      else if (!strncmp(var.value, "2 MHz (underclock)", 2))
       {
          boot_clock_4mhz = CLOCK_4MHZ;
          cpu_clock_mhz = CONST_4MHZ_CLOCK * 0.50;
@@ -714,8 +713,41 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 
 void retro_set_environment(retro_environment_t cb)
 {
+   static const struct retro_variable vars[] = 
+   {
+      { "q88_basic_mode",         "Basic mode; N88 V2|N88 V1H|N88 V1S|N" },
+      { "q88_cpu_clock",          "CPU clock; 4 MHz|8 MHz|16 MHz (overclock)|32 MHz (overclock)|64 MHz (overclock)|1 MHz (underclock)|2 MHz (underclock)" },
+      { "q88_sound_board",        "Sound board; OPN|OPNA"},
+      { "q88_use_fdc_wait",       "Use FDC-Wait; enabled|disabled"},
+      { "q88_pcg-8100",           "Use PCG-8100; disabled|enabled"},
+      { "q88_save_to_disk_image", "Save to disk image; disabled|enabled"},
+      { "q88_rumble",             "Rumble on disk access; enabled|disabled"},
+#if defined(PSP) || defined(_3DS)
+      { "q88_screen_size",        "Screen size; half|full"},
+#else
+      { "q88_screen_size",        "Screen size; full|half"},
+#endif
+      { NULL, NULL },
+   };
+   static const struct retro_controller_description port[] = {
+      { "Retro Joypad",   RETRO_DEVICE_JOYPAD },
+      { "Retro Keyboard", RETRO_DEVICE_KEYBOARD },
+      { 0 },
+   };
+   static const struct retro_controller_info ports[] = {
+      { port, 2 },
+      { port, 2 },
+      { NULL, 0 },
+   };
+   bool no_game = true;
+   enum retro_pixel_format rgb565 = RETRO_PIXEL_FORMAT_RGB565;
+   
    environ_cb = cb;
-   quasi88_set_environment(cb);
+   cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
+   cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT,    &rgb565);
+   cb(RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO,  (void*)subsystems);
+   cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &no_game);
+   cb(RETRO_ENVIRONMENT_SET_VARIABLES,       (void*)vars);
 }
 
 void retro_set_audio_sample(retro_audio_sample_t cb)
