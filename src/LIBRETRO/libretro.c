@@ -30,6 +30,8 @@
 #include "pseudo_bios.h"
 #include "disks.h"
 #include "libretro_options.h"
+#include "libretro-file.h"
+#include "suspend.h"
 
 #define INT16 int16_t
 #include "../snddrv/src/sound.h"
@@ -809,38 +811,45 @@ void retro_set_video_refresh(retro_video_refresh_t cb)
 
 size_t retro_serialize_size(void)
 {
-   /* main_ram + main_vram + main_high_ram + main_cpu + sub_cpu */
-   return 0x21000 + sizeof(z80arch) * 2;
+   return 0x70000;
 }
 
 /* TODO: Not safe across endianness yet! */
 bool retro_serialize(void *data, size_t size)
 {
-   memcpy(&((uint8_t*)data)[0x00000], main_ram,  0x10000);
-   memcpy(&((uint8_t*)data)[0x10000], main_vram, 0x10000);
-   memcpy(&((uint8_t*)data)[0x20000], main_high_ram, 0x1000);
-   memcpy(&((uint8_t*)data)[0x21000], &z80main_cpu, sizeof(z80arch));
-   memcpy(&((uint8_t*)data)[0x21000 + sizeof(z80arch)], &z80sub_cpu, sizeof(z80arch));
+  OSD_FILE *fp = osd_file_mem(data, size, 1);
+  if (!fp) {
+    return false;
+  }
+  int success = statesave_by_fp (fp);
+  if (osd_file_did_overflow(fp)) {
+    fprintf(stderr, "OSD file overflown\n");
+    success = false;
+  }
 
-   return true;
+  osd_fclose(fp);
+  
+  return success;
 }
 
 bool retro_unserialize(const void *data, size_t size)
 {
+   OSD_FILE *fp = osd_file_mem(data, size, 0);
+   if (!fp)
+     return false;
+
    pc88main_term();
    pc88sub_term();
 
-   memcpy(main_ram,      &((uint8_t*)data)[0x00000], 0x10000);
-   memcpy(main_vram,     &((uint8_t*)data)[0x10000], 0x10000);
-   memcpy(main_high_ram, &((uint8_t*)data)[0x20000], 0x01000);
-   memcpy(&z80main_cpu,  &((uint8_t*)data)[0x21000], sizeof(z80arch));
-   memcpy(&z80sub_cpu,   &((uint8_t*)data)[0x21000 + sizeof(z80arch)], sizeof(z80arch));
-   screen_update_immidiate();
+   int success = stateload_by_fp (fp);
 
+   osd_fclose(fp);
+
+   screen_update_immidiate();
    pc88main_init(INIT_STATELOAD);
    pc88sub_init(INIT_STATELOAD);
 
-   return true;
+   return success;
 }
 
 void *retro_get_memory_data(unsigned type)

@@ -1711,6 +1711,7 @@ void	screen_update(void)
 void	screen_update_immidiate(void)
 {
     screen_set_dirty_frame();		/* 全領域 更新 */
+    screen_dirty_palette = TRUE;
     frameskip_counter_reset();		/* 次回描画 */
 
     screen_update();			/* 描画処理 */

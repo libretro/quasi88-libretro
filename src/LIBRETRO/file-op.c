@@ -30,6 +30,7 @@
 #include "initval.h"
 #include "file-op.h"
 #include "menu.h"
+#include "libretro-file.h"
 
 
 /*****************************************************************************/
@@ -129,10 +130,19 @@ struct OSD_FILE_STRUCT
    uint8_t  mode;                   /* VFS file open flags (libretro.h)         */
    char     path[OSD_MAX_FILENAME]; /* Path to opened file                      */
    uint8_t  type;                   /* File type (file-op.h)                    */
+   void    *mem_file;
+   size_t   mem_size;
+   int      mem_is_writeable;
+   int      mem_did_overflow;
+   size_t   mem_ptr;
 };
 
 #define  MAX_STREAM  16
 static   OSD_FILE osd_stream[MAX_STREAM];
+
+int osd_file_did_overflow(OSD_FILE * fp) {
+  return fp->mem_file && fp->mem_did_overflow;
+}
 
 /* The original code uses strings to decide file access mode. 
    Here, we will use the flags defined in libretro.h */
@@ -162,6 +172,33 @@ uint8_t get_file_access_mode(const char *mode)
    return retro_mode;
 }
 
+OSD_FILE *osd_file_mem(char *mem, size_t size, int is_writeable) {
+   OSD_FILE *current_stream;
+   int i;
+
+   /* Try to find a free spot in the filestream buffer */
+   current_stream = NULL;
+   for (i = 0; i < MAX_STREAM; i++)
+   {
+      if (osd_stream[i].fp == NULL && osd_stream[i].mem_file == NULL)
+      {
+         current_stream = &osd_stream[i];
+         break;
+      }
+   }
+   if (current_stream == NULL)
+      return NULL;
+
+   current_stream->mem_file = mem;
+   current_stream->mem_size = size;
+   current_stream->mem_ptr = 0;
+   current_stream->mem_is_writeable = is_writeable;
+   current_stream->mem_did_overflow = 0;
+   current_stream->type = FTYPE_STATE_LOAD;
+
+   return current_stream;
+}
+
 OSD_FILE *osd_fopen(int type, const char *path, const char *mode)
 {
    uint8_t   i;
@@ -177,7 +214,7 @@ OSD_FILE *osd_fopen(int type, const char *path, const char *mode)
    current_stream = NULL;
    for (i = 0; i < MAX_STREAM; i++)
    {
-      if (osd_stream[i].fp == NULL)
+      if (osd_stream[i].fp == NULL && osd_stream[i].mem_file == NULL)
       {
          current_stream = &osd_stream[i];
          break;
@@ -261,6 +298,9 @@ int osd_fclose(OSD_FILE *stream)
       RFILE *fp  = stream->fp;
 
       stream->fp  = NULL;
+      stream->mem_file = NULL;
+      if (fp == NULL)
+	return 0;
 
       return filestream_close(fp);
    }
@@ -268,19 +308,44 @@ int osd_fclose(OSD_FILE *stream)
 
 int osd_fflush(OSD_FILE *stream)
 {
-   if (stream == NULL)
-      return filestream_flush(NULL);
+   if (stream == NULL || stream->fp == NULL)
+      return TRUE;
    else
       return filestream_flush(stream->fp);
 }
 
 int osd_fseek(OSD_FILE *stream, long offset, int whence)
 {
+  if (stream->mem_file) {
+    long oldptr = stream->mem_ptr, newptr = oldptr;
+    switch (whence) {
+    case SEEK_SET:
+      newptr = offset;
+      break;
+    case SEEK_CUR:
+      newptr = oldptr + offset;
+      break;
+    case SEEK_END:
+      newptr = stream->mem_size - offset;
+      break;
+    }
+    if (newptr >= stream->mem_size)
+      newptr = stream->mem_size - 1;
+    if (newptr < 0)
+      newptr = 0;
+    stream->mem_ptr = newptr;
+    return 0;
+  }
+
    return filestream_seek(stream->fp, offset, whence);
 }
 
 long osd_ftell(OSD_FILE *stream)
 {
+    if (stream->mem_file) {
+      return stream->mem_ptr;
+    }
+
    return filestream_tell(stream->fp);
 }
 
@@ -290,9 +355,38 @@ void osd_rewind(OSD_FILE *stream)
    osd_fflush(stream);
 }
 
+static size_t osd_fread_real(OSD_FILE *stream, void *data, size_t length)
+{
+   if(stream->mem_file) {
+     long real_len = length;
+     if (real_len > stream->mem_size - stream->mem_ptr)
+       real_len = stream->mem_size - stream->mem_ptr;
+     if (real_len < 0)
+       return -1;
+     memcpy(data, stream->mem_file + stream->mem_ptr, real_len);
+     stream->mem_ptr += real_len;
+     return real_len;
+   } else
+      return filestream_read(stream->fp, data, length);
+}
+
+static size_t osd_fwrite_real(OSD_FILE *stream, const void *data, size_t length)
+{
+   if (stream->mem_file) {
+     if (stream->mem_size < stream->mem_ptr + length) {
+       stream->mem_did_overflow = 1;
+       return -1;
+     }
+     memcpy(stream->mem_file + stream->mem_ptr, data, length);
+     stream->mem_ptr += length;
+     return length;
+   } else
+      return filestream_write(stream->fp, data, length);
+}
+
 size_t osd_fread_diff(void *ptr, size_t size, OSD_FILE *stream)
 {
-   if (!stream->fp)
+   if (!stream->fp && !stream->mem_file)
       return 0;
    else
    {
@@ -335,55 +429,58 @@ size_t osd_fwrite_diff(const void *ptr, uint32_t size, OSD_FILE *stream)
    return size;
 }
 
-#define SAVE_DIFF !save_to_disk_image && stream->type == FTYPE_DISK && stream->sfp
+#define SAVE_DIFF !save_to_disk_image && stream->type == FTYPE_DISK && stream->sfp && !stream->mem_file
 
 size_t osd_fread(void *ptr, size_t size, size_t nobj, OSD_FILE *stream)
 {
    if (SAVE_DIFF)
       return osd_fread_diff(ptr, size * nobj, stream);
    else
-      return filestream_read(stream->fp, ptr, size * nobj);
+     return osd_fread_real(stream, ptr, size * nobj);
 }
 
 size_t osd_fwrite(const void *ptr, size_t size, size_t nobj, OSD_FILE *stream)
 {
    if (SAVE_DIFF)
       return osd_fwrite_diff(ptr, size * nobj, stream);
-   else
-      return filestream_write(stream->fp, ptr, size * nobj);
+   else 
+     return osd_fwrite_real(stream, ptr, size * nobj);
 }
 
 int osd_fputc(int c, OSD_FILE *stream)
 {
-   return filestream_putc(stream->fp, c);
+  unsigned char c2 = c & 0xff;
+  osd_fwrite_real(stream, &c2, 1);
+  return c2;
 }
 
 int osd_fgetc(OSD_FILE *stream)
 {
-   return filestream_getc(stream->fp);
+  unsigned char c2 = 0;
+  osd_fread_real(stream, &c2, 1);
+  return c2;
 }
 
 char *osd_fgets(char *str, int size, OSD_FILE *stream)
 {
+  if (stream->mem_file) {
+    char *ptr;
+    int l;
+    for (ptr = stream->mem_file + stream->mem_ptr, l = 0;
+	 ptr < stream->mem_file + stream->mem_size &&
+	   l < size - 1;
+	 ptr++, l++);
+    osd_fread_real(stream, str, l);
+    str[l] = '\0';
+    return str;
+  }
    return filestream_gets(stream->fp, str, size);
 }
 
 /* libretro-common does not have an fputs implementation */
 int osd_fputs(const char *str, OSD_FILE *stream)
 {
-   uint32_t i = 0;
-
-   while (str[i] != '\0')
-   {
-      if (!filestream_putc(stream->fp, str[i]))
-      {
-         i = FALSE;
-         break;
-      }
-      i++;
-   }
-
-   return i;
+  return osd_fwrite_real(stream, str, strlen(str));
 }
 
 /****************************************************************************
