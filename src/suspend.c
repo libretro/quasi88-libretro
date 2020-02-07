@@ -658,6 +658,30 @@ int	statesave_check_file_exist(void)
 }
 
 
+int	statesave_by_fp(OSD_FILE *fp)
+{
+  statesave_fp = fp;
+  
+  if( statesave_header() != STATE_OK )
+    return FALSE;
+
+  if( statesave_emu()      == FALSE ) return FALSE;
+  if( statesave_memory()   == FALSE ) return FALSE;
+  if( statesave_pc88main() == FALSE ) return FALSE;
+  if( statesave_crtcdmac() == FALSE ) return FALSE;
+  if( statesave_sound()    == FALSE ) return FALSE;
+  if( statesave_pio()      == FALSE ) return FALSE;
+  if( statesave_screen()   == FALSE ) return FALSE;
+  if( statesave_intr()     == FALSE ) return FALSE;
+  if( statesave_keyboard() == FALSE ) return FALSE;
+  if( statesave_pc88sub()  == FALSE ) return FALSE;
+  if( statesave_fdc()      == FALSE ) return FALSE;
+  if( statesave_system()   == FALSE ) return FALSE;
+
+  return TRUE;
+}
+
+
 int	statesave( void )
 {
   int success = FALSE;
@@ -670,35 +694,15 @@ int	statesave( void )
   if( verbose_suspend )
     printf( "statesave : %s\n", file_state );
 
-  if( (statesave_fp = osd_fopen( FTYPE_STATE_SAVE, file_state, "wb" )) ){
+  OSD_FILE * fp = osd_fopen( FTYPE_STATE_SAVE, file_state, "wb" );
+  if (!fp)
+    return FALSE;
 
-    if( statesave_header() == STATE_OK ){
-
-      do{
-	if( statesave_emu()      == FALSE ) break;
-	if( statesave_memory()   == FALSE ) break;
-	if( statesave_pc88main() == FALSE ) break;
-	if( statesave_crtcdmac() == FALSE ) break;
-	if( statesave_sound()    == FALSE ) break;
-	if( statesave_pio()      == FALSE ) break;
-	if( statesave_screen()   == FALSE ) break;
-	if( statesave_intr()     == FALSE ) break;
-	if( statesave_keyboard() == FALSE ) break;
-	if( statesave_pc88sub()  == FALSE ) break;
-	if( statesave_fdc()      == FALSE ) break;
-	if( statesave_system()   == FALSE ) break;
-
-	success = TRUE;
-      }while(0);
-
-    }
-
-    osd_fclose( statesave_fp );
-  }
+  success = statesave_by_fp(fp);
+  osd_fclose( fp );
 
   return success;
 }
-
 
 
 
@@ -722,6 +726,33 @@ int	stateload_check_file_exist(void)
 }
 
 
+int	stateload_by_fp( OSD_FILE *fp )
+{
+  int success = FALSE;
+
+  stateload_fp = fp;
+
+  if( stateload_header() != STATE_OK )
+    return FALSE;
+
+  if( stateload_emu()      == FALSE ) return FALSE;
+  if( stateload_sound()    == FALSE ) return FALSE;
+  if( stateload_memory()   == FALSE ) return FALSE;
+  if( stateload_pc88main() == FALSE ) return FALSE;
+  if( stateload_crtcdmac() == FALSE ) return FALSE;
+  /*if( stateload_sound()    == FALSE ) break; memoryの前に！ */
+  if( stateload_pio()      == FALSE ) return FALSE;
+  if( stateload_screen()   == FALSE ) return FALSE;
+  if( stateload_intr()     == FALSE ) return FALSE;
+  if( stateload_keyboard() == FALSE ) return FALSE;
+  if( stateload_pc88sub()  == FALSE ) return FALSE;
+  if( stateload_fdc()      == FALSE ) return FALSE;
+  if( stateload_system()   == FALSE ) return FALSE;
+
+  return TRUE;
+}
+
+
 int	stateload( void )
 {
   int success = FALSE;
@@ -734,36 +765,16 @@ int	stateload( void )
   if( verbose_suspend )
     printf( "stateload: %s\n", file_state );
 
-  if( (stateload_fp = osd_fopen( FTYPE_STATE_LOAD, file_state, "rb" )) ){
+  OSD_FILE *fp = osd_fopen( FTYPE_STATE_LOAD, file_state, "rb" );
 
-    if( stateload_header() == STATE_OK ){
+  if (fp == NULL)
+    return FALSE;
 
-      do{
-	if( stateload_emu()      == FALSE ) break;
-	if( stateload_sound()    == FALSE ) break;
-	if( stateload_memory()   == FALSE ) break;
-	if( stateload_pc88main() == FALSE ) break;
-	if( stateload_crtcdmac() == FALSE ) break;
-      /*if( stateload_sound()    == FALSE ) break; memoryの前に！ */
-	if( stateload_pio()      == FALSE ) break;
-	if( stateload_screen()   == FALSE ) break;
-	if( stateload_intr()     == FALSE ) break;
-	if( stateload_keyboard() == FALSE ) break;
-	if( stateload_pc88sub()  == FALSE ) break;
-	if( stateload_fdc()      == FALSE ) break;
-	if( stateload_system()   == FALSE ) break;
-
-	success = TRUE;
-      }while(0);
-
-    }
-
-    osd_fclose( stateload_fp );
-  }
+  success = stateload_by_fp(fp);
+  osd_fclose( fp );
 
   return success;
 }
-
 
 
 /***********************************************************************

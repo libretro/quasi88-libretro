@@ -80,7 +80,9 @@ void		filename_set_state_serial(int serial);
 
 
 void	stateload_init( void );
+int	statesave_by_fp(OSD_FILE *fp);
 int	statesave( void );
+int	stateload_by_fp( OSD_FILE *fp );
 int	stateload( void );
 int	statesave_check_file_exist(void);
 int	stateload_check_file_exist(void);
