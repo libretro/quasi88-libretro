@@ -541,7 +541,7 @@ FLAGS += $(ENDIANNESS_DEFINES) -DSIZEOF_DOUBLE=8 $(WARNINGS) -DPACKAGE=\"quasi88
 ifneq (,$(findstring msvc,$(platform)))
 FLAGS += -DINLINE="_inline"
 else
-FLAGS += -DINLINE="inline"
+FLAGS += -DINLINE="static inline"
 endif
 
 CXXFLAGS += $(FLAGS)

@@ -697,7 +697,7 @@ static INT32	LFO_PM;			/* runtime LFO calculations helper */
 
 
 /* status set and IRQ handling */
-static void FM_STATUS_SET(FM_ST *ST,int flag)
+INLINE void FM_STATUS_SET(FM_ST *ST,int flag)
 {
 	/* set status flag */
 	ST->status |= flag;
@@ -710,7 +710,7 @@ static void FM_STATUS_SET(FM_ST *ST,int flag)
 }
 
 /* status reset and IRQ handling */
-static void FM_STATUS_RESET(FM_ST *ST,int flag)
+INLINE void FM_STATUS_RESET(FM_ST *ST,int flag)
 {
 	/* reset status flag */
 	ST->status &=~flag;
@@ -723,7 +723,7 @@ static void FM_STATUS_RESET(FM_ST *ST,int flag)
 }
 
 /* IRQ mask set */
-static void FM_IRQMASK_SET(FM_ST *ST,int flag)
+INLINE void FM_IRQMASK_SET(FM_ST *ST,int flag)
 {
 	ST->irqmask = flag;
 	/* IRQ handling check */
@@ -732,7 +732,7 @@ static void FM_IRQMASK_SET(FM_ST *ST,int flag)
 }
 
 /* OPN Mode Register Write */
-static void set_timers( FM_ST *ST, void *n, int v )
+INLINE void set_timers( FM_ST *ST, void *n, int v )
 {
 	/* b7 = CSM MODE */
 	/* b6 = 3 slot mode */
@@ -790,7 +790,7 @@ static void set_timers( FM_ST *ST, void *n, int v )
 
 
 /* Timer A Overflow */
-static void TimerAOver(FM_ST *ST)
+INLINE void TimerAOver(FM_ST *ST)
 {
 	/* set status (if enabled) */
 	if(ST->mode & 0x04) FM_STATUS_SET(ST,0x01);
@@ -799,7 +799,7 @@ static void TimerAOver(FM_ST *ST)
 	if (ST->Timer_Handler) (ST->Timer_Handler)(ST->param,0,ST->TAC,ST->TimerBase);
 }
 /* Timer B Overflow */
-static void TimerBOver(FM_ST *ST)
+INLINE void TimerBOver(FM_ST *ST)
 {
 	/* set status (if enabled) */
 	if(ST->mode & 0x08) FM_STATUS_SET(ST,0x02);
@@ -840,7 +840,7 @@ static void TimerBOver(FM_ST *ST)
 
 
 #if FM_BUSY_FLAG_SUPPORT
-static UINT8 FM_STATUS_FLAG(FM_ST *ST)
+INLINE UINT8 FM_STATUS_FLAG(FM_ST *ST)
 {
 	if( ST->BusyExpire )
 	{
@@ -851,7 +851,7 @@ static UINT8 FM_STATUS_FLAG(FM_ST *ST)
 	}
 	return ST->status;
 }
-static void FM_BUSY_SET(FM_ST *ST,int busyclock )
+INLINE void FM_BUSY_SET(FM_ST *ST,int busyclock )
 {
 	ST->BusyExpire = FM_GET_TIME_NOW() + (ST->TimerBase * busyclock);
 }
@@ -865,7 +865,7 @@ static void FM_BUSY_SET(FM_ST *ST,int busyclock )
 
 
 
-static void FM_KEYON(FM_CH *CH , int s )
+INLINE void FM_KEYON(FM_CH *CH , int s )
 {
 	FM_SLOT *SLOT = &CH->SLOT[s];
 	if( !SLOT->key )
@@ -876,7 +876,7 @@ static void FM_KEYON(FM_CH *CH , int s )
 	}
 }
 
-static void FM_KEYOFF(FM_CH *CH , int s )
+INLINE void FM_KEYOFF(FM_CH *CH , int s )
 {
 	FM_SLOT *SLOT = &CH->SLOT[s];
 	if( SLOT->key )
@@ -975,7 +975,7 @@ static void setup_connection( FM_CH *CH, int ch )
 }
 
 /* set detune & multiple */
-static void set_det_mul(FM_ST *ST,FM_CH *CH,FM_SLOT *SLOT,int v)
+INLINE void set_det_mul(FM_ST *ST,FM_CH *CH,FM_SLOT *SLOT,int v)
 {
 	SLOT->mul = (v&0x0f)? (v&0x0f)*2 : 1;
 	SLOT->DT  = ST->dt_tab[(v>>4)&7];
@@ -983,13 +983,13 @@ static void set_det_mul(FM_ST *ST,FM_CH *CH,FM_SLOT *SLOT,int v)
 }
 
 /* set total level */
-static void set_tl(FM_CH *CH,FM_SLOT *SLOT , int v)
+INLINE void set_tl(FM_CH *CH,FM_SLOT *SLOT , int v)
 {
 	SLOT->tl = (v&0x7f)<<(ENV_BITS-7); /* 7bit TL */
 }
 
 /* set attack rate & key scale  */
-static void set_ar_ksr(FM_CH *CH,FM_SLOT *SLOT,int v)
+INLINE void set_ar_ksr(FM_CH *CH,FM_SLOT *SLOT,int v)
 {
 	UINT8 old_KSR = SLOT->KSR;
 
@@ -1019,7 +1019,7 @@ static void set_ar_ksr(FM_CH *CH,FM_SLOT *SLOT,int v)
 }
 
 /* set decay rate */
-static void set_dr(FM_SLOT *SLOT,int v)
+INLINE void set_dr(FM_SLOT *SLOT,int v)
 {
 	SLOT->d1r = (v&0x1f) ? 32 + ((v&0x1f)<<1) : 0;
 
@@ -1029,7 +1029,7 @@ static void set_dr(FM_SLOT *SLOT,int v)
 }
 
 /* set sustain rate */
-static void set_sr(FM_SLOT *SLOT,int v)
+INLINE void set_sr(FM_SLOT *SLOT,int v)
 {
 	SLOT->d2r = (v&0x1f) ? 32 + ((v&0x1f)<<1) : 0;
 
@@ -1038,7 +1038,7 @@ static void set_sr(FM_SLOT *SLOT,int v)
 }
 
 /* set release rate */
-static void set_sl_rr(FM_SLOT *SLOT,int v)
+INLINE void set_sl_rr(FM_SLOT *SLOT,int v)
 {
 	SLOT->sl = sl_table[ v>>4 ];
 
@@ -1050,7 +1050,7 @@ static void set_sl_rr(FM_SLOT *SLOT,int v)
 
 
 
-static signed int op_calc(UINT32 phase, unsigned int env, signed int pm)
+INLINE signed int op_calc(UINT32 phase, unsigned int env, signed int pm)
 {
 	UINT32 p;
 
@@ -1061,7 +1061,7 @@ static signed int op_calc(UINT32 phase, unsigned int env, signed int pm)
 	return tl_tab[p];
 }
 
-static signed int op_calc1(UINT32 phase, unsigned int env, signed int pm)
+INLINE signed int op_calc1(UINT32 phase, unsigned int env, signed int pm)
 {
 	UINT32 p;
 
@@ -1073,7 +1073,7 @@ static signed int op_calc1(UINT32 phase, unsigned int env, signed int pm)
 }
 
 /* advance LFO to next sample */
-static void advance_lfo(FM_OPN *OPN)
+INLINE void advance_lfo(FM_OPN *OPN)
 {
 	UINT8 pos;
 	UINT8 prev_pos;
@@ -1119,7 +1119,7 @@ static void advance_lfo(FM_OPN *OPN)
 	}
 }
 
-static void advance_eg_channel(FM_OPN *OPN, FM_SLOT *SLOT)
+INLINE void advance_eg_channel(FM_OPN *OPN, FM_SLOT *SLOT)
 {
 	unsigned int out;
 	unsigned int swap_flag = 0;
@@ -1261,7 +1261,7 @@ static void advance_eg_channel(FM_OPN *OPN, FM_SLOT *SLOT)
 
 #define volume_calc(OP) ((OP)->vol_out + (AM & (OP)->AMmask))
 
-static void chan_calc(FM_OPN *OPN, FM_CH *CH)
+INLINE void chan_calc(FM_OPN *OPN, FM_CH *CH)
 {
 	unsigned int eg_out;
 
@@ -1363,7 +1363,7 @@ static void chan_calc(FM_OPN *OPN, FM_CH *CH)
 }
 
 /* update phase increment and envelope generator */
-static void refresh_fc_eg_slot(FM_SLOT *SLOT , int fc , int kc )
+INLINE void refresh_fc_eg_slot(FM_SLOT *SLOT , int fc , int kc )
 {
 	int ksr;
 
@@ -1399,7 +1399,7 @@ static void refresh_fc_eg_slot(FM_SLOT *SLOT , int fc , int kc )
 }
 
 /* update phase increment counters */
-static void refresh_fc_eg_chan(FM_CH *CH )
+INLINE void refresh_fc_eg_chan(FM_CH *CH )
 {
 	if( CH->SLOT[SLOT1].Incr==-1){
 		int fc = CH->fc;
@@ -1590,7 +1590,7 @@ static void FMCloseTable( void )
 
 
 /* CSM Key Controll */
-static void CSMKeyControll(FM_CH *CH)
+INLINE void CSMKeyControll(FM_CH *CH)
 {
 	/* this is wrong, atm */
 
@@ -2398,7 +2398,7 @@ static void Init_ADPCMATable(void){
 }
 
 /* ADPCM A (Non control type) : calculate one channel output */
-static void ADPCMA_calc_chan( YM2610 *F2610, ADPCM_CH *ch )
+INLINE void ADPCMA_calc_chan( YM2610 *F2610, ADPCM_CH *ch )
 {
 	UINT32 step;
 	UINT8  data;
@@ -3164,7 +3164,7 @@ static unsigned char YM2608_ADPCM_ROM[0x2000] = {
 
 
 /* flag enable control 0x110 */
-static void YM2608IRQFlagWrite(FM_OPN *OPN, YM2608 *F2608, int v)
+INLINE void YM2608IRQFlagWrite(FM_OPN *OPN, YM2608 *F2608, int v)
 {
 	if( v & 0x80 )
 	{	/* Reset IRQ flag */
@@ -3178,7 +3178,7 @@ static void YM2608IRQFlagWrite(FM_OPN *OPN, YM2608 *F2608, int v)
 }
 
 /* compatible mode & IRQ enable control 0x29 */
-static void YM2608IRQMaskWrite(FM_OPN *OPN, YM2608 *F2608, int v)
+INLINE void YM2608IRQMaskWrite(FM_OPN *OPN, YM2608 *F2608, int v)
 {
 	/* SCH,xx,xxx,EN_ZERO,EN_BRDY,EN_EOS,EN_TB,EN_TA */
 

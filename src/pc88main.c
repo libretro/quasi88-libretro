@@ -269,7 +269,7 @@ static	byte	*write_mem_f000_ffff;
 /*		ext_rom_bank, misc_ctrl により変化	*/
 /*------------------------------------------------------*/
 #if 1
-static INLINE	void	main_memory_mapping_0000_7fff( void )
+INLINE	void	main_memory_mapping_0000_7fff( void )
 {
   highspeed_n88rom = FALSE;	/* デフォルト */
 
@@ -403,7 +403,7 @@ INLINE	void	main_memory_mapping_0000_7fff( void )
 /* address : 0x8000 〜 0x83ff の メモリ割り当て		*/
 /*		grph_ctrl, window_offset により変化	*/
 /*------------------------------------------------------*/
-static INLINE	void	main_memory_mapping_8000_83ff( void )
+INLINE	void	main_memory_mapping_8000_83ff( void )
 {
   if( grph_ctrl & ( GRPH_CTRL_64RAM | GRPH_CTRL_N ) ){
     read_mem_8000_83ff  = &main_ram[ 0x8000 ];
@@ -557,7 +557,7 @@ INLINE	byte	ALU_read( word addr )
 /*------------------------------*/
 /* ＡＬＵを介したＶＲＡＭライト	*/
 /*------------------------------*/
-static INLINE	void	ALU_write( word addr, byte data )
+INLINE	void	ALU_write( word addr, byte data )
 {
   int i, mode;
 
@@ -2895,7 +2895,7 @@ void	pc88main_term( void )
 /************************************************************************/
 /* ブレークポイント関連							*/
 /************************************************************************/
-static INLINE	void	check_break_point( int type, word addr, byte data, char *str )
+INLINE	void	check_break_point( int type, word addr, byte data, char *str )
 {
   int	i;
 

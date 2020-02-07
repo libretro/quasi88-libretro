@@ -4912,7 +4912,7 @@ static	void	cb_tape_open_warn_clicked(UNUSED_WIDGET, void *p)
 
 /*----------------------------------------------------------------------*/
 
-static INLINE	Q8tkWidget	*menu_tape_image_unit(const t_menulabel *l, int c)
+INLINE	Q8tkWidget	*menu_tape_image_unit(const t_menulabel *l, int c)
 {
     int save_code;
     Q8tkWidget *vbox, *hbox, *w, *e;
