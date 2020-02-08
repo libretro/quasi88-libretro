@@ -429,6 +429,7 @@ void	drive_init( void )
     drive[ i ].fp     = NULL;
     drive[ i ].sec_nr = -1;
     drive[ i ].empty  = TRUE;
+    drive[ i ].index_heads = 2;
     /* memset( drive[ i ].filename, 0, QUASI88_MAX_FILENAME ); */
   }
   disk_ex_drv = 0;
@@ -515,6 +516,58 @@ int	drive_check_empty( int drv )
 
 
 
+void	discover_index_params( int drv )
+{
+  // Floppies have only 2 surfaces (heads) but some disk imaging software
+  // pretends the have 4 for the index layout. Detect those.
+
+  int trk;
+  long full_size;
+  Uchar c[4];
+
+  // Fallback (standard) value
+  drive[drv].index_heads = 2;
+
+  if( osd_fseek( drive[ drv ].fp,
+		 drive[ drv ].disk_top + 28,  SEEK_SET ) !=0
+      || osd_fread( c, sizeof(Uchar), 4, drive[ drv ].fp ) != 4) {
+    return;
+  }
+
+  full_size = (long)c[0]+((long)c[1]<<8)+((long)c[2]<<16)+((long)c[3]<<24);
+
+  for (trk = 2; trk < 20; trk++) {
+    if( osd_fseek( drive[ drv ].fp,
+		   drive[ drv ].disk_top + DISK_TRACK + trk*4,  SEEK_SET ) !=0
+	|| osd_fread( c, sizeof(Uchar), 4, drive[ drv ].fp ) != 4){
+      break;
+    }
+
+    long track_top = (long)c[0]+((long)c[1]<<8)+((long)c[2]<<16)+((long)c[3]<<24);
+    if (track_top == 0 || track_top >= full_size)
+      continue;
+
+    if( osd_fseek( drive[ drv ].fp,
+		   drive[ drv ].disk_top + track_top,  SEEK_SET ) !=0
+	|| osd_fread( c, sizeof(Uchar), 1, drive[ drv ].fp ) != 1){
+      continue;
+    }
+
+    int cyl = c[0];
+
+    if (cyl * 4 == (trk & ~1)) {
+      drive[drv].index_heads = 4;
+      return;
+    }
+
+    drive[drv].index_heads = 2;
+    return;
+  }
+
+
+}
+
+
 int	disk_insert( int drv, const char *filename, int img, int readonly )
 {
   int	exit_flag;
@@ -552,6 +605,8 @@ int	disk_insert( int drv, const char *filename, int img, int readonly )
     DISK_ERROR( "Open failed", drv );
     return 1;
   }
+
+  discover_index_params(drv);
 
 
 
@@ -841,9 +896,10 @@ static	void	disk_now_track( int drv, int trk )
 
 
 	/* トラックのインデックスで指定されたファイル位置を取得 */
+  int trk_idx = (trk & 1) | ((trk >> 1) * (drive[drv].index_heads));
 
   if( osd_fseek( drive[ drv ].fp,
-		 drive[ drv ].disk_top + DISK_TRACK + trk*4,  SEEK_SET )==0 ){
+		 drive[ drv ].disk_top + DISK_TRACK + trk_idx*4,  SEEK_SET )==0 ){
     if( osd_fread( c, sizeof(Uchar), 4, drive[ drv ].fp )==4 ){
 
 	/* トラックおよび、先頭セクタの位置を設定   */

@@ -50,6 +50,8 @@ typedef	struct{
 
   /* char	filename[ QUASI88_MAX_FILENAME ];*/
 
+  int index_heads; /* Number of heads assumed in index layout. In some broken images it's not 2 as it should be.  */
+
 } PC88_DRIVE_T;
 
 
