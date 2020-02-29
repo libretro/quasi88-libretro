@@ -604,13 +604,24 @@ byte	main_fetch( word addr )
 
   if( memory_wait ){
 
+      if (state_of_cpu + z80main_cpu.state0 >= dma_next_vline) {
+          /* vsync でDMAウェイトを一斉に計算するとBEEPの音出力に影響が出るため、
+             垂直帰線毎にDMAウェイトを初期化する */
+
+          SET_DMA_WAIT_COUNT();
+
+          /* 次の垂直帰線のステート数を計算する */
+
+          dma_next_vline += state_of_vsync / (crtc_sz_lines * crtc_font_height);
+      }
+
     if( high_mode == FALSE ){		/* 低速モードの場合 */
 
       z80main_cpu.state0 += 1;			/* M1サイクルウェイト */
 
-      if( dma_wait_count ){			/* DMAウェイトがあれば    */
-	dma_wait_count --;			/* すこしずつ加算していく */
-	z80main_cpu.state0 += DMA_WAIT;
+      if(dma_wait_count){         /* DMAウェイトがあれば    */
+        dma_wait_count--;          /* すこしずつ加算していく */
+        z80main_cpu.state0 += DMA_WAIT;
       }
 
     }else{				/* 高速モードの場合 */
