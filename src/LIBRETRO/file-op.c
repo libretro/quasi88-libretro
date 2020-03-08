@@ -268,8 +268,13 @@ OSD_FILE *osd_fopen(int type, const char *path, const char *mode)
          if (type == FTYPE_DISK)
          {
             char save_name[OSD_MAX_FILENAME];
+            char temp_name[OSD_MAX_FILENAME];
 
-            snprintf(save_name, OSD_MAX_FILENAME, "%s%c%s.srm", save_path, SLASH, path_remove_extension(path_basename(path)));
+            strncpy(temp_name, path, OSD_MAX_FILENAME);
+            path_basename(temp_name);
+            path_remove_extension(temp_name);
+
+            snprintf(save_name, OSD_MAX_FILENAME, "%s%c%s.srm", save_path, SLASH, temp_name);
             /* Create diff file if it does not already exist */
             if (osd_file_stat(save_name) != FILE_STAT_FILE)
                filestream_write_file(save_name, 0, 0);

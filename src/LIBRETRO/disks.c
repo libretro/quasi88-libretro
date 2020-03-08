@@ -58,7 +58,8 @@ bool retro_disks_append(const char *new_filename)
       disk_t *new_disk = &retro_disks[swap.count];
 
       strncpy(new_disk->filename, new_filename, OSD_MAX_FILENAME);
-      strncpy(new_disk->basename, path_basename(new_filename), OSD_MAX_FILENAME);
+      strncpy(new_disk->basename, new_filename, OSD_MAX_FILENAME);
+      path_basename(new_disk->basename);
       new_disk->drive_index = DRIVE_NONE;
       new_disk->is_user_disk = is_user_disk(new_filename);
       swap.count++;
@@ -134,10 +135,6 @@ void retro_disks_set(retro_environment_t cb)
 
    if (index != NO_DISK)
    {
-      /* Hack until I find out what's really wrong here */
-      if (!strstr(retro_disks[index].filename, ".d88"))
-         strcat(retro_disks[index].filename, ".d88");
-      
       if (!quasi88_disk_insert(swap.state, retro_disks[index].filename, 0, 0))
          snprintf(msg, sizeof(msg), "Drive %c: Error! (%s)", drive_id, retro_disks[index].filename);
       else

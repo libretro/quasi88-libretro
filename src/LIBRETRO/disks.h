@@ -8,8 +8,8 @@
 
 typedef struct disk_t
 {
-   char   basename[OSD_MAX_FILENAME];
-   char   filename[OSD_MAX_FILENAME];
+   char basename[OSD_MAX_FILENAME];
+   char filename[OSD_MAX_FILENAME];
 
    /* Which drive is this disk inserted into? */
    int8_t drive_index;
