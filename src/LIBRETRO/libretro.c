@@ -3,6 +3,7 @@
 
 #include <libretro.h>
 #include <file/file_path.h>
+#include <encodings/crc32.h>
 #include <streams/file_stream.h>
 #include <string/stdstring.h>
 
@@ -32,6 +33,7 @@
 #include "libretro_options.h"
 #include "libretro-file.h"
 #include "suspend.h"
+#include "remaps.h"
 
 #define INT16 int16_t
 #include "../snddrv/src/sound.h"
@@ -113,6 +115,8 @@ static bool     *pad_buffer                     = NULL;
 static bool      rumble_enabled                 = true;
 static char      download_dir[OSD_MAX_FILENAME] = { '\0' };
 static char      system_dir[OSD_MAX_FILENAME]   = { '\0' };
+static unsigned  language                       = RETRO_LANGUAGE_ENGLISH;
+static retro_remap_t current_remap;
 
 void display_message(const char *msg)
 {
@@ -213,23 +217,15 @@ void handle_input()
    if (handle_disk_swap(true, RETRO_DEVICE_ID_JOYPAD_L) || handle_disk_swap(false, RETRO_DEVICE_ID_JOYPAD_R))
       return;
 
-   /* Simple default remappings for joypad, these are temporary and a bit arbitrary */
-   handle_pad(KEY88_KP_8,    RETRO_DEVICE_ID_JOYPAD_UP,     0);
-   handle_pad(KEY88_KP_2,    RETRO_DEVICE_ID_JOYPAD_DOWN,   0);
-   handle_pad(KEY88_KP_4,    RETRO_DEVICE_ID_JOYPAD_LEFT,   0);
-   handle_pad(KEY88_KP_6,    RETRO_DEVICE_ID_JOYPAD_RIGHT,  0);
-   handle_pad(KEY88_X,       RETRO_DEVICE_ID_JOYPAD_A,      0);
-   handle_pad(KEY88_Z,       RETRO_DEVICE_ID_JOYPAD_B,      0);
-   handle_pad(KEY88_SPACE,   RETRO_DEVICE_ID_JOYPAD_Y,      0);
-   handle_pad(KEY88_RETURNL, RETRO_DEVICE_ID_JOYPAD_START,  0);
-   handle_pad(KEY88_I,       RETRO_DEVICE_ID_JOYPAD_SELECT, 0);
-
-   handle_pad(KEY88_R,      RETRO_DEVICE_ID_JOYPAD_UP,     1);
-   handle_pad(KEY88_F,      RETRO_DEVICE_ID_JOYPAD_DOWN,   1);
-   handle_pad(KEY88_D,      RETRO_DEVICE_ID_JOYPAD_LEFT,   1);
-   handle_pad(KEY88_G,      RETRO_DEVICE_ID_JOYPAD_RIGHT,  1);
-   handle_pad(KEY88_TAB,    RETRO_DEVICE_ID_JOYPAD_A,      1);
-   handle_pad(KEY88_Q,      RETRO_DEVICE_ID_JOYPAD_B,      1);
+   for (int i = 0; i < 16; i++)
+   {
+      if (!current_remap.labels[i].key)
+         break;
+      handle_pad(
+         current_remap.labels[i].key, 
+         current_remap.labels[i].button, 
+         current_remap.labels[i].player);
+   }
    
    /* Basics, numbers */
    for (i = 0; i < 64; i++)
@@ -238,7 +234,6 @@ void handle_input()
       handle_key(KEY88_BRACKETLEFT + i, RETROK_LEFTBRACKET + i);
    for (i = 0; i < 4; i++)
       handle_key(KEY88_BRACELEFT + i, RETROK_LEFTBRACE + i);
-   handle_key(KEY88_RETURN,      RETROK_RETURN);
    handle_key(KEY88_HOME,        RETROK_HOME);
    handle_key(KEY88_UP,          RETROK_UP);
    handle_key(KEY88_RIGHT,       RETROK_RIGHT);
@@ -267,9 +262,7 @@ void handle_input()
    */
    handle_key(KEY88_ZENKAKU,     RETROK_RALT);
    handle_key(KEY88_RETURNL,     RETROK_RETURN);
-   handle_key(KEY88_RETURNR,     RETROK_RETURN);
    handle_key(KEY88_SHIFTL,      RETROK_LSHIFT);
-   handle_key(KEY88_SHIFTR,      RETROK_RSHIFT);
    
    /* Keypad */
    for (i = 0; i < 10; i++)
@@ -321,6 +314,7 @@ void handle_rumble()
 void init_variables()
 {
    struct retro_variable var = {0};
+   uint8_t i;
 
    var.key = "q88_basic_mode";
 
@@ -427,6 +421,23 @@ void init_variables()
    }
    else
       rumble_enabled = false;
+
+   /* Setup gamepad remaps */
+   struct retro_input_descriptor desc[REMAP_MAX];
+
+   for (i = 0; i < REMAP_MAX; i++)
+   {
+      if (!current_remap.labels[i].key)
+         break;
+      desc[i].port        = current_remap.labels[i].player;
+      desc[i].device      = RETRO_DEVICE_JOYPAD;
+      desc[i].index       = 0;
+      desc[i].id          = current_remap.labels[i].button;
+      desc[i].description = current_remap.labels[i].name[language];
+      if (!desc[i].description)
+         desc[i].description = current_remap.labels[i].name[RETRO_LANGUAGE_ENGLISH];
+   }
+   environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 }
 
 bool load_system_file(uint8_t bios_index, byte *rom_data, uint32_t rom_size)
@@ -483,29 +494,7 @@ bool load_system_file(uint8_t bios_index, byte *rom_data, uint32_t rom_size)
 void retro_init(void)
 {
    char *dir = NULL;
-
-   struct retro_input_descriptor desc[] = {
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left (Keypad 4)" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up (Keypad 8)" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "Down (Keypad 2)" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Right (Keypad 6)" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "X Key" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "Z Key" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Space Key" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Return Key" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "I Key" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "Change drive 1 disk" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "Change drive 2 disk" },
-
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D Key" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "R Key" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "F Key" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "G Key" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "Tab Key" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "Q Key" },
-
-      { 0 },
-   };
+   uint8_t i;
 
    /* Set up paths */
    if (!environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log_cb))
@@ -581,7 +570,6 @@ void retro_init(void)
    else
       save_to_disk_image = true;
   
-   environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
    key_buffer = (bool*)calloc(KEY88_END, sizeof(bool));
    pad_buffer = (bool*)calloc(KEY88_END, sizeof(bool));
    init_variables();
@@ -651,12 +639,40 @@ bool load_m3u(const char *filename)
    return loaded_disks != 0;
 }
 
+bool identify_game()
+{
+   uint32_t checksum;
+   uint8_t i, j;
+
+   /* Try to identify the first disk inserted */
+   checksum = file_crc32(0, retro_disks[0].filename);
+   if (!checksum)
+      return false;
+
+   log_cb(RETRO_LOG_INFO, "[QUASI88]: CRC32 of %s: %08X\n", retro_disks[0].filename, checksum);
+   for (i = 0;; i++)
+   {
+      if (!remaps[i].title)
+         break;
+      for (j = 0;; j++)
+      {
+         if (!remaps[i].checksums[j])
+            break;
+         else if (remaps[i].checksums[j] == checksum)
+         {
+            current_remap = remaps[i];
+            return true;
+         }
+      }
+   }
+
+   return false;
+}
+
 bool retro_load_game(const struct retro_game_info *info)
 {
-   init_variables();
    quasi88_start();
    quasi88_disk_eject_all();
-
    if (info && !string_is_empty(info->path))
    {
       if (strstr(info->path, ".m3u") != NULL)
@@ -667,6 +683,8 @@ bool retro_load_game(const struct retro_game_info *info)
          quasi88_disk_insert(DRIVE_1, info->path, 0, 0);
       }
    }
+   identify_game();
+   init_variables();
    quasi88_reset(NULL);
    quasi88_exec();
    
@@ -677,7 +695,6 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info *info, 
 {
    uint8_t i;
 
-   init_variables();
    quasi88_start();
    quasi88_disk_eject_all();
 
@@ -687,6 +704,8 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info *info, 
          retro_disks_append(info[i].path);
    }
    retro_disks_ready();
+   identify_game();
+   init_variables();
    quasi88_reset(NULL);
    quasi88_exec();
 
@@ -760,7 +779,6 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 void retro_set_environment(retro_environment_t cb)
 {
    unsigned core_options_version = 0;
-   unsigned language = RETRO_LANGUAGE_ENGLISH;
    bool no_game = true;
    enum retro_pixel_format rgb565 = RETRO_PIXEL_FORMAT_RGB565;
    
@@ -772,7 +790,7 @@ void retro_set_environment(retro_environment_t cb)
    
    static struct retro_core_options_intl variables_intl = { variables_english, variables_english };
 
-   /* Set localized core options if available */
+   /* Setup localization if available */
    if (cb(RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION, &core_options_version) && core_options_version > 0)
    {
       cb(RETRO_ENVIRONMENT_GET_LANGUAGE, &language);

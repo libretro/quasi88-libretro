@@ -57,9 +57,8 @@ bool retro_disks_append(const char *new_filename)
    {
       disk_t *new_disk = &retro_disks[swap.count];
 
-      strncpy(new_disk->filename, new_filename, OSD_MAX_FILENAME);
-      strncpy(new_disk->basename, new_filename, OSD_MAX_FILENAME);
-      path_basename(new_disk->basename);
+      strlcpy(new_disk->filename, new_filename, OSD_MAX_FILENAME);
+      strlcpy(new_disk->basename, path_basename(new_filename), OSD_MAX_FILENAME);
       new_disk->drive_index = DRIVE_NONE;
       new_disk->is_user_disk = is_user_disk(new_filename);
       swap.count++;
