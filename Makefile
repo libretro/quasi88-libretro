@@ -107,7 +107,6 @@ else ifeq ($(platform), osx)
    fpic := -fPIC
    SHARED := -dynamiclib
    ifeq ($(arch),ppc)
-      ENDIANNESS_DEFINES := -DMSB_FIRST
       OLD_GCC := 1
    endif
    OSXVER = `sw_vers -productVersion | cut -d. -f 2`
@@ -162,7 +161,6 @@ else ifeq ($(platform), qnx)
 # PS3
 else ifneq (,$(filter $(platform), ps3 sncps3 psl1ght))
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
-   ENDIANNESS_DEFINES := -DMSB_FIRST
    STATIC_LINKING = 1
 
    # sncps3
@@ -231,7 +229,7 @@ else ifeq ($(platform), xenon)
    CC = xenon-gcc$(EXE_EXT)
    CXX = xenon-g++$(EXE_EXT)
    AR = xenon-ar$(EXE_EXT)
-   ENDIANNESS_DEFINES += -D__LIBXENON__ -m32 -D__ppc__ -DMSB_FIRST
+   ENDIANNESS_DEFINES += -D__LIBXENON__ -m32 -D__ppc__
    STATIC_LINKING = 1
 
 # Nintendo Switch (libnx)
@@ -259,7 +257,7 @@ else ifneq (,$(filter $(platform), ngc wii wiiu))
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
    CXX = $(DEVKITPPC)/bin/powerpc-eabi-g++$(EXE_EXT)
    AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
-   ENDIANNESS_DEFINES += -DGEKKO -mcpu=750 -meabi -mhard-float -DMSB_FIRST
+   ENDIANNESS_DEFINES += -DGEKKO -mcpu=750 -meabi -mhard-float
    FLAGS += -U__INT32_TYPE__ -U __UINT32_TYPE__ -D__INT32_TYPE__=int
    EXTRA_INCLUDES := -I$(DEVKITPRO)/libogc/include
    STATIC_LINKING = 1

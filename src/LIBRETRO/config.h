@@ -18,11 +18,7 @@
 
 
 
-/* Platform endianness; the libretro makefile sets MSB_FIRST if the 
-   target is big-endian, so flip that here if needed */
-#ifndef MSB_FIRST
-#define LSB_FIRST
-#endif
+#include <retro_endianness.h>
 
 
 
