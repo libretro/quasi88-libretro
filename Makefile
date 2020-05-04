@@ -272,7 +272,7 @@ else ifneq (,$(filter $(platform), ngc wii wiiu))
 
    # Nintendo Game Cube
    else ifneq (,$(findstring ngc,$(platform)))
-      ENDIANNESS_DEFINES += -DHW_DOL -mrvl
+      ENDIANNESS_DEFINES += -DHW_DOL -mogc
    endif
 
 # Emscripten
