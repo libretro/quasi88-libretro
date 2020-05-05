@@ -20,9 +20,6 @@
 
 #include <retro_endianness.h>
 
-/* Quasi88 uses inline differently from retro_inline. Undef it to
-   avoid conflicts.  */
-#undef INLINE
 
 
 /* メニューのタイトル／バージョン表示にて追加で表示する言葉 (任意の文字列) */
