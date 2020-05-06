@@ -433,7 +433,7 @@ static INLINE	void	main_memory_mapping_8000_83ff( void )
 /*		jisho_rom_ctrl, jisho_rom_bank, 	*/
 /*		misc_ctrl により変化			*/
 /*------------------------------------------------------*/
-INLINE	void	main_memory_mapping_c000_ffff( void )
+static INLINE	void	main_memory_mapping_c000_ffff( void )
 {
   mem_wait_highram = FALSE;
 
@@ -473,7 +473,7 @@ enum VramAccessWay{
   EndofVramAcc
 };
 
-INLINE	void	main_memory_vram_mapping( void )
+static INLINE	void	main_memory_vram_mapping( void )
 {
   if( misc_ctrl & MISC_CTRL_EVRAM ){		/* 拡張アクセスモード */
 
