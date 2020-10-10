@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <retro_inline.h>
+
 #include "quasi88.h"
 #include "snddrv.h"			/* VOL_MAX			*/
 #include "z80.h"
@@ -217,7 +219,7 @@ extern running_machine *Machine;
 
 /* log to the standard error.log file */
 /* void CLIB_DECL logerror(const char *text,...); */
-INLINE	void CLIB_DECL logerror(ATTR_UNUSED const char *text,...){}
+static INLINE	void CLIB_DECL logerror(ATTR_UNUSED const char *text,...){}
 /* #define logerror		(void)			*/
 /* #define logerror		if(1){}else printf	*/
 
