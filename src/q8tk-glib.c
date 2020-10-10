@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <retro_inline.h>
+
 #include "quasi88.h"
 #include "memory.h"		/* has_kanji_rom	*/
 
@@ -40,12 +42,12 @@ static	int	q8gr_strings(int x, int y, int fg, int bg,
 			     int cursor_pos, 
 			     int code, const char *str, int start, int width);
 
-INLINE	void	q8gr_putc(int x, int y, int fg, int bg, int c)
+static INLINE	void	q8gr_putc(int x, int y, int fg, int bg, int c)
 {
     q8gr_putchar(x, y, fg, bg, FALSE, FALSE,  c);
 }
 
-INLINE	int	q8gr_puts(int x, int y, int fg, int bg,
+static INLINE	int	q8gr_puts(int x, int y, int fg, int bg,
 			  int code, const char *str)
 {
     return q8gr_strings(x, y, fg, bg, FALSE, FALSE, -1, code, str, 0, 0);
