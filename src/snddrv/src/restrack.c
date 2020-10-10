@@ -125,7 +125,7 @@ static void free_callback_list(callback_item **cb)
     auto_malloc_add - add pointer to malloc list
 -------------------------------------------------*/
 
-INLINE void auto_malloc_add(void *result, size_t size)
+static INLINE void auto_malloc_add(void *result, size_t size)
 {
 	/* make sure we have tracking space */
 	if (malloc_list_index == malloc_list_size)

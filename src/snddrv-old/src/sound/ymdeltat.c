@@ -54,6 +54,8 @@
 
 #ifndef YM_INLINE_BLOCK
 
+#include <retro_inline.h>
+
 #include "driver.h"
 #include "state.h"
 #include "ymdeltat.h"
@@ -377,7 +379,7 @@ void YM_DELTAT_savestate(const char *statename,int num,YM_DELTAT *DELTAT)
 	state_save_register_INT32 (statename, num, "DeltaT.adpcml"   , &DELTAT->adpcml   , 1);
 }
 #endif	/* QUASI88 */
-#else /* YM_INLINE_BLOCK */
+#else /* YM_static INLINE_BLOCK */
 
 /* ---------- inline block ---------- */
 
@@ -399,7 +401,7 @@ extern const INT32 ym_deltat_decode_tableB2[];
 	else if ( val < min ) val = min;	\
 }
 
-INLINE void YM_DELTAT_synthesis_from_external_memory(YM_DELTAT *DELTAT)
+static INLINE void YM_DELTAT_synthesis_from_external_memory(YM_DELTAT *DELTAT)
 {
 	UINT32 step;
 	int data;
@@ -491,7 +493,7 @@ INLINE void YM_DELTAT_synthesis_from_external_memory(YM_DELTAT *DELTAT)
 
 
 
-INLINE void YM_DELTAT_synthesis_from_CPU_memory(YM_DELTAT *DELTAT)
+static INLINE void YM_DELTAT_synthesis_from_CPU_memory(YM_DELTAT *DELTAT)
 {
 	UINT32 step;
 	int data;
@@ -553,7 +555,7 @@ INLINE void YM_DELTAT_synthesis_from_CPU_memory(YM_DELTAT *DELTAT)
 
 
 /* ADPCM B (Delta-T control type) */
-INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
+static INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 {
 
 /*
@@ -589,4 +591,4 @@ value:   START, REC, MEMDAT, REPEAT, SPOFF, x,x,RESET   meaning:
 	return;
 }
 
-#endif /* YM_INLINE_BLOCK */
+#endif /* YM_static INLINE_BLOCK */

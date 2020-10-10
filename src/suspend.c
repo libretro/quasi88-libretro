@@ -66,7 +66,7 @@ char	file_state[QUASI88_MAX_FILENAME];	/* ステートファイル名   */
  *		int 型、 short 型、char 型、pair 型、256バイトブロック、
  *		文字列(1023文字まで)、double型 (1000000倍してintに変換)
  *----------------------------------------------------------------------*/
-INLINE	int	statesave_int( OSD_FILE *fp, int *val )
+static INLINE	int	statesave_int( OSD_FILE *fp, int *val )
 {
   unsigned char c[4];
   c[0] = ( *val       ) & 0xff;
@@ -76,7 +76,7 @@ INLINE	int	statesave_int( OSD_FILE *fp, int *val )
   if( osd_fwrite( c, sizeof(char), 4, fp )==4 ) return TRUE;
   return FALSE;
 }
-INLINE	int	stateload_int( OSD_FILE *fp, int *val )
+static INLINE	int	stateload_int( OSD_FILE *fp, int *val )
 {
   unsigned char c[4];
   if( osd_fread( c, sizeof(char), 4, fp )!=4 ) return FALSE;
@@ -86,7 +86,7 @@ INLINE	int	stateload_int( OSD_FILE *fp, int *val )
 	    (unsigned int)c[0]       );
   return TRUE;
 }
-INLINE	int	statesave_short( OSD_FILE *fp, short *val )
+static INLINE	int	statesave_short( OSD_FILE *fp, short *val )
 {
   unsigned char c[2];
   c[0] = ( *val       ) & 0xff;
@@ -94,7 +94,7 @@ INLINE	int	statesave_short( OSD_FILE *fp, short *val )
   if( osd_fwrite( c, sizeof(char), 2, fp )==2 ) return TRUE;
   return FALSE;
 }
-INLINE	int	stateload_short( OSD_FILE *fp, short *val )
+static INLINE	int	stateload_short( OSD_FILE *fp, short *val )
 {
   unsigned char c[2];
   if( osd_fread( c, sizeof(Uchar), 2, fp )!=2 ) return FALSE;
@@ -102,19 +102,19 @@ INLINE	int	stateload_short( OSD_FILE *fp, short *val )
 	    (unsigned short)c[0]       );
   return TRUE;
 }
-INLINE	int	statesave_char( OSD_FILE *fp, char *val )
+static INLINE	int	statesave_char( OSD_FILE *fp, char *val )
 {
   if( osd_fwrite( val, sizeof(char), 1, fp )==1 ) return TRUE;
   return FALSE;
 }
-INLINE	int	stateload_char( OSD_FILE *fp, char *val )
+static INLINE	int	stateload_char( OSD_FILE *fp, char *val )
 {
   if( osd_fread( val, sizeof(char), 1, fp )!=1 ) return FALSE;
   return TRUE;
 }
 
 
-INLINE	int	statesave_pair( OSD_FILE *fp, pair *val )
+static INLINE	int	statesave_pair( OSD_FILE *fp, pair *val )
 {
   unsigned char c[2];
   c[0] = ( (*val).W      ) & 0xff;
@@ -122,7 +122,7 @@ INLINE	int	statesave_pair( OSD_FILE *fp, pair *val )
   if( osd_fwrite( c, sizeof(char), 2, fp )==2 ) return TRUE;
   return FALSE;
 }
-INLINE	int	stateload_pair( OSD_FILE *fp, pair *val )
+static INLINE	int	stateload_pair( OSD_FILE *fp, pair *val )
 {
   unsigned char c[2];
   if( osd_fread( c, sizeof(char), 2, fp )!=2 ) return FALSE;
@@ -131,19 +131,19 @@ INLINE	int	stateload_pair( OSD_FILE *fp, pair *val )
   return TRUE;
 }
 
-INLINE	int	statesave_256( OSD_FILE *fp, char *array )
+static INLINE	int	statesave_256( OSD_FILE *fp, char *array )
 {
   if( osd_fwrite( array, sizeof(char), 256, fp )==256 ) return TRUE;
   return FALSE;
 }
-INLINE	int	stateload_256( OSD_FILE *fp, char *array )
+static INLINE	int	stateload_256( OSD_FILE *fp, char *array )
 {
   if( osd_fread( array, sizeof(char), 256, fp )!=256 ) return FALSE;
   return TRUE;
 }
 
 
-INLINE	int	statesave_str( OSD_FILE *fp, char *str )
+static INLINE	int	statesave_str( OSD_FILE *fp, char *str )
 {
   char wk[1024];
 
@@ -155,13 +155,13 @@ INLINE	int	statesave_str( OSD_FILE *fp, char *str )
   if( osd_fwrite( wk, sizeof(char), 1024, fp )==1024 ) return TRUE;
   return FALSE;
 }
-INLINE	int	stateload_str( OSD_FILE *fp, char *str )
+static INLINE	int	stateload_str( OSD_FILE *fp, char *str )
 {
   if( osd_fread( str, sizeof(char), 1024, fp )!=1024 ) return FALSE;
   return TRUE;
 }
 
-INLINE	int	statesave_double( OSD_FILE *fp, double *val )
+static INLINE	int	statesave_double( OSD_FILE *fp, double *val )
 {
   unsigned char c[4];
   int	wk;
@@ -174,7 +174,7 @@ INLINE	int	statesave_double( OSD_FILE *fp, double *val )
   if( osd_fwrite( c, sizeof(char), 4, fp )==4 ) return TRUE;
   return FALSE;
 }
-INLINE	int	stateload_double( OSD_FILE *fp, double *val )
+static INLINE	int	stateload_double( OSD_FILE *fp, double *val )
 {
   unsigned char c[4];
   int	wk;

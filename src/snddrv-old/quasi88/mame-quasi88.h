@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <retro_inline.h>
+
 #include "quasi88.h"
 #include "snddrv.h"
 #include "z80.h"
@@ -118,7 +120,7 @@ int osd_get_mastervolume(void);
 void osd_sound_enable(int enable);
 
 
-INLINE	void CLIB_DECL logerror(UNUSEDARG const char *text,...){}
+static INLINE	void CLIB_DECL logerror(UNUSEDARG const char *text,...){}
 /* #define logerror		(void)			*/
 /* #define logerror		if(1){}else printf	*/
 

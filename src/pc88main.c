@@ -9,6 +9,8 @@
 #include <string.h>
 #include <time.h>
 
+#include <retro_inline.h>
+
 #include "quasi88.h"
 #include "initval.h"
 #include "pc88main.h"
@@ -350,7 +352,7 @@ static INLINE	void	main_memory_mapping_0000_7fff( void )
 
 #else	/* こう、すっきりさせるほうがいい？ */
 
-INLINE	void	main_memory_mapping_0000_7fff( void )
+static INLINE	void	main_memory_mapping_0000_7fff( void )
 {
   highspeed_n88rom = FALSE;	/* デフォルト */
 
@@ -500,7 +502,7 @@ static INLINE	void	main_memory_vram_mapping( void )
 /*------------------------------*/
 /* 通常のＶＲＡＭリード		*/
 /*------------------------------*/
-INLINE	byte	vram_read( word addr )
+static INLINE	byte	vram_read( word addr )
 {
   return main_vram[addr][ memory_bank ];
 }
@@ -508,7 +510,7 @@ INLINE	byte	vram_read( word addr )
 /*------------------------------*/
 /* 通常のＶＲＡＭライト		*/
 /*------------------------------*/
-INLINE	void	vram_write( word addr, byte data )
+static INLINE	void	vram_write( word addr, byte data )
 {
   screen_set_dirty_flag(addr);
 
@@ -544,7 +546,7 @@ static	ALU_memory	ALU_comp;
 	}while(0)
 #endif
 
-INLINE	byte	ALU_read( word addr )
+static INLINE	byte	ALU_read( word addr )
 {
   ALU_memory	wk;
 

@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <retro_inline.h>
+
 #include "quasi88.h"
 #include "initval.h"
 #include "drive.h"
@@ -3306,7 +3308,7 @@ if (s >= DATA_BUF_SIZE) {		\
 /*
  * GAP3 の計算
  */
-INLINE
+static INLINE
 int calc_gap3_size(int n, Uchar fdc_mf)
 {
     int gap3_size;
@@ -3322,7 +3324,7 @@ int calc_gap3_size(int n, Uchar fdc_mf)
     return(gap3_size);
 }
 
-INLINE
+static INLINE
 int input_safely_data(int ptr, int *ad, int data, int size)
 {
     if (size == 0) return(TRUE);
