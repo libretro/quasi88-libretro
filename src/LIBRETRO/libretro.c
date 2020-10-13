@@ -343,7 +343,14 @@ void init_variables()
       else
          boot_basic = BASIC_V1S;
    }
-   
+
+   var.key = "q88_sub_cpu_mode";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      cpu_timing = atoi(var.value);
+   }
+
    var.key = "q88_cpu_clock";
    
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)

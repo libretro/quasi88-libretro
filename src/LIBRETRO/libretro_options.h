@@ -3,6 +3,7 @@
 const struct retro_variable variables_old[] = 
 {
    { "q88_basic_mode",         "Basic mode; N88 V2|N88 V1H|N88 V1S|N" },
+   { "q88_sub_cpu_mode",       "Sub-CPU Mode; 0|1|2" },
    { "q88_cpu_clock",          "CPU clock; 4 MHz|8 MHz|16 MHz (overclock)|32 MHz (overclock)|64 MHz (overclock)|1 MHz (underclock)|2 MHz (underclock)" },
    { "q88_sound_board",        "Sound board; OPN|OPNA"},
    { "q88_use_fdc_wait",       "Use FDC-Wait; enabled|disabled"},
@@ -31,6 +32,19 @@ struct retro_core_option_definition variables_english[] =
          { NULL, NULL }
       },
       "N88 V2"
+   },
+
+   { 
+      "q88_sub_cpu_mode",
+      "Sub-CPU Mode",
+      "Default: Run SUB-CPU only during the disk access.",
+      {
+         { "0", "Run SUB-CPU only during the disk access."},
+         { "1", "Run both CPUs during the disk access."},
+         { "2", "Always run both CPUs."},
+         { NULL, NULL },
+      },
+      "0"
    },
 
    { 
