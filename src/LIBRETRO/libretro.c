@@ -51,7 +51,7 @@ static retro_environment_t environ_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
 static retro_log_printf_t log_cb;
-static struct retro_rumble_interface rumble;
+static retro_set_rumble_state_t rumble_cb;
 static retro_video_refresh_t video_cb;
 
 static const struct retro_subsystem_rom_info pc88_disk[] = {
@@ -309,13 +309,19 @@ void handle_input()
 
 void handle_rumble()
 {
+   if (!rumble_cb)
+      return;
+
    if (rumble_enabled && (!get_drive_ready(0) || !get_drive_ready(1)))
    {
-      rumble.set_rumble_state(0, RETRO_RUMBLE_STRONG, 65535);
-      rumble.set_rumble_state(0, RETRO_RUMBLE_WEAK, 65535 / 32);
+      rumble_cb(0, RETRO_RUMBLE_STRONG, 65535);
+      rumble_cb(0, RETRO_RUMBLE_WEAK, 65535 / 32);
    }
    else
-      rumble.set_rumble_state(0, RETRO_RUMBLE_STRONG, 0);
+   {
+      rumble_cb(0, RETRO_RUMBLE_STRONG, 0);
+      rumble_cb(0, RETRO_RUMBLE_WEAK, 0);
+   }
 }
 
 void init_variables()
@@ -337,7 +343,14 @@ void init_variables()
       else
          boot_basic = BASIC_V1S;
    }
-   
+
+   var.key = "q88_sub_cpu_mode";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      cpu_timing = atoi(var.value);
+   }
+
    var.key = "q88_cpu_clock";
    
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -417,16 +430,11 @@ void init_variables()
 
    if (!save_to_disk_image && environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
       save_to_disk_image = (!strcmp(var.value, "enabled")) ? true : false;
-  
+
    var.key = "q88_rumble";
-   
-   if (environ_cb(RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE, &rumble))
-   {
-      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-         rumble_enabled = (!strcmp(var.value, "disabled")) ? false : true;
-   }
-   else
-      rumble_enabled = false;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      rumble_enabled = (!strcmp(var.value, "disabled")) ? false : true;
 }
 
 bool load_system_file(uint8_t bios_index, byte *rom_data, uint32_t rom_size)
@@ -483,6 +491,7 @@ bool load_system_file(uint8_t bios_index, byte *rom_data, uint32_t rom_size)
 void retro_init(void)
 {
    char *dir = NULL;
+   struct retro_rumble_interface rumble;
 
    struct retro_input_descriptor desc[] = {
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left (Keypad 4)" },
@@ -506,6 +515,9 @@ void retro_init(void)
 
       { 0 },
    };
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE, &rumble))
+      rumble_cb = rumble.set_rumble_state;
 
    /* Set up paths */
    if (!environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log_cb))
