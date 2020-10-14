@@ -54,13 +54,24 @@ static retro_log_printf_t log_cb;
 static retro_set_rumble_state_t rumble_cb;
 static retro_video_refresh_t video_cb;
 
+#define RETRO_MEMORY_TYPE_SHIFT         8
+#define RETRO_MEMORY_SUBCLASS(base, id) (((id + 1) << RETRO_DEVICE_TYPE_SHIFT) | base)
+
+#define RETRO_MEMORY_PC88_SYSTEM_RAM    (RETRO_MEMORY_SUBCLASS(RETRO_MEMORY_SYSTEM_RAM, 0))
+#define RETRO_MEMORY_PC88_VIDEO_RAM     (RETRO_MEMORY_SUBCLASS(RETRO_MEMORY_VIDEO_RAM, 0))
+
+static const struct retro_subsystem_memory_info pc88_memory[] = {
+    { "ram",  RETRO_MEMORY_PC88_SYSTEM_RAM },
+    { "vram", RETRO_MEMORY_PC88_VIDEO_RAM },
+};
+
 static const struct retro_subsystem_rom_info pc88_disk[] = {
-   { "Disk 1", "d88", true, false, true, NULL, 1 },
-   { "Disk 2", "d88", true, false, true, NULL, 1 },
-   { "Disk 3", "d88", true, false, true, NULL, 1 },
-   { "Disk 4", "d88", true, false, true, NULL, 1 },
-   { "Disk 5", "d88", true, false, true, NULL, 1 },
-   { "Disk 6", "d88", true, false, true, NULL, 1 },
+   { "Disk 1", "d88", true, false, true, pc88_memory, 1 },
+   { "Disk 2", "d88", true, false, true, pc88_memory, 1 },
+   { "Disk 3", "d88", true, false, true, pc88_memory, 1 },
+   { "Disk 4", "d88", true, false, true, pc88_memory, 1 },
+   { "Disk 5", "d88", true, false, true, pc88_memory, 1 },
+   { "Disk 6", "d88", true, false, true, pc88_memory, 1 },
    { NULL }
 };
 
@@ -866,22 +877,32 @@ bool retro_unserialize(const void *data, size_t size)
 
 void *retro_get_memory_data(unsigned type)
 {
-   if (type == RETRO_MEMORY_SYSTEM_RAM)
-      return main_ram;
-   else if (type == RETRO_MEMORY_VIDEO_RAM)
-      return main_vram;
-   else
-      return NULL;
+   switch (type)
+   {
+      case RETRO_MEMORY_SYSTEM_RAM:
+      case RETRO_MEMORY_PC88_SYSTEM_RAM:
+         return main_ram;
+      case RETRO_MEMORY_VIDEO_RAM:
+      case RETRO_MEMORY_PC88_VIDEO_RAM:
+         return main_vram;
+      default:
+         return NULL;
+   }
 }
 
 size_t retro_get_memory_size(unsigned type)
 {
-   if (type == RETRO_MEMORY_SYSTEM_RAM)
-      return 0x10000;
-   else if (type == RETRO_MEMORY_VIDEO_RAM)
-      return 0x10000;
-   else
-      return 0;
+   switch (type)
+   {
+      case RETRO_MEMORY_SYSTEM_RAM:
+      case RETRO_MEMORY_PC88_SYSTEM_RAM:
+         return 0x10000;
+      case RETRO_MEMORY_VIDEO_RAM:
+      case RETRO_MEMORY_PC88_VIDEO_RAM:
+         return 0x10000;
+      default:
+         return 0;
+   }
 }
 
 void retro_cheat_reset(void)
