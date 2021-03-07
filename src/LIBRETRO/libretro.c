@@ -556,7 +556,7 @@ void retro_init(void)
       memcpy(main_rom, &pbios_n88, 0x08000);
    if (!load_system_file(SUB_ROM, sub_romram, 0x00800))
       memcpy(sub_romram, &pbios_disk, 0x00800);
-
+   rom_version = ROM_VERSION;
    load_system_file(EXT0_ROM,  main_rom_ext[0], 0x02000);
    load_system_file(EXT1_ROM,  main_rom_ext[1], 0x02000);
    load_system_file(EXT2_ROM,  main_rom_ext[2], 0x02000);
