@@ -14,6 +14,13 @@ ifeq ($(platform),)
       platform = win
    else ifneq ($(findstring Darwin,$(shell uname -a)),)
       platform = osx
+      arch = intel
+      ifeq ($(shell uname -p),powerpc)
+         arch = ppc
+      endif
+      ifeq ($(shell uname -p),arm)
+         arch = arm
+      endif
    endif
 else ifneq (,$(findstring armv,$(platform)))
    ifeq (,$(findstring classic_,$(platform)))
@@ -21,12 +28,6 @@ else ifneq (,$(findstring armv,$(platform)))
    endif
 else ifneq (,$(findstring rpi,$(platform)))
    override platform += unix
-endif
-
-ifeq ($(shell uname -p),powerpc)
-   arch = ppc
-else
-   arch = intel
 endif
 
 prefix := /usr
@@ -108,6 +109,7 @@ else ifeq ($(platform), osx)
    TARGET := $(TARGET_NAME)_libretro.dylib
    fpic := -fPIC
    SHARED := -dynamiclib
+   MINVERSION :=
    ifeq ($(arch),ppc)
       OLD_GCC := 1
    endif
@@ -115,8 +117,21 @@ else ifeq ($(platform), osx)
    OSX_GT_MOJAVE = $(shell (( $(OSXVER) >= 14)) && echo "YES")
    ifneq ($(OSX_GT_MOJAVE),YES)
 	#this breaks compiling on Mac OS Mojave
-      fpic += -mmacosx-version-min=10.1
+      MINVERSION = -mmacosx-version-min=10.1
    endif
+   fpic += $(MINVERSION)
+
+   ifeq ($(CROSS_COMPILE),1)
+		TARGET_RULE   = -target $(LIBRETRO_APPLE_PLATFORM) -isysroot $(LIBRETRO_APPLE_ISYSROOT)
+		CFLAGS   += $(TARGET_RULE)
+		CPPFLAGS += $(TARGET_RULE)
+		CXXFLAGS += $(TARGET_RULE)
+		LDFLAGS  += $(TARGET_RULE)
+   endif
+
+   CFLAGS    += $(ARCHFLAGS)
+   CXXFLAGS  += $(ARCHFLAGS)
+   LDFLAGS   += $(ARCHFLAGS)
 
 # iOS
 else ifneq (,$(findstring ios,$(platform)))
