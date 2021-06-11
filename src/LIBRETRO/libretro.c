@@ -759,11 +759,17 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
 void retro_deinit()
 {
+   /* Stop the emulator */
    quasi88_stop(TRUE);
+
+   /* Free our input buffers */
    free(key_buffer);
    key_buffer = NULL;
    free(pad_buffer);
    pad_buffer = NULL;
+
+   /* Free all our file handles */
+   osd_fcloseall();
 }
 
 unsigned retro_get_region(void)
