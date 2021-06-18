@@ -23,7 +23,9 @@ struct retro_core_option_definition variables_english[] =
    { 
       "q88_basic_mode", 
       "BASIC mode", 
-      "Recommended: N88 V2/V1H for PC-8800 series software, N for PC-8000 series software.", 
+      "Recommended: N88-BASIC V2/V1H for PC-8800 software, N-BASIC for PC-8000 software.\n"
+         "- If PC-8800 software runs too fast in V2 mode, use a V1 mode.\n"
+         "- BIOS files are required for N-BASIC mode. See core info.",
       {
          { "N88 V2",  "N88-BASIC V2" },
          { "N88 V1H", "N88-BASIC V1H" },
@@ -36,12 +38,12 @@ struct retro_core_option_definition variables_english[] =
 
    { 
       "q88_sub_cpu_mode",
-      "Sub-CPU Mode",
-      "Default: Run SUB-CPU only during the disk access.",
+      "Sub-CPU mode",
+      "Recommended: Run Sub-CPU only during disk access.",
       {
-         { "0", "Run SUB-CPU only during the disk access."},
-         { "1", "Run both CPUs during the disk access."},
-         { "2", "Always run both CPUs."},
+         { "0", "Run Sub-CPU only during disk access"},
+         { "1", "Run both CPUs during disk access"},
+         { "2", "Always run both CPUs"},
          { NULL, NULL },
       },
       "0"
@@ -49,7 +51,7 @@ struct retro_core_option_definition variables_english[] =
 
    { 
       "q88_cpu_clock", 
-      "CPU", 
+      "CPU clock", 
       "Recommended: 4MHz or 8MHz. Some software may run too fast with an 8MHz CPU.",
       {
          { "4",  "4 MHz (NEC µPD780)" },
@@ -78,7 +80,7 @@ struct retro_core_option_definition variables_english[] =
          
    { 
       "q88_use_fdc_wait", 
-      "Use FDC-Wait", 
+      "FDC-Wait", 
       "Recommended: ON. Enables more accurate IO timing for the floppy disk controller.",
       {
          { "enabled",  "enabled" },
@@ -91,7 +93,7 @@ struct retro_core_option_definition variables_english[] =
    { 
       "q88_pcg-8100", 
       "Use PCG-8100", 
-      "Recommended: OFF. May be required for some PC-8000 series software.",
+      "Recommended: OFF. May be required for some PC-8000 software.",
       {
          { "enabled",  "enabled" },
          { "disabled", "disabled" },
@@ -103,7 +105,9 @@ struct retro_core_option_definition variables_english[] =
    {
       "q88_save_to_disk_image", 
       "Save to disk image", 
-      "Recommended: OFF. Allows the core to rewrite data to the inserted floppy disk(s). Will only work with unzipped content.",
+      "Recommended: OFF. Changes the core's preferred save behavior.\n"
+         "- OFF: Data written to floppy disks will be stored in a separate file in the frontend's save directory.\n"
+         "- ON: Data will be written directly to the loaded disk file(s). Will not work with zipped content.",
       {
          { "enabled",  "enabled" },
          { "disabled", "disabled" },
@@ -166,8 +170,21 @@ struct retro_core_option_definition variables_japanese[] =
    },
 
    { 
+      "q88_sub_cpu_mode",
+      "Sub-CPU駆動",
+      "推奨：ディスク処理中、Sub-CPUのみ駆動させる",
+      {
+         { "0", "ディスク処理中、Sub-CPUのみ駆動させる"},
+         { "1", "ディスク処理中、両CPUを駆動させる"},
+         { "2", "常時、両CPUを駆動させる"},
+         { NULL, NULL },
+      },
+      "0"
+   },
+
+   { 
       "q88_cpu_clock", 
-      "CPU", 
+      "CPU クロック", 
       "推奨：4MHzまたは8MHz。 一部のソフトウェアは、8MHz CPUでは高速に実行される場合があります。",
       {
          { "4",  "4 MHz (NEC µPD780)" },
@@ -196,7 +213,7 @@ struct retro_core_option_definition variables_japanese[] =
          
    { 
       "q88_use_fdc_wait", 
-      "FDC-Wait", 
+      "FDCウエイト", 
       "推奨：ON。 FDCの処理にウエイトをいれます。FDCの処理速度に依存する アプリケーションの場合、動くようになる可能性があります。",
       {
          { "enabled",  "enabled" },
@@ -267,24 +284,25 @@ struct retro_core_option_definition variables_japanese[] =
    { NULL, NULL, NULL, {{0}}, NULL }
 };
 
-void *variables[RETRO_LANGUAGE_LAST] =
+const void *variables[RETRO_LANGUAGE_LAST] =
 {
    &variables_english,
    &variables_japanese,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL
+   NULL, // RETRO_LANGUAGE_FRENCH
+   NULL, // RETRO_LANGUAGE_SPANISH
+   NULL, // RETRO_LANGUAGE_GERMAN
+   NULL, // RETRO_LANGUAGE_ITALIAN
+   NULL, // RETRO_LANGUAGE_DUTCH
+   NULL, // RETRO_LANGUAGE_PORTUGUESE_BRAZIL
+   NULL, // RETRO_LANGUAGE_PORTUGUESE_PORTUGAL
+   NULL, // RETRO_LANGUAGE_RUSSIAN
+   NULL, // RETRO_LANGUAGE_KOREAN
+   NULL, // RETRO_LANGUAGE_CHINESE_TRADITIONAL
+   NULL, // RETRO_LANGUAGE_CHINESE_SIMPLIFIED
+   NULL, // RETRO_LANGUAGE_ESPERANTO
+   NULL, // RETRO_LANGUAGE_POLISH
+   NULL, // RETRO_LANGUAGE_VIETNAMESE
+   NULL, // RETRO_LANGUAGE_ARABIC
+   NULL, // RETRO_LANGUAGE_GREEK
+   NULL  // RETRO_LANGUAGE_TURKISH
 };
