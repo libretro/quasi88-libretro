@@ -64,11 +64,13 @@ const char *osd_dir_lcfg (void) { return dir_l_cfg[0] ? dir_l_cfg : NULL; }
 
 static int set_new_dir(const char *newdir, char *dir)
 {
-    if (strlen(newdir) < OSD_MAX_FILENAME) {
-  strcpy(dir, newdir);
-  return TRUE;
-    }
-    return FALSE;
+   if (dir && strlen(newdir) < OSD_MAX_FILENAME)
+   {
+      strcpy(dir, newdir);
+      return TRUE;
+   }
+   else
+      return FALSE;
 }
 
 int osd_set_dir_cwd  (const char *d) { return set_new_dir(d, dir_cwd);   }
@@ -267,19 +269,19 @@ OSD_FILE *osd_fopen(int type, const char *path, const char *mode)
          current_stream->type = type;
 
          /* Set up diff file if the loaded file is a disk */
-         if (type == FTYPE_DISK)
+         if (type == FTYPE_DISK && !save_to_disk_image)
          {
             char save_name[OSD_MAX_FILENAME];
             char temp_name[OSD_MAX_FILENAME];
 
-            strncpy(temp_name, path, OSD_MAX_FILENAME);
-            path_basename(temp_name);
-            path_remove_extension(temp_name);
-
+            strncpy(temp_name, path_basename(path), OSD_MAX_FILENAME - 1);
+            strncpy(temp_name, path_remove_extension(temp_name), OSD_MAX_FILENAME - 1);
             snprintf(save_name, OSD_MAX_FILENAME, "%s%c%s.srm", save_path, SLASH, temp_name);
+
             /* Create diff file if it does not already exist */
             if (osd_file_stat(save_name) != FILE_STAT_FILE)
                filestream_write_file(save_name, 0, 0);
+
             current_stream->sfp = filestream_open(save_name, retro_mode, 0);
          }
 
@@ -300,9 +302,9 @@ int osd_fclose(OSD_FILE *stream)
       return TRUE;
    else
    {
-      RFILE *fp  = stream->fp;
+      RFILE *fp = stream->fp;
 
-      stream->fp  = NULL;
+      stream->fp = NULL;
       stream->mem_file = NULL;
       if (fp == NULL)
          return 0;
@@ -498,13 +500,13 @@ char *osd_fgets(char *str, int size, OSD_FILE *stream)
 {
    if (stream->mem_file)
    {
-      char *ptr;
+      void *ptr;
       int l;
       
       for (ptr = stream->mem_file + stream->mem_ptr, l = 0;
-      ptr < stream->mem_file + stream->mem_size &&
-      l < size - 1;
-      ptr++, l++);
+         ptr < stream->mem_file + stream->mem_size &&
+         l < size - 1;
+         ptr++, l++);
       osd_fread_real(stream, str, l);
       str[l] = '\0';
 
@@ -588,7 +590,7 @@ void osd_closedir(T_DIR_INFO *dirp)
 int osd_path_normalize(const char *path, char resolved_path[], int size)
 {
     char *buf, *s, *d, *p;
-    int is_abs, is_dir, success = FALSE;
+    int is_abs, success = FALSE;
     size_t len = strlen(path);
 
     if (len == 0) {
@@ -596,7 +598,7 @@ int osd_path_normalize(const char *path, char resolved_path[], int size)
     } else {
 
   is_abs = (path[0]     == '/') ? TRUE : FALSE;
-  is_dir = (path[len-1] == '/') ? TRUE : FALSE;
+  //is_dir = (path[len-1] == '/') ? TRUE : FALSE;
 
   buf = (char *)malloc((len+3) * 2);  /* path と同サイズ位の */
   if (buf) {        /* バッファを2個分 確保  */
