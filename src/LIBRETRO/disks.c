@@ -2,6 +2,7 @@
 #include <streams/file_stream.h>
 #include <string/stdstring.h>
 #include <vfs/vfs_implementation.h>
+#include <wchar.h>
 
 #include "quasi88.h"
 #include "drive.h"
@@ -21,7 +22,7 @@ void disk_display_message(retro_environment_t cb)
       bool    is_first_drive = swap.state == DRIVE_1;
       char    drive_id       = is_first_drive ? '1' : '2';
       int8_t *index          = is_first_drive ? &swap.index_a : &swap.index_b;
-      char    msg[OSD_MAX_FILENAME];
+      wchar_t msg[OSD_MAX_FILENAME];
       struct  retro_message rmsg;
 
       if (*index == NO_DISK)
