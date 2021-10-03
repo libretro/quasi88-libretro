@@ -165,7 +165,6 @@ enum MonitorJob
 };
 
 
-
 /****************************************************************/
 /* ヘルプメッセージ表示関数					*/
 /****************************************************************/
@@ -2734,18 +2733,11 @@ static	void	monitor_loadmem( void )
 
   if( (fp=fopen( filename,"rb")) ){
     if( size<0 ){
-#if 0
-      struct stat filestats;
-
-      if(fstat(fileno(fp), &filestats)) size = 0;
-      else                              size = filestats.st_size;
-#else
       if( fseek( fp, 0, SEEK_END )==0 ){
 	size = ftell( fp );
 	if( size < 0 ) size = 0;
       }
       fseek( fp, 0, SEEK_SET );
-#endif
     }
     for( i=0; i<size; i++ ){
       if( (c=getc(fp)) ==  EOF ){
@@ -4750,49 +4742,6 @@ static	void	monitor_serialout(void)
 /*----------------------------------*/
 static	void    monitor_misc(void)
 {
-/*
-  int ch;
-  extern const char *mixer_get_name(int ch);
-  extern mixer_get_mixing_level(int ch);
-    for( ch=0; ch<16 ; ch++ ){
-      const char *name = mixer_get_name(ch);
-      if(name) printf( "%d[ch] %s\t:%d\n", ch,name,mixer_get_mixing_level(ch));
-    }
-*/
-#if 0
-  FILE *fp;
-  fp = fopen( "log.main","wb");
-  fwrite( main_ram,            sizeof(byte),  0x0f000,  fp );
-  fwrite( main_high_ram,       sizeof(byte),  0x01000,  fp );
-  fclose(fp);
-
-  fp = fopen( "log.high","wb");
-  fwrite( &main_ram[0xf000],  sizeof(byte),   0x1000,  fp );
-  fclose(fp);
-
-  fp = fopen( "log.sub","wb");
-  fwrite( &sub_romram[0x4000], sizeof(byte),   0x4000,  fp );
-  fclose(fp);
-
-  fp = fopen( "log.vram","wb");
-  fwrite( main_vram,           sizeof(byte), 4*0x4000,  fp );
-  fclose(fp);
-#endif
-
-/*
-  extern void monitor_fdc(void);
-  monitor_fdc();
-*/
-/*
-  int line = 0;
-  if( exist_argv() ){
-    line = argv.val;
-    shift();
-  }
-  printf( "line=%d\n",line );
-  attr_misc(line);
-*/
-
     if (quasi88_cfg_can_showstatus()) {
 	int now  = quasi88_cfg_now_showstatus();
 	int next = (now) ? FALSE : TRUE;

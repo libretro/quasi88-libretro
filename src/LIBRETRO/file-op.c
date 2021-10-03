@@ -368,8 +368,7 @@ long osd_ftell(OSD_FILE *stream)
 {
    if (stream->mem_file)
       return stream->mem_ptr;
-   else
-      return filestream_tell(stream->fp);
+   return filestream_tell(stream->fp);
 }
 
 void osd_rewind(OSD_FILE *stream)
@@ -441,14 +440,10 @@ size_t osd_fread_diff(void *ptr, size_t size, OSD_FILE *stream)
 
 size_t osd_fwrite_diff(const void *ptr, uint32_t size, OSD_FILE *stream)
 {
-   void     *diff;
-   uint32_t  diff_offset;
-   size_t    diff_size;
-
    /* Backup the current position, then read data from disk into buffer */
-   diff        = (void*)calloc(size, sizeof(int8_t));
-   diff_offset = filestream_tell(stream->fp);
-   diff_size   = filestream_read(stream->fp, diff, size);
+   void     *diff        = (void*)calloc(size, sizeof(int8_t));
+   uint32_t diff_offset  = filestream_tell(stream->fp);
+   size_t diff_size      = filestream_read(stream->fp, diff, size);
 
    /* Write difference of each byte to file */
    for (; diff_size != 0; diff_size--)
@@ -466,16 +461,14 @@ size_t osd_fread(void *ptr, size_t size, size_t nobj, OSD_FILE *stream)
 {
    if (SAVE_DIFF)
       return osd_fread_diff(ptr, size * nobj, stream);
-   else
-      return osd_fread_real(stream, ptr, size * nobj);
+   return osd_fread_real(stream, ptr, size * nobj);
 }
 
 size_t osd_fwrite(const void *ptr, size_t size, size_t nobj, OSD_FILE *stream)
 {
    if (SAVE_DIFF)
       return osd_fwrite_diff(ptr, size * nobj, stream);
-   else 
-      return osd_fwrite_real(stream, ptr, size * nobj);
+   return osd_fwrite_real(stream, ptr, size * nobj);
 }
 
 int osd_fputc(int c, OSD_FILE *stream)
@@ -589,86 +582,89 @@ void osd_closedir(T_DIR_INFO *dirp)
  *---------------------------------------------------------------------------*/
 int osd_path_normalize(const char *path, char resolved_path[], int size)
 {
-    char *buf, *s, *d, *p;
-    int is_abs, success = FALSE;
-    size_t len = strlen(path);
+	char *buf, *s, *d, *p;
+	int is_abs, success = FALSE;
+	size_t len = strlen(path);
 
-    if (len == 0) {
-  if (size) { resolved_path[0] = '\0';  success = TRUE; }
-    } else {
+	if (len == 0)
+	{
+		if (size) { resolved_path[0] = '\0';  success = TRUE; }
+	}
+	else
+	{
 
-  is_abs = (path[0]     == '/') ? TRUE : FALSE;
-  //is_dir = (path[len-1] == '/') ? TRUE : FALSE;
+		is_abs = (path[0]     == '/') ? TRUE : FALSE;
+		//is_dir = (path[len-1] == '/') ? TRUE : FALSE;
 
-  buf = (char *)malloc((len+3) * 2);  /* path と同サイズ位の */
-  if (buf) {        /* バッファを2個分 確保  */
-      strcpy(buf, path);
-      d = &buf[ len + 3 ];
-      d[0] = '\0';
+		buf = (char *)malloc((len+3) * 2);  /* path と同サイズ位の */
+		if (buf) {        /* バッファを2個分 確保  */
+			strcpy(buf, path);
+			d = &buf[ len + 3 ];
+			d[0] = '\0';
 
-      s = strtok(buf, "/");   /* / で 区切っていく */
+			s = strtok(buf, "/");   /* / で 区切っていく */
 
-      if (s == NULL) {      /* 区切れないなら、 */
-            /* それは / そのものだ  */
-    if (size > 1) {
-        strcpy(resolved_path, "/");
-        success = TRUE;
-    }
+			if (s == NULL) {      /* 区切れないなら、 */
+				/* それは / そのものだ  */
+				if (size > 1) {
+					strcpy(resolved_path, "/");
+					success = TRUE;
+				}
 
-      } else {        /* 区切れたなら、分析  */
+			} else {        /* 区切れたなら、分析  */
 
-    for ( ; s ;  s = strtok(NULL, "/")) {
+				for ( ; s ;  s = strtok(NULL, "/")) {
 
-        if        (strcmp(s, ".")  == 0) {  /* . は無視  */
-      ;
+					if        (strcmp(s, ".")  == 0) {  /* . は無視  */
+						;
 
-        } else if (strcmp(s, "..") == 0) {  /* .. は直前を削除 */
+					} else if (strcmp(s, "..") == 0) {  /* .. は直前を削除 */
 
-      p = strrchr(d, '/');        /* 直前の/を探す */
+						p = strrchr(d, '/');        /* 直前の/を探す */
 
-      if (p && strcmp(p, "/..") != 0) {   /* 見つかれば    */
-          *p = '\0';          /*    そこで分断 */
-      } else {                            /* 見つからない  */
-          if (p == NULL && is_abs) {      /*   絶対パスなら*/
-        ;         /*     無視する  */
-          } else {          /*   相対パスなら*/
-        strcat(d, "/..");     /*     .. にする */
-          }
-      }
+						if (p && strcmp(p, "/..") != 0) {   /* 見つかれば    */
+							*p = '\0';          /*    そこで分断 */
+						} else {                            /* 見つからない  */
+							if (p == NULL && is_abs) {      /*   絶対パスなら*/
+								;         /*     無視する  */
+							} else {          /*   相対パスなら*/
+								strcat(d, "/..");     /*     .. にする */
+							}
+						}
 
-        } else {        /* 上記以外は連結 */
-      strcat(d, "/");         /* 常に / を前置 */
-      strcat(d, s);
-        }
-    }
+					} else {        /* 上記以外は連結 */
+						strcat(d, "/");         /* 常に / を前置 */
+						strcat(d, s);
+					}
+				}
 
-    if (d[0] == '\0') {   /* 結果が空文字列になったら */
-        if (is_abs) strcpy(d, "/"); /*   元が絶対パスなら /     */
-        /* else         ;    *   元が相対パスから 空    */
+				if (d[0] == '\0') {   /* 結果が空文字列になったら */
+					if (is_abs) strcpy(d, "/"); /*   元が絶対パスなら /     */
+					/* else         ;    *   元が相対パスから 空    */
 
-    } else {
-        if (is_abs == FALSE) {  /* 元が相対パスなら */
-      d ++;     /* 先頭の / を削除  */
-        }
+				} else {
+					if (is_abs == FALSE) {  /* 元が相対パスなら */
+						d ++;     /* 先頭の / を削除  */
+					}
 #if 0 /* この処理は無し。元が a/b/c/ でも a/b/c とする */
-        if (is_dir) {   /* 元の末尾が / なら */
-      strcat(d, "/");   /* 末尾に / を付加   */
-        }
+					if (is_dir) {   /* 元の末尾が / なら */
+						strcat(d, "/");   /* 末尾に / を付加   */
+					}
 #endif
-    }
+				}
 
-    if (strlen(d) < (size_t)size) {
-        strcpy(resolved_path, d);
-        success = TRUE;
-    }
-      }
+				if (strlen(d) < (size_t)size) {
+					strcpy(resolved_path, d);
+					success = TRUE;
+				}
+			}
 
-      free(buf);
-  }
-    }
+			free(buf);
+		}
+	}
 
-    /*printf("NORM:\"%s\" => \"%s\"\n",path,resolved_path);*/
-    return success;
+	/*printf("NORM:\"%s\" => \"%s\"\n",path,resolved_path);*/
+	return success;
 }
 
 
@@ -685,54 +681,54 @@ int osd_path_normalize(const char *path, char resolved_path[], int size)
  *---------------------------------------------------------------------------*/
 int osd_path_split(const char *path, char dir[], char file[], int size)
 {
-    int pos = strlen(path);
+	int pos = strlen(path);
 
-    /* dir, file は十分なサイズを確保しているはずなので、軽くチェック */
-    if (pos == 0 || size <= pos) {
-  dir[0]  = '\0';
-  file[0] = '\0';
-  strncat(file, path, size-1);
-  if (pos) fprintf(stderr, "internal overflow %d\n", __LINE__);
-  return FALSE;
-    }
+	/* dir, file は十分なサイズを確保しているはずなので、軽くチェック */
+	if (pos == 0 || size <= pos) {
+		dir[0]  = '\0';
+		file[0] = '\0';
+		strncat(file, path, size-1);
+		if (pos) fprintf(stderr, "internal overflow %d\n", __LINE__);
+		return FALSE;
+	}
 
 
-    if (strcmp(path, "/") == 0) { /* "/" の場合、別処理  */
-  strcpy(dir, "/");     /* ディレクトリは "/"  */
-  strcpy(file, "");     /* ファイルは "" */
-  return TRUE;
-    }
+	if (strcmp(path, "/") == 0) { /* "/" の場合、別処理  */
+		strcpy(dir, "/");     /* ディレクトリは "/"  */
+		strcpy(file, "");     /* ファイルは "" */
+		return TRUE;
+	}
 
-    if (path[ pos - 1 ] == '/') { /* path 末尾の / は無視 */
-  pos --;
-    }
+	if (path[ pos - 1 ] == '/') { /* path 末尾の / は無視 */
+		pos --;
+	}
 
-    do {        /* / を末尾から探す  */
-  if (path[ pos - 1 ] == '/') { break; }
-  pos --;
-    } while (pos);
+	do {        /* / を末尾から探す  */
+		if (path[ pos - 1 ] == '/') { break; }
+		pos --;
+	} while (pos);
 
-    if (pos) {        /* / が見つかったら  */
-  strncpy(dir, path, pos);    /* 先頭〜 / までをコピー*/
-  if (pos > 1)
-      dir[ pos - 1 ] = '\0';    /* 末尾の / は削除する  */
-  else          /* ただし    */ 
-      dir[ pos ] = '\0';      /* "/"の場合は / は残す */
+	if (pos) {        /* / が見つかったら  */
+		strncpy(dir, path, pos);    /* 先頭〜 / までをコピー*/
+		if (pos > 1)
+			dir[ pos - 1 ] = '\0';    /* 末尾の / は削除する  */
+		else          /* ただし    */ 
+			dir[ pos ] = '\0';      /* "/"の場合は / は残す */
 
-  strcpy(file, &path[pos]);
+		strcpy(file, &path[pos]);
 
-    } else {        /* / が見つからなかった  */
-  strcpy(dir,  "");     /* ディレクトリは "" */
-  strcpy(file, path);     /* ファイルは path全て */
-    }
+	} else {        /* / が見つからなかった  */
+		strcpy(dir,  "");     /* ディレクトリは "" */
+		strcpy(file, path);     /* ファイルは path全て */
+	}
 
-    pos = strlen(file);     /* ファイル末尾の / は削除 */
-    if (pos && file[ pos - 1 ] == '/') { 
-  file[ pos - 1 ] = '\0';
-    }
+	pos = strlen(file);     /* ファイル末尾の / は削除 */
+	if (pos && file[ pos - 1 ] == '/') { 
+		file[ pos - 1 ] = '\0';
+	}
 
-    /*printf("SPLT:\"%s\" = \"%s\" + \"%s\")\n",path,dir,file);*/
-    return TRUE;
+	/*printf("SPLT:\"%s\" = \"%s\" + \"%s\")\n",path,dir,file);*/
+	return TRUE;
 }
 
 
@@ -747,43 +743,43 @@ int osd_path_split(const char *path, char dir[], char file[], int size)
  *---------------------------------------------------------------------------*/
 int osd_path_join(const char *dir, const char *file, char path[], int size)
 {
-    int len;
-    char *p;
+	int len;
+	char *p;
 
-    if (dir == NULL    ||
-  dir[0] == '\0' ||     /* ディレクトリ名なし or  */
-  file[0] == '/') {     /* ファイル名が、絶対パス */
+	if (dir == NULL    ||
+			dir[0] == '\0' ||     /* ディレクトリ名なし or  */
+			file[0] == '/') {     /* ファイル名が、絶対パス */
 
-  if ((size_t)size <= strlen(file)) { return FALSE; }
-  strcpy(path, file);
+		if ((size_t)size <= strlen(file)) { return FALSE; }
+		strcpy(path, file);
 
-    } else {          /* ファイル名は、相対パス */
+	} else {          /* ファイル名は、相対パス */
 
-  path[0] = '\0';
-  strncat(path, dir, size - 1);
+		path[0] = '\0';
+		strncat(path, dir, size - 1);
 
-  len = strlen(path);       /* ディレクトリ末尾  */
-  if (len && path[ len - 1 ] != '/') {    /* が '/' でないなら */
-      strncat(path, "/", size - len - 1);   /* 付加する          */
-  }
+		len = strlen(path);       /* ディレクトリ末尾  */
+		if (len && path[ len - 1 ] != '/') {    /* が '/' でないなら */
+			strncat(path, "/", size - len - 1);   /* 付加する          */
+		}
 
-  len = strlen(path);
-  strncat(path, file, size - len - 1);
+		len = strlen(path);
+		strncat(path, file, size - len - 1);
 
-    }
+	}
 
 
-    p = (char *)malloc(size);     /* 正規化しておこう */
-    if (p) {
-  strcpy(p, path);
-  if (osd_path_normalize(p, path, size) == FALSE) {
-      strcpy(path, p);
-  }
-  free(p);
-    }
+	p = (char *)malloc(size);     /* 正規化しておこう */
+	if (p) {
+		strcpy(p, path);
+		if (osd_path_normalize(p, path, size) == FALSE) {
+			strcpy(path, p);
+		}
+		free(p);
+	}
 
-    /*printf("JOIN:\"%s\" + \"%s\" = \"%s\"\n",dir,file,path);*/
-    return TRUE;
+	/*printf("JOIN:\"%s\" + \"%s\" = \"%s\"\n",dir,file,path);*/
+	return TRUE;
 }
 
 
@@ -798,8 +794,7 @@ int osd_file_stat(const char *pathname)
        return FILE_STAT_NOEXIST;
    else if (path_is_directory(pathname))
        return FILE_STAT_DIR;
-   else
-       return FILE_STAT_FILE;
+   return FILE_STAT_FILE;
 }
 
 /****************************************************************************
@@ -828,53 +823,53 @@ int osd_file_config_init(void)
 static int parse_tilda(const char *home, const char *path,
            char *result_path, int result_size)
 {
-    int  i;
-    char *buf;
+	int  i;
+	char *buf;
 
-    if (home           &&
-  home[0] == '/' && /* home が / で始まっていて、   */
-  path[0] == '~') { /* path が ~ で始まっている場合 */
+	if (home           &&
+			home[0] == '/' && /* home が / で始まっていて、   */
+			path[0] == '~') { /* path が ~ で始まっている場合 */
 
-  buf = (char *)malloc(strlen(home) + strlen(path) + 2);
-  if (buf == NULL)
-      return FALSE;
+		buf = (char *)malloc(strlen(home) + strlen(path) + 2);
+		if (buf == NULL)
+			return FALSE;
 
-  if (path[1] == '/'  ||    /* path が ~/ や ~/xxx や ~ の場合 */
-      path[1] == '\0') {
+		if (path[1] == '/'  ||    /* path が ~/ や ~/xxx や ~ の場合 */
+				path[1] == '\0') {
 
-      sprintf(buf, "%s%s%s", home, "/", &path[1]);
+			sprintf(buf, "%s%s%s", home, "/", &path[1]);
 
-  } else {      /* path が ~xxx や ~xxx/ の場合 */
+		} else {      /* path が ~xxx や ~xxx/ の場合 */
 
-      strcpy(buf, home);      /* home から最後のディレク */
-      i = strlen(buf) - 1;    /* トリ部を削り切り取ろう  */
+			strcpy(buf, home);      /* home から最後のディレク */
+			i = strlen(buf) - 1;    /* トリ部を削り切り取ろう  */
 
-      while (0<=i && buf[i] == '/') {i--;}  /* 末尾の / を全てスキップ */
-      while (0<=i && buf[i] != '/') {i--;}  /* / 以外を全てスキップ    */
-      while (0<=i && buf[i] == '/') {i--;}  /* さらに / を全てスキップ */
-              /*   (全部スキップして     */
-      buf[i+1] = '\0';        /*    しまったら / になる) */
+			while (0<=i && buf[i] == '/') {i--;}  /* 末尾の / を全てスキップ */
+			while (0<=i && buf[i] != '/') {i--;}  /* / 以外を全てスキップ    */
+			while (0<=i && buf[i] == '/') {i--;}  /* さらに / を全てスキップ */
+			/*   (全部スキップして     */
+			buf[i+1] = '\0';        /*    しまったら / になる) */
 
-      strcat(buf, "/");
-      strcat(buf, &path[1]);
-  }
+			strcat(buf, "/");
+			strcat(buf, &path[1]);
+		}
 
-  osd_path_normalize(buf, result_path, result_size);
+		osd_path_normalize(buf, result_path, result_size);
 
-  free(buf);
-  return TRUE;
+		free(buf);
+		return TRUE;
 
-    } else {      /* home が / で始まらない、 path が ~ で…… */
+	} else {      /* home が / で始まらない、 path が ~ で…… */
 
-  if (strlen(path) < (size_t)result_size) {
+		if (strlen(path) < (size_t)result_size) {
 
-      strcpy(result_path, path);
-      return TRUE;
+			strcpy(result_path, path);
+			return TRUE;
 
-  } else {
-      return FALSE;
-  }
-    }
+		} else {
+			return FALSE;
+		}
+	}
 }
 
 
