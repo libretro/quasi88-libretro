@@ -28,65 +28,6 @@ int	fdc_debug = 0;			/* 真なら、ファイル出力		*/
 int	main_debug = 0;			/* 真なら、ファイル出力		*/
 int	sub_debug = 0;			/* 真なら、ファイル出力		*/
 
-#ifdef	DEBUGLOG
-#include <stdarg.h>
-static	FILE	*LOG = NULL;
-
-void	debuglog_init(void)
-{
-    LOG = fopen("quasi88.log","w");
-
-    if (verbose_proc) {
-	printf("+ Support debug logging.\n");
-    }
-}
-
-void	debuglog_sync(void)
-{
-    fflush(LOG);
-}
-
-void	debuglog_exit(void)
-{
-    if (LOG) fclose(LOG);
-}
-
-void	logpio(const char *format, ...)
-{
-    va_list  list;
-    if (pio_debug) {
-	va_start(list, format);
-	vfprintf(LOG, format, list);
-	va_end(list);
-    }
-}
-
-void	logfdc(const char *format, ...)
-{
-    va_list  list;
-    if (fdc_debug) {
-	va_start(list, format);
-	vfprintf(LOG, format, list);
-	va_end(list);
-    }
-}
-
-static	int	z80_debug_wk;
-void	logz80_target(int debug_flag)
-{
-    z80_debug_wk = debug_flag;
-}
-void	logz80( const char *format, ... )
-{
-    va_list  list;
-    if (z80_debug_wk) {
-	va_start(list, format);
-	vfprintf(LOG, format, list);
-	va_end(list);
-    }
-}
-#endif
-
 /*----------------------------------------------------------------------
  *	処理時間 区間計測
  *----------------------------------------------------------------------*/

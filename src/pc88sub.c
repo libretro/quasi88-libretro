@@ -296,12 +296,7 @@ void	pc88sub_init( int init )
   z80sub_cpu.break_if_halt = TRUE;
   z80sub_cpu.PC_prev   = z80sub_cpu.PC;		/* dummy for monitor */
 
-#ifdef	DEBUGLOG
-  z80sub_cpu.log	= TRUE;
-#else
   z80sub_cpu.log	= FALSE;
-#endif
-
 
   if( init == INIT_POWERON  ||  init == INIT_RESET ){
 

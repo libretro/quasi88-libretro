@@ -219,17 +219,6 @@ extern	int	fdc_debug;
 extern	int	main_debug;
 extern	int	sub_debug;
 
-#ifdef	DEBUGLOG
-void	debuglog_init(void);
-void	debuglog_sync(void);
-void	debuglog_exit(void);
-
-void	logpio(const char *format, ...);
-void	logfdc(const char *format, ...);
-void	logz80(const char *format, ...);
-void	logz80_target(int debug_flag);
-#else
-
 #define	debuglog_init()
 #define	debuglog_sync()
 #define	debuglog_exit()
@@ -237,8 +226,6 @@ void	logz80_target(int debug_flag);
 #define	logfdc	if(1){}else printf
 #define	logz80	if(1){}else printf
 #define	logz80_target(x)
-#endif
-
 
 extern	int	debug_profiler;
 

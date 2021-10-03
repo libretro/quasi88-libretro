@@ -795,10 +795,6 @@ int	z80_emu( z80arch *z80, int state_of_exec )
 
     do{
 
-#ifdef	DEBUGLOG
-      if( z80->log ) z80_logging( z80 );	/* ログを記録 */
-#endif
-
       opcode = M_FETCH(z80->PC.W++);		/* 命令フェッチ */
       z80->R ++;
       z80->state0 += state_table[ opcode ];

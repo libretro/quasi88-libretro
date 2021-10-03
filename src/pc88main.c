@@ -2749,12 +2749,7 @@ void	pc88main_init( int init )
   z80main_cpu.break_if_halt = FALSE;		/* for debug */
   z80main_cpu.PC_prev   = z80main_cpu.PC;	/* dummy for monitor */
 
-#ifdef	DEBUGLOG
-  z80main_cpu.log	= TRUE;
-#else
   z80main_cpu.log	= FALSE;
-#endif
-
 
 	/* RAMを電源投入時パターンで初期化 */
 
