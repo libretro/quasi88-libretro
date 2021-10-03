@@ -58,11 +58,11 @@ SOURCES_C := $(CORE_DIR)/quasi88.c \
    $(CORE_DIR)/snapshot.c \
    $(CORE_DIR)/screen-16bpp.c \
    $(CORE_DIR)/screen-snapshot.c \
+   $(CORE_DIR)/utf16.c \
    $(CORE_DIR)/MINI/event.c \
-   $(CORE_DIR)/LIBRETRO/graph.c \
    $(CORE_DIR)/MINI/wait.c \
    $(CORE_DIR)/MINI/audio.c \
-   $(CORE_DIR)/utf16.c \
+   $(CORE_DIR)/LIBRETRO/graph.c \
    $(CORE_DIR)/LIBRETRO/main.c \
    $(CORE_DIR)/LIBRETRO/disks.c \
    $(CORE_DIR)/LIBRETRO/libretro.c \
@@ -100,8 +100,8 @@ SOURCES_C += \
 endif
    
 SOURCES_CXX := $(CORE_DIR)/fmgen/fmgen.cpp \
-   $(CORE_DIR)/fmgen/fmtimer.cpp \
-   $(CORE_DIR)/fmgen/opna.cpp \
-   $(CORE_DIR)/fmgen/psg.cpp \
-   $(CORE_DIR)/snddrv/quasi88/2203fmgen.cpp \
-   $(CORE_DIR)/snddrv/quasi88/2608fmgen.cpp
+	       $(CORE_DIR)/fmgen/fmtimer.cpp \
+	       $(CORE_DIR)/fmgen/opna.cpp \
+	       $(CORE_DIR)/fmgen/psg.cpp \
+	       $(CORE_DIR)/snddrv/quasi88/2203fmgen.cpp \
+	       $(CORE_DIR)/snddrv/quasi88/2608fmgen.cpp
