@@ -799,10 +799,6 @@ int	z80_emu( z80arch *z80, int state_of_exec )
       if( z80->log ) z80_logging( z80 );	/* ログを記録 */
 #endif
 
-#ifdef	USE_MONITOR
-      z80->PC_prev = z80->PC;			/* 直前のものを記憶 */
-#endif
-
       opcode = M_FETCH(z80->PC.W++);		/* 命令フェッチ */
       z80->R ++;
       z80->state0 += state_table[ opcode ];

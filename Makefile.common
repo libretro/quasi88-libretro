@@ -44,7 +44,6 @@ SOURCES_C := $(CORE_DIR)/quasi88.c \
    $(CORE_DIR)/fdc.c \
    $(CORE_DIR)/image.c \
    $(CORE_DIR)/monitor.c \
-   $(CORE_DIR)/basic.c \
    $(CORE_DIR)/menu.c \
    $(CORE_DIR)/menu-screen.c \
    $(CORE_DIR)/q8tk.c \

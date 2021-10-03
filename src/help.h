@@ -128,11 +128,6 @@ static	void	help_msg_common(void)
    "    -playback <filename>    Play back all key inputs from the file <filename>\n"
    "    -timestop               Freeze real-time-clock\n"
    "    -vsync <hz>             Set VSYNC frequency [55.4]\n"
-#ifdef	USE_MONITOR
-   "    -debug                  enable to go to monitor mode\n"
-   "    -monitor                start in monitor mode\n"
-   "    -fdcdebug               print FDC status\n"
-#endif
    "\n"
    ,
    command,

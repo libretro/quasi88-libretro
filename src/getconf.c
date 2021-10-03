@@ -235,9 +235,6 @@ static int o_setjoy_g    (char *keysym) { return oo_setinput(2,10, keysym); }
 static int o_setjoy_h    (char *keysym) { return oo_setinput(2,11, keysym); }
 
 static int o_menu   (UNUSED_ARG){ quasi88_menu();    return 0; }
-#ifdef  USE_MONITOR
-static int o_monitor(UNUSED_ARG){ quasi88_monitor(); return 0; }
-#endif
 
 static int oo_resumefilename(char *filename, int force)
 {
@@ -536,16 +533,9 @@ static const T_CONFIG_TABLE option_table[] =
   { 264, "cmd_sing",     X_FIX,  &use_cmdsing,     TRUE,                  0,0, 0        },
   { 264, "no_cmd_sing",  X_FIX,  &use_cmdsing,     FALSE,                 0,0, 0        },
 
-#ifdef  USE_MONITOR
-  { 271, "debug",        X_FIX,  &debug_mode,      TRUE,                  0,0, 0        },
-  { 271, "nodebug",      X_FIX,  &debug_mode,      FALSE,                 0,0, 0        },
-  { 272, "monitor",      X_FIX,  &debug_mode,      TRUE, 0, o_monitor,         0        },
-  { 273, "fdcdebug",     X_FIX,  &fdc_debug_mode,  TRUE ,                 0,0, 0        },
-#else
   {   0, "debug",        X_INV,                                       0,0,0,0, 0        },
   {   0, "monitor",      X_INV,                                       0,0,0,0, 0        },
   {   0, "fdcdebug",     X_INV,                                       0,0,0,0, 0        },
-#endif
 
   { 281, "nofont",       X_FIX,  &use_built_in_font,TRUE,                 0,0, 0        },
   { 281, "font",         X_FIX,  &use_built_in_font,FALSE,                0,0, 0        },

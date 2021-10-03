@@ -69,8 +69,7 @@ static int set_new_dir(const char *newdir, char *dir)
       strcpy(dir, newdir);
       return TRUE;
    }
-   else
-      return FALSE;
+   return FALSE;
 }
 
 int osd_set_dir_cwd  (const char *d) { return set_new_dir(d, dir_cwd);   }
@@ -101,25 +100,6 @@ int osd_kanji_code(void)
     else if (file_coding == 1) return 2;
     else                       return 1;
 }
-
-
-
-/****************************************************************************
- * ファイル操作
- *
- * OSD_FILE *osd_fopen(int type, const char *path, const char *mode)
- * int  osd_fclose(OSD_FILE *stream)
- * int  osd_fflush(OSD_FILE *stream)
- * int  osd_fseek(OSD_FILE *stream, long offset, int whence)
- * long osd_ftell(OSD_FILE *stream)
- * void osd_rewind(OSD_FILE *stream)
- * size_t osd_fread(void *ptr, size_t size, size_t nobj, OSD_FILE *stream)
- * size_t osd_fwrite(const void *ptr,size_t size,size_t nobj,OSD_FILE *stream)
- * int  osd_fputc(int c, OSD_FILE *stream)
- * int  osd_fgetc(OSD_FILE *stream)
- * char *osd_fgets(char *str, int size, OSD_FILE *stream)
- * int  osd_fputs(const char *str, OSD_FILE *stream)
- *****************************************************************************/
 
 /* The original code does not allow the same disk/tape file to be opened
    in multiple instances. We need to store path instead of serial number
@@ -206,16 +186,13 @@ OSD_FILE *osd_file_mem(char *mem, size_t size, int is_writeable)
 OSD_FILE *osd_fopen(int type, const char *path, const char *mode)
 {
    uint8_t   i;
-   uint8_t   retro_mode;
-   OSD_FILE *current_stream;
    uint8_t   stat;
-
-   retro_mode = get_file_access_mode(mode);
+   OSD_FILE *current_stream = NULL;
+   uint8_t retro_mode       = get_file_access_mode(mode);
    if (!retro_mode)
       return NULL;
 
    /* Try to find a free spot in the filestream buffer */
-   current_stream = NULL;
    for (i = 0; i < MAX_STREAM; i++)
    {
       if (osd_stream[i].fp == NULL && osd_stream[i].mem_file == NULL)
@@ -234,64 +211,62 @@ OSD_FILE *osd_fopen(int type, const char *path, const char *mode)
 
    switch (type)
    {
-   case FTYPE_DISK:      /* "r+b", "rb" */
-   case FTYPE_TAPE_LOAD: /* "rb"        */
-   case FTYPE_TAPE_SAVE: /* "ab"        */
-   case FTYPE_PRN:       /* "ab"        */
-   case FTYPE_COM_LOAD:  /* "rb"        */
-   case FTYPE_COM_SAVE:  /* "ab"        */
+	   case FTYPE_DISK:      /* "r+b", "rb" */
+	   case FTYPE_TAPE_LOAD: /* "rb"        */
+	   case FTYPE_TAPE_SAVE: /* "ab"        */
+	   case FTYPE_PRN:       /* "ab"        */
+	   case FTYPE_COM_LOAD:  /* "rb"        */
+	   case FTYPE_COM_SAVE:  /* "ab"        */
 
-      if (stat == FILE_STAT_FILE)
-      {
-         for (i = 0; i < MAX_STREAM; i++)
-         {
-            if (osd_stream[i].fp && string_is_equal(osd_stream[i].path, path))
-            {
-               return &osd_stream[i];
-            }
-         }
-      }
+		   if (stat == FILE_STAT_FILE)
+		   {
+			   for (i = 0; i < MAX_STREAM; i++)
+			   {
+				   if (osd_stream[i].fp && string_is_equal(osd_stream[i].path, path))
+					   return &osd_stream[i];
+			   }
+		   }
 
-   /* FALLTHROUGH */
-   default:
-      current_stream->fp = filestream_open(path, retro_mode, 0);
-      if (current_stream->fp)
-      {
-         if (stat == FILE_STAT_NOEXIST)
-         {
-            filestream_flush(current_stream->fp);
-            /* This shouldn't happen */
-            if (osd_file_stat(path) != FILE_STAT_FILE)
-               return NULL;
-         }
-         current_stream->mode = retro_mode;
-         snprintf(current_stream->path, OSD_MAX_FILENAME, "%s", path);
-         current_stream->type = type;
+		   /* FALLTHROUGH */
+	   default:
+		   current_stream->fp = filestream_open(path, retro_mode, 0);
+		   if (current_stream->fp)
+		   {
+			   if (stat == FILE_STAT_NOEXIST)
+			   {
+				   filestream_flush(current_stream->fp);
+				   /* This shouldn't happen */
+				   if (osd_file_stat(path) != FILE_STAT_FILE)
+					   return NULL;
+			   }
+			   current_stream->mode = retro_mode;
+			   snprintf(current_stream->path, OSD_MAX_FILENAME, "%s", path);
+			   current_stream->type = type;
 
-         /* Set up diff file if the loaded file is a disk */
-         if (type == FTYPE_DISK && !save_to_disk_image)
-         {
-            char save_name[OSD_MAX_FILENAME];
-            char temp_name[OSD_MAX_FILENAME];
+			   /* Set up diff file if the loaded file is a disk */
+			   if (type == FTYPE_DISK && !save_to_disk_image)
+			   {
+				   char save_name[OSD_MAX_FILENAME];
+				   char temp_name[OSD_MAX_FILENAME];
 
-            strncpy(temp_name, path_basename(path), OSD_MAX_FILENAME - 1);
-            strncpy(temp_name, path_remove_extension(temp_name), OSD_MAX_FILENAME - 1);
-            snprintf(save_name, OSD_MAX_FILENAME, "%s%c%s.srm", save_path, SLASH, temp_name);
+				   strncpy(temp_name, path_basename(path), OSD_MAX_FILENAME - 1);
+				   strncpy(temp_name, path_remove_extension(temp_name), OSD_MAX_FILENAME - 1);
+				   snprintf(save_name, OSD_MAX_FILENAME, "%s%c%s.srm", save_path, SLASH, temp_name);
 
-            /* Create diff file if it does not already exist */
-            if (osd_file_stat(save_name) != FILE_STAT_FILE)
-               filestream_write_file(save_name, 0, 0);
+				   /* Create diff file if it does not already exist */
+				   if (osd_file_stat(save_name) != FILE_STAT_FILE)
+					   filestream_write_file(save_name, 0, 0);
 
-            current_stream->sfp = filestream_open(save_name, retro_mode, 0);
-         }
+				   current_stream->sfp = filestream_open(save_name, retro_mode, 0);
+			   }
 
-         if (retro_mode & RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING)
-            osd_fseek(current_stream, 0, RETRO_VFS_SEEK_POSITION_END);
+			   if (retro_mode & RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING)
+				   osd_fseek(current_stream, 0, RETRO_VFS_SEEK_POSITION_END);
 
-         return current_stream;
-      }
-      else
-         return NULL;
+			   return current_stream;
+		   }
+		   else
+			   return NULL;
    }
 }
 
@@ -330,8 +305,7 @@ int osd_fflush(OSD_FILE *stream)
 {
    if (stream == NULL || stream->fp == NULL)
       return TRUE;
-   else
-      return filestream_flush(stream->fp);
+   return filestream_flush(stream->fp);
 }
 
 int osd_fseek(OSD_FILE *stream, long offset, int whence)
@@ -526,8 +500,6 @@ struct  T_DIR_INFO_STRUCT
     T_DIR_ENTRY *entry;     /* エントリ情報 (entry[0]〜) */
 };
 
-
-
 /*
  * ディレクトリ内のファイル名のソーティングに使う関数
  */
@@ -538,9 +510,6 @@ static int namecmp(const void *p1, const void *p2)
 
     return strcmp(s1->name, s2->name);
 }
-
-
-
 
 /*---------------------------------------------------------------------------
  * T_DIR_INFO *osd_opendir(const char *filename)
@@ -804,83 +773,10 @@ int osd_file_stat(const char *pathname)
  *  正常終了時は真を、 malloc に失敗したなど異常終了時は偽を返す。
  *
  ****************************************************************************/
-static int parse_tilda(const char *home, const char *path,
-           char *result_path, int result_size);
-static int make_dir(const char *dname);
-
 /* This is stubbed as well, we don't load from a config file. */
 int osd_file_config_init(void)
 {
    return TRUE;
-}
-
-
-/*
- * path が ~ で始まっていたら、 home に置き換えて result_path に格納する。
- *  何らかの理由で格納できなかったら、偽を返す。
- */
-
-static int parse_tilda(const char *home, const char *path,
-           char *result_path, int result_size)
-{
-	int  i;
-	char *buf;
-
-	if (home           &&
-			home[0] == '/' && /* home が / で始まっていて、   */
-			path[0] == '~') { /* path が ~ で始まっている場合 */
-
-		buf = (char *)malloc(strlen(home) + strlen(path) + 2);
-		if (buf == NULL)
-			return FALSE;
-
-		if (path[1] == '/'  ||    /* path が ~/ や ~/xxx や ~ の場合 */
-				path[1] == '\0') {
-
-			sprintf(buf, "%s%s%s", home, "/", &path[1]);
-
-		} else {      /* path が ~xxx や ~xxx/ の場合 */
-
-			strcpy(buf, home);      /* home から最後のディレク */
-			i = strlen(buf) - 1;    /* トリ部を削り切り取ろう  */
-
-			while (0<=i && buf[i] == '/') {i--;}  /* 末尾の / を全てスキップ */
-			while (0<=i && buf[i] != '/') {i--;}  /* / 以外を全てスキップ    */
-			while (0<=i && buf[i] == '/') {i--;}  /* さらに / を全てスキップ */
-			/*   (全部スキップして     */
-			buf[i+1] = '\0';        /*    しまったら / になる) */
-
-			strcat(buf, "/");
-			strcat(buf, &path[1]);
-		}
-
-		osd_path_normalize(buf, result_path, result_size);
-
-		free(buf);
-		return TRUE;
-
-	} else {      /* home が / で始まらない、 path が ~ で…… */
-
-		if (strlen(path) < (size_t)result_size) {
-
-			strcpy(result_path, path);
-			return TRUE;
-
-		} else {
-			return FALSE;
-		}
-	}
-}
-
-
-
-/*
- *  ディレクトリ dname があるかチェック。無ければ作る。
- *    成功したら、真を返す
- */
-static int make_dir(const char *dname)
-{
-   return path_mkdir(dname);
 }
 
 /****************************************************************************

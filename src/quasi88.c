@@ -304,11 +304,9 @@ int	quasi88_loop(void)
 
 	/* 例外的なモード変更時の処理 */
 	switch (mode) {
-#ifndef	USE_MONITOR
 	case MONITOR:	/* ありえないけど、念のため */
 	    mode = PAUSE;
 	    break;
-#endif
 	case QUIT:	/* QUIT なら、メインループ終了 */
 	    return FALSE;
 	}
@@ -325,9 +323,6 @@ int	quasi88_loop(void)
 	case EXEC:	emu_init();		break;
 
 	case MENU:	menu_init();		break;
-#ifdef	USE_MONITOR
-	case MONITOR:	monitor_init();		break;
-#endif
 	case PAUSE:	pause_init();		break;
 	}
 
@@ -349,9 +344,6 @@ int	quasi88_loop(void)
 
 	case EXEC:	profiler_lapse( PROF_LAPSE_RESET );
 			emu_main();		break;
-#ifdef	USE_MONITOR
-	case MONITOR:	monitor_main();		break;
-#endif
 	case MENU:	menu_main();		break;
 
 	case PAUSE:	pause_main();		break;
@@ -484,21 +476,12 @@ void	quasi88_pause(void)
 
 void	quasi88_monitor(void)
 {
-#ifdef	USE_MONITOR
-    set_mode(MONITOR);
-#else
     set_mode(PAUSE);
-#endif
 }
 
 void	quasi88_debug(void)
 {
-#ifdef	USE_MONITOR
-    set_mode(MONITOR);
-    quasi88_event_flags |= EVENT_DEBUG;
-#else
     set_mode(PAUSE);
-#endif
 }
 
 void	quasi88_quit(void)

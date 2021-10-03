@@ -341,66 +341,7 @@ void pc88fdc_break_point(void)
 }
 
 
-#ifndef	USE_MONITOR
-
 #define	print_fdc_status(nStatus,nDrive,nTrack,nSector)
-
-#else	/* USE_MONITOR */
-
-void print_fdc_status(int nStatus, int nDrive, int nTrack, int nSector)
-{
-    static int oDrive = -1;
-    static int oTrack[2];
-    static int oSector[2];
-    static int oStatus;
-    char c = ' ';
-    int i;
-    
-    if (fdc_debug_mode == TRUE) {
-	if (oDrive < 0 || nStatus != oStatus || nDrive != oDrive ||
-	    nTrack != oTrack[nDrive])
-	{
-	    oStatus = nStatus;
-	    oDrive = nDrive;
-	    oTrack[oDrive] = nTrack;
-	    oSector[oDrive] = nSector;
-	    switch (nStatus) {
-	    case BP_READ:  c = 'R'; break;
-	    case BP_WRITE: c = 'W'; break;
-	    case BP_DIAG:  c = 'D'; break;
-	    }
-	    printf("\n%c D:%d T:%d S:%d", c, nDrive+1, nTrack, nSector+1);
-	    fflush(stdout);
-	} else if (nSector != oSector[nDrive]){
-	    oSector[nDrive] = nSector;
-	    printf(",%d", nSector+1);
-	    fflush(stdout);
-	}
-    }
-    
-    if (fdc_break_flag == TRUE) {
-	for (i = 0; i < NR_BP; i++) {
-	    if (break_point_fdc[i].type == nStatus &&
-	        break_point_fdc[i].drive == nDrive + 1 &&
-		break_point_fdc[i].track == nTrack) {
-		if (break_point_fdc[i].sector == nSector + 1 ||
-		    break_point_fdc[i].sector < 0) {
-		    printf( "*** Break at D:%d T:%d S:%d *** ",
-			    nDrive + 1, nTrack, nSector + 1);
-		    switch (nStatus) {
-		    case BP_READ:  printf("( Read )\n"); break;
-		    case BP_WRITE: printf("( Write )\n"); break;
-		    case BP_DIAG:  printf("( Diag )\n"); break;
-	 	    }
-		    quasi88_debug();
-		    break;
-		}
-	    }
-	}
-    }
- 
-}
-#endif	/* USE_MONITOR */
 
 /************************************************************************/
 /* セクタ間を埋める                                                     */

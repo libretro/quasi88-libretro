@@ -393,41 +393,6 @@ void	sub_io_out_with_BP( byte port, byte data )
 /************************************************************************/
 void	pc88sub_bus_setup( void )
 {
-#ifdef	USE_MONITOR
-
-  int	i, buf[4];
-  for( i=0; i<4; i++ ) buf[i]=0;
-  for( i=0; i<NR_BP; i++ ){
-    switch( break_point[BP_SUB][i].type ){
-    case BP_READ:	buf[0]++;	break;
-    case BP_WRITE:	buf[1]++;	break;
-    case BP_IN:		buf[2]++;	break;
-    case BP_OUT:	buf[3]++;	break;
-    }
-  }
-   
-  if( memory_wait ){
-    if( buf[0] ) z80sub_cpu.fetch   = sub_fetch_with_BP;
-    else         z80sub_cpu.fetch   = sub_fetch;
-  }else{
-    if( buf[0] ) z80sub_cpu.fetch   = sub_mem_read_with_BP;
-    else         z80sub_cpu.fetch   = sub_mem_read;
-  }
-
-  if( buf[0] ) z80sub_cpu.mem_read  = sub_mem_read_with_BP;
-  else         z80sub_cpu.mem_read  = sub_mem_read;
-
-  if( buf[1] ) z80sub_cpu.mem_write = sub_mem_write_with_BP;
-  else         z80sub_cpu.mem_write = sub_mem_write;
-
-  if( buf[2] ) z80sub_cpu.io_read   = sub_io_in_with_BP;
-  else         z80sub_cpu.io_read   = sub_io_in;
-
-  if( buf[3] ) z80sub_cpu.io_write  = sub_io_out_with_BP;
-  else         z80sub_cpu.io_write  = sub_io_out;
-
-#else
-
   if( memory_wait ){
     z80sub_cpu.fetch   = sub_fetch;
   }else{
@@ -437,8 +402,6 @@ void	pc88sub_bus_setup( void )
   z80sub_cpu.mem_write = sub_mem_write;
   z80sub_cpu.io_read   = sub_io_in;
   z80sub_cpu.io_write  = sub_io_out;
-
-#endif
 }
 
 

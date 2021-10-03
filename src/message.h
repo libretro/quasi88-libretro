@@ -69,10 +69,6 @@ static const char *data_about_en[] =
     "SOUND OUTPUT ... Not available",
 #endif  
     "",
-#ifdef	USE_MONITOR
-    "Monitor mode ... Supported",
-    "",
-#endif
 
     NULL,	/* 終端 */
 };
@@ -94,10 +90,6 @@ static const char *data_about_jp[] =
     "サウンド出力 は組み込まれていません",
 #endif
     "",
-#ifdef	USE_MONITOR
-    "モニターモードが使用できます",
-    "",
-#endif
 
     NULL,	/* 終端 */
 };
