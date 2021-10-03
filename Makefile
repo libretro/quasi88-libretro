@@ -311,7 +311,6 @@ INCFLAGS_PLATFORM = -I"$(WindowsSdkDirInc)"
 export INCLUDE := $(INCLUDE)
 export LIB := $(LIB);$(WindowsSdkDir)
 TARGET := $(TARGET_NAME)_libretro.dll
-PSS_STYLE :=2
 LDFLAGS += -DLL
 # Windows MSVC 2010 x86
 else ifeq ($(platform), windows_msvc2010_x86)
@@ -335,7 +334,6 @@ INCFLAGS_PLATFORM = -I"$(WindowsSdkDirInc)"
 export INCLUDE := $(INCLUDE)
 export LIB := $(LIB);$(WindowsSdkDir)
 TARGET := $(TARGET_NAME)_libretro.dll
-PSS_STYLE :=2
 LDFLAGS += -DLL
 
 # Windows MSVC 2005 x86
@@ -354,7 +352,6 @@ WindowsSdkDir := $(INETSDK)
 export INCLUDE := $(INCLUDE);$(INETSDK)/Include;libretro-common/include/compat/msvc
 export LIB := $(LIB);$(WindowsSdkDir);$(INETSDK)/Lib
 TARGET := $(TARGET_NAME)_libretro.dll
-PSS_STYLE :=2
 LDFLAGS += -DLL
 CFLAGS += -D_CRT_SECURE_NO_DEPRECATE
 LIBS =
@@ -369,7 +366,6 @@ LD   = lib.exe
 export INCLUDE := $(XDK)/xbox/include
 export LIB := $(XDK)/xbox/lib
 PATH := $(call unixcygpath,$(XDK)/xbox/bin/vc71):$(PATH)
-PSS_STYLE :=2
 CFLAGS   += -D_XBOX -D_XBOX1
 CXXFLAGS += -D_XBOX -D_XBOX1
 STATIC_LINKING=1
@@ -390,7 +386,6 @@ WindowsSdkDir := $(INETSDK)
 export INCLUDE := $(INCLUDE);$(INETSDK)/Include;libretro-common/include/compat/msvc
 export LIB := $(LIB);$(WindowsSdkDir);$(INETSDK)/Lib
 TARGET := $(TARGET_NAME)_libretro.dll
-PSS_STYLE :=2
 LDFLAGS += -DLL
 CFLAGS += -D_CRT_SECURE_NO_DEPRECATE
 WINDOWS_VERSION=1
@@ -487,7 +482,6 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 	export INCLUDE := $(INCLUDE);$(WindowsSDKSharedIncludeDir);$(WindowsSDKUCRTIncludeDir);$(WindowsSDKUMIncludeDir)
 	export LIB := $(LIB);$(WindowsSDKUCRTLibDir);$(WindowsSDKUMLibDir)
 	TARGET := $(TARGET_NAME)_libretro.dll
-	PSS_STYLE :=2
 	LDFLAGS += -DLL
 
 # Windows
@@ -533,7 +527,7 @@ LDFLAGS += $(fpic) $(SHARED)
 FLAGS   += $(fpic) $(NEW_GCC_FLAGS)
 FLAGS   += $(INCFLAGS) $(INCFLAGS_PLATFORM)
 
-FLAGS += $(ENDIANNESS_DEFINES) -DSIZEOF_DOUBLE=8 $(WARNINGS) -DPACKAGE=\"quasi88\" -DPSS_STYLE=1 -DMPC_FIXED_POINT -DSTDC_HEADERS -D__STDC_LIMIT_MACROS -D__LIBRETRO__ -D_LOW_ACCURACY_ $(EXTRA_INCLUDES)
+FLAGS += $(ENDIANNESS_DEFINES) $(WARNINGS) -DSTDC_HEADERS -D__STDC_LIMIT_MACROS -D__LIBRETRO__ $(EXTRA_INCLUDES)
 
 CXXFLAGS += $(FLAGS)
 CFLAGS += $(FLAGS)
