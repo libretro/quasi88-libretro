@@ -207,13 +207,6 @@ char	*filename_alloc_keyboard_cfgname(void);
 /*----------------------------------------------------------------------*/
 /*	デバッグ用							*/
 /*----------------------------------------------------------------------*/
-#ifdef	DEBUGPRINTF
-void	debugprintf(const char *format, ...);
-#define	XPRINTF	debugprintf
-#else
-#define	XPRINTF	if(1){}else printf
-#endif
-
 extern	int	pio_debug;
 extern	int	fdc_debug;
 extern	int	main_debug;

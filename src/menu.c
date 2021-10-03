@@ -6583,7 +6583,6 @@ void	menu_sound_restart(int output)
     /* サウンドドライバを再初期化すると、WAV出力が継続できない場合がある */
     if (xmame_wavout_damaged()) {
 	quasi88_waveout(FALSE);
-	XPRINTF("*** Waveout Stop ***\n");
     }
 
 
@@ -6596,7 +6595,4 @@ void	menu_sound_restart(int output)
 
     /* メニューモードでこの関数が呼ばれた場合に備えて、ワークリセット */
     sd_cfg_save();
-
-
-    XPRINTF("*** Sound Setting Is Applied ***\n\n");
 }
