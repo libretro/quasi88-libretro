@@ -1211,11 +1211,9 @@ printf("CMT %02x, %s: Motor %s: CDS %d\n",data,
 	/* ＰＩＯ */
 
   case 0xfc:
-    logpio(" %02x-->\n",data);
     pio_write_AB( PIO_SIDE_M, PIO_PORT_A, data );
     return;
   case 0xfd:
-    logpio(" %02x==>\n",data);
     pio_write_AB( PIO_SIDE_M, PIO_PORT_B, data );
     return;
   case 0xfe:
@@ -1490,24 +1488,11 @@ byte	main_io_in( byte port )
   case 0xfc:
     {
       byte data = pio_read_AB( PIO_SIDE_M, PIO_PORT_A );
-      logpio(" %02x<--\n",data);
-/*      {
-	static byte debug_pio_halt[4] = { 0,0,0,0 };
-	debug_pio_halt[0] = debug_pio_halt[1];
-	debug_pio_halt[1] = debug_pio_halt[2];
-	debug_pio_halt[2] = debug_pio_halt[3];
-	debug_pio_halt[3] = data;
-	if(debug_pio_halt[0]==0x20&&
-	   debug_pio_halt[1]==0x3d&&
-	   debug_pio_halt[2]==0x02&&
-	   debug_pio_halt[3]==0x00) emu_mode=MONITOR;
-      }*/
       return data;
     }
   case 0xfd:
     {
       byte data = pio_read_AB( PIO_SIDE_M, PIO_PORT_B );
-      logpio(" %02x<==\n",data);
       return data;
     }
   case 0xfe:

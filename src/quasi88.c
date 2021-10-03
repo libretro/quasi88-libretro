@@ -136,9 +136,6 @@ void	quasi88_start(void)
     screen_snapshot_init();		/* スナップショット関連初期化   */
 
 
-    debuglog_init();
-    profiler_init();
-
     emu_breakpoint_init();
 
     if (verbose_proc) printf("Running QUASI88...\n");
@@ -180,8 +177,6 @@ void	quasi88_stop(int normal_exit)
 
     switch (proc) {
     case 6:			/* 初期化 正常に終わっている */
-	profiler_exit();
-	debuglog_exit();
 	screen_snapshot_exit();
 	key_record_playback_exit();
 	pc88main_term();
@@ -296,8 +291,6 @@ int	quasi88_loop(void)
 
     /* ======================== イニシャル処理 ======================== */
     case INIT:
-	profiler_lapse( PROF_LAPSE_RESET );
-
 	/* モード変更時は、必ずここに来る。モード変更フラグをクリア */
 	quasi88_event_flags &= ~EVENT_MODE_CHANGED;
 	mode = next_mode;
@@ -342,7 +335,7 @@ int	quasi88_loop(void)
     case MAIN:
 	switch (mode) {
 
-	case EXEC:	profiler_lapse( PROF_LAPSE_RESET );
+	case EXEC:	
 			emu_main();		break;
 	case MENU:	menu_main();		break;
 
@@ -382,7 +375,6 @@ int	quasi88_loop(void)
 
 	switch (mode) {
 	case EXEC:
-	    profiler_lapse( PROF_LAPSE_IDLE );
 	    if (! no_wait) { stat = wait_vsync_update(); }
 	    break;
 

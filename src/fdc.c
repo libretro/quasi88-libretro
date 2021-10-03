@@ -1052,7 +1052,6 @@ void	fdc_TC( void )
 #define	REPEAT()	do{  if( fdc_wait==FALSE ){ fdc.wait = 0; }   }while(0)
 
 
-/*#define	logfdc	printf*/
 /*======================================================================
  * E-PHASE にて、各種処理に要するクロック数を算出する関数・マクロ
  *======================================================================*/
@@ -1159,7 +1158,6 @@ static	int	fdc_check_unit( void )
   if( fdc.hl_stat[drv] == FALSE ){
     /* ロード音 ? */
     if ((cpu_timing > 0) && (fdc_wait)) {
-      /*logfdc("### Head Down ###\n");*/
       xmame_dev_sample_headdown();
     }
     fdc.hl_stat[drv] = TRUE;
@@ -1190,10 +1188,6 @@ static	int	fdc_check_unit( void )
 
       disk_now_track( drv, ((drive[drv].track & ~1)|fdc.hd) );
       fdc.carry = 0;
-      logfdc("\n<< sector reload >>\t\t\t");
-      if( verbose_fdc )
-	printf("FDC log : sec_buf reload $$$$\n" );
-
     }else
 
     if( ( drive[drv].track & 1 ) != fdc.hd ){	/* ヘッド位置が異なる時のみ  */
@@ -2079,13 +2073,6 @@ static	void	c_phase( void )
 	    printf("FDC %s : Drive %d Track %d\n",
 		   cmd_name[fdc.command],fdc.us+1,fdc.ncn[fdc.us]*2+fdc.hd);
 	  }
-	  logfdc("%s mf%d us%d hd%d\n",
-		 cmd_name[fdc.command],
-		 fdc.mf,fdc.us,fdc.hd);
-	}else{
-	  logfdc("%s sk%d mf%d mt%d us%d hd%d eot=%d gpl=%d dtl=%d\n",
-		 cmd_name[fdc.command],
-		 fdc.sk,fdc.mf,fdc.mt,fdc.us,fdc.hd,fdc.eot,fdc.gpl,fdc.dtl);
 	}
 	break;
 
@@ -2096,15 +2083,6 @@ static	void	c_phase( void )
 	fdc.status = (fdc.status&0x0f) | FDC_BUSY;
 	fdc.phase  = E_PHASE;
 
-	if( fdc.command==WRITE_ID ){
-	  logfdc("%s mf%d us%d hd%d n%d sc%d gpl%d d%02x\n",
-		 cmd_name[fdc.command],
-		 fdc.mf,fdc.us,fdc.hd,fdc.n,fdc.sc,fdc.gpl,fdc.d);
-	}else{
-	  logfdc("%s sk%d mf%d mt%d us%d hd%d eot=%d gpl=%d dtl=%d\n",
-		 cmd_name[fdc.command],
-		 fdc.sk,fdc.mf,fdc.mt,fdc.us,fdc.hd,fdc.eot,fdc.gpl,fdc.dtl);
-	}
 	break;
 
       case SEEK:						/* SEEK系 */
@@ -2113,10 +2091,6 @@ static	void	c_phase( void )
 	fdc.status = (fdc.status&0x0f) | FDC_BUSY;
 	fdc.phase  = E_PHASE;
 
-	logfdc("%s us%d %02x (Tr.%02d,%02d=>%02d,%02d)\n", 
-	       cmd_name[fdc.command],
-	       fdc.us,fdc.ncn[fdc.us],fdc.pcn[fdc.us]*2,fdc.pcn[fdc.us]*2+1,
-				      fdc.ncn[fdc.us]*2,fdc.ncn[fdc.us]*2+1);
 	break;
 
       case SENSE_INT_STATUS:					/* SENSE系 */
@@ -2125,11 +2099,6 @@ static	void	c_phase( void )
 	fdc.status  = (fdc.status&0x0f) | FDC_BUSY | DATA_IO;
 	fdc.phase   = R_PHASE;	
 
-	if( fdc.command==SENSE_DEVICE_STATUS ){
-	  logfdc("%s us%d hd%d\n",   cmd_name[fdc.command], fdc.us, fdc.hd );
-	}else{
-	  logfdc("%s \n",            cmd_name[fdc.command] );
-	}
 	break;
 
       case SPECIFY:						/* SPECIFY系 */
@@ -2138,10 +2107,6 @@ static	void	c_phase( void )
 	fdc.hlt_clk =     ((fdc.s1>>1)&0x7f)  *  (4*4000);  /*     hlt x 4ms */
 	nd          =       fdc.s1    &   1;
 	if( fdc.hut_clk==0 ) fdc.hut_clk = 16 * (32*4000);		/* ? */
-
-	logfdc("%s srt%dms hut%dms hlt%dms (%02X %02X)\n",
-	       cmd_name[fdc.command],
-	     fdc.srt_clk/4000,fdc.hut_clk/4000,fdc.hlt_clk/4000,fdc.s0,fdc.s1);
 
 	fdc.status  = (fdc.status&0x0f) | REQ_MASTER;
 	fdc.command = WAIT;
@@ -2208,12 +2173,9 @@ static	void	r_phase( void )
 	if( i<NR_DRIVE ) fdc.r0 = ST0_IC_NT | ST0_SE | i;
 	else             fdc.r0 = ST0_IC_AT | ST0_SE | ST0_NR | i;
 	fdc.r1 = fdc.pcn[ i ];
-	logfdc("\t\t\t\t\t\t<st0:%02x pcn:%02x>\n",
-	       fdc.r0,fdc.r1);
       }else{						/* 見つからない時は  */
 	fdc.command = INVALID;				/* INVALID扱いとする */
 	fdc.r0 = ST0_IC_IC;
-	logfdc("\t\t\t\t\t\tinvalid\n");
       }
       break;
 
@@ -2235,20 +2197,14 @@ static	void	r_phase( void )
 			((fdc.hd<<2) & ST3_HD) | ( fdc.us & ST3_US );
 	}
       }
-      logfdc("\t\t\t\t\t\t<st3:%02x>\n",
-	     fdc.st3);
       break;
 
     case INVALID:				/* INVALID                */
       fdc.r0 = ST0_IC_IC;			/* ST0 を生成する         */
-      logfdc("\t\t\t\t\t\t<st0:%02x>\n",
-	     fdc.r0);
       break;
 
     default:					/* それ以外は             */
       fdc_occur_interrupt();			/* 割り込み発生させる     */
-      logfdc("\t\t\t\t\t\t<ST:%02x %02x %02x  CHRN:%02x %02x %02x %02x>\n",
-	     fdc.st0,fdc.st1,fdc.st2,fdc.c,fdc.h,fdc.r,fdc.n);
       break;
     }
   }
@@ -2328,7 +2284,6 @@ static	void	e_phase_seek( void )
       /* シーク音 ? */
       if ((cpu_timing > 0) && (fdc_wait)) {
 	fdc_sound_counter = 0;
-	/*logfdc("### Seek ###\n");*/
 	xmame_dev_sample_seek();
       }
       fdc.seek_stat[ fdc.us ] = SEEK_STAT_MOVE;
@@ -2359,11 +2314,6 @@ static	int	e_phase_read_search( void )
 {
   int search, ret, skip_this;
 
-  if( fdc.command != READ_ID ){
-    logfdc("\t\t\tC:%02X H:%02X R:%02X N:%02X  ",fdc.c,fdc.h,fdc.r,fdc.n);
-  }
-
-
   fdc.ddam_not_skipped = 0;
 
 
@@ -2381,7 +2331,6 @@ static	int	e_phase_read_search( void )
 
     }else if( fdc.st0 & ST0_IC ){	    /* 検索したけど IDが見つかんない */
 
-      logfdc("-Miss\n");
       ret = -1;
 
     }else{				    /* 検索したら IDが見つかった     */
@@ -2401,12 +2350,10 @@ static	int	e_phase_read_search( void )
 
       if( skip_this ){				/* セクタをスキップする場合 */
 	if( fdc_next_chrn(FALSE)==0 ){			/* 次セクタに進む   */
-	  logfdc("Skip\n");
 	  ret = 0;
 	}else{						/* 既に EOT だった  */
 	  fdc.st0 |= ST0_IC_AT;
 	  fdc.st1 |= ST1_EN;
-	  logfdc("Skip-EOT\n");
 	  ret = -1;
 	}
       }else{					/* スキップせずに読む場合    */
@@ -2514,7 +2461,6 @@ static	int	e_phase_read_end( int interval )
   if( fdc.command != READ_DIAGNOSTIC &&
       fdc.st0 & ST0_IC ){		/* ID/DATA CRCエラーありの場合	*/
 
-    logfdc("-CRC\n");
     ICOUNT( fdc.limit );
     REPEAT();
     fdc.limit = 0;
@@ -2525,11 +2471,9 @@ static	int	e_phase_read_end( int interval )
     if( fdc.TC ){			    /* TC信号があった場合 */
 
       if( fdc.ddam_not_skipped ){		/* (D)DAM不一致なのにスキップ*/
-	logfdc("TC(Noskip)\n");			/* ぜずなら、今のセクタのまま*/
 
       }else{					/* それ以外 (かREAD DIAG)なら*/
 	fdc_next_chrn(TRUE);			/* 次セクタを指す            */
-	logfdc("TC\n");
       }
       ICOUNT( fdc.limit );
       REPEAT();
@@ -2543,18 +2487,15 @@ static	int	e_phase_read_end( int interval )
 	if( fdc.ddam_not_skipped ){		/* (D)DAM不一致なのにスキップ*/
 	  fdc.st0 |= ST0_IC_AT;			/* せずなら、異常終了        */
 	  fdc.st1 |= ST1_EN;
-	  logfdc("MT-Noskip\n");
 	  ret = -1;						/* E-PHASE完 */
 
 	}else{					/* それ以外 (かREAD DIAG)なら*/
 
 	  if( fdc_next_chrn(FALSE)==0 ){		/* 次セクタに進む   */
-	    logfdc("MT\n");
 	    ret = 1;
 	  }else{					/* 既に EOT だった  */
 	    fdc.st0 |= ST0_IC_AT;
 	    fdc.st1 |= ST1_EN;
-	    logfdc("MT-EOT\n");
 	    ret = -1;
 	  }
 	}
@@ -2613,7 +2554,6 @@ static	int	e_phase_writeid_search( void )
 
     if( fdc.st0 & ST0_IC ){		    /* 書き込み不能 */
 
-      logfdc("-WrPro\n");
       ret = -1;
 
     }else{				    /* 書き込み可能 */
@@ -2640,12 +2580,8 @@ static	int	e_phase_writeid_search( void )
  *- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -	*/ 	
 static	int	e_phase_write_search( void )
 {
-  int search, ret;
-
-  logfdc("\t\t\tC:%02X H:%02X R:%02X N:%02X  ",fdc.c,fdc.h,fdc.r,fdc.n);
-
-
-  search = fdc_search_id();		/* ID検索する			*/
+  int ret;
+  int search = fdc_search_id();		/* ID検索する			*/
 
   if( search == FALSE ){		/* 検索不能 (ディスク未挿入)	*/
 
@@ -2655,11 +2591,6 @@ static	int	e_phase_write_search( void )
 
     if( fdc.st0 & ST0_IC ){	    	    /* 検索したけど 異常発生         */
 
-      if( fdc.st1 & ST1_NW ){			/* 書き込み不能     */
-	logfdc("-WrPro\n");
-      }else{					/* IDが見つからない */
-	logfdc("-Miss\n");
-      }
       ret = -1;
 
     }else{				    /* 検索して、無事IDを見つけた    */
@@ -2737,7 +2668,6 @@ static	int	e_phase_write_respond( int interval )
       -- fdc.counter;
 
       if( fdc.command == WRITE_ID ){
-	logfdc("%02X %s",fdc.write,((fdc.counter%4)==0)?"\n":"");
 
 	ICOUNT( fdc.limit + ( ((fdc.counter%4)==0)? CLOCK_SECTOR(fdc.n) :0 ) );
 	REPEAT();
@@ -2838,7 +2768,6 @@ static	int	e_phase_write_end( int interval )
   if( fdc.TC ){				    /* TC信号があった場合       */
 
     fdc_next_chrn(TRUE);			    /* 次セクタを指す   */
-    logfdc("TC\n");
     ICOUNT( fdc.limit + CLOCK_BYTE() );
     REPEAT();
     fdc.limit = 0;
@@ -2849,12 +2778,10 @@ static	int	e_phase_write_end( int interval )
     if( fdc.limit <= 0 ){			/* 2バイトタイム経過    */
 
       if( fdc_next_chrn(FALSE)==0 ){		    /* 次セクタに進む   */
-	logfdc("MT\n");
 	ret = 1;
       }else{					    /* 既に EOT だった  */
 	fdc.st0 |= ST0_IC_AT;
 	fdc.st1 |= ST1_EN;
-	logfdc("MT-EOT\n");
 	ret = -1;
       }
       ICOUNT( 0 );
@@ -2918,7 +2845,6 @@ int	fdc_ctrl( int interval )
 	    fdc_sound_counter ++;
 	    if (fdc_sound_counter >= fdc_sound_skipper) {
 	      fdc_sound_counter = 0;
-	      /*logfdc("### Seek ###\n");*/
 	      xmame_dev_sample_seek();
 	    }
 	  }
@@ -2941,7 +2867,6 @@ int	fdc_ctrl( int interval )
 	  fdc.hl_stat[i] = FALSE;
 	  /* アンロード音 ? */
 	  if ((cpu_timing > 0) && (fdc_wait)) {
-	    /*logfdc("### Head Up ###\n");*/
 	    xmame_dev_sample_headup();
 	  }
 	}

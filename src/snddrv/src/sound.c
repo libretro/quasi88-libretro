@@ -676,8 +676,6 @@ void sound_frame_update(void)
 
 	VPRINTF(("sound_frame_update\n"));
 
-	profiler_mark(PROFILER_SOUND);
-
 	/* reset the mixing streams */
 	memset(leftmix, 0, samples_this_frame * sizeof(*leftmix));
 	memset(rightmix, 0, samples_this_frame * sizeof(*rightmix));
@@ -768,10 +766,7 @@ void sound_frame_update(void)
 
 	/* reset the timer to resync for this frame */
 	mame_timer_adjust(sound_update_timer, time_never, 0, time_never);
-
-	profiler_mark(PROFILER_END);
 }
-
 
 /*-------------------------------------------------
     mixer_update - mix all inputs to one output

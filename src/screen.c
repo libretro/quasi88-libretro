@@ -1509,11 +1509,6 @@ void	screen_update(void)
 
     screen_attr_update();	/* マウス自動で隠す…呼び出し場所がいまいち */
 
-
-    if (is_exec) {
-	profiler_lapse( PROF_LAPSE_BLIT );
-    }
-
     status_update();		/* ステータス領域の画像データを更新 */
 
 
@@ -1673,20 +1668,10 @@ void	screen_update(void)
 
     if (draw_finish) { (draw_finish)(); }	/* システム依存の描画後処理 */
 
-    if (is_exec) {
-	profiler_video_output(((frame_counter % frameskip_rate) == 0),
-			      skip, (all_area || rect != -1));
-    }
-
-
     if ((is_exec) && (dont_frameskip == FALSE)) {
 	++ frame_counter;
     } else {	/* menu,pause,monitor */
 	frame_counter = 0;
-    }
-
-    if (is_exec) {
-	profiler_lapse( PROF_LAPSE_VIDEO );
     }
 
     if (all_area) {

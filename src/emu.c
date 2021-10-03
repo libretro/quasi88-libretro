@@ -233,8 +233,6 @@ void	emu_main(void)
 {
   int	wk;
 
-  profiler_lapse( PROF_LAPSE_CPU );
-
   switch( emu_mode_execute ){
 
   /*------------------------------------------------------------------------*/
@@ -289,20 +287,12 @@ void	emu_main(void)
       if (quasi88_event_flags & EVENT_AUDIO_UPDATE) {
 	quasi88_event_flags &= ~EVENT_AUDIO_UPDATE;
 
-	profiler_lapse( PROF_LAPSE_SND );
-
 	xmame_sound_update();			/* サウンド出力 */
-
-	profiler_lapse( PROF_LAPSE_AUDIO );
 
 	xmame_update_video_and_audio();		/* サウンド出力 その2 */
 
-	profiler_lapse( PROF_LAPSE_INPUT );
-
 	event_update();				/* イベント処理		*/
 	keyboard_update();
-
-	profiler_lapse( PROF_LAPSE_CPU2 );
       }
 
       /* ビデオ出力タイミングであれば、CPU処理は一旦中止。上位に抜ける */
@@ -344,11 +334,8 @@ void	emu_main(void)
 
       if (quasi88_event_flags & EVENT_AUDIO_UPDATE) {
 	quasi88_event_flags &= ~EVENT_AUDIO_UPDATE;
-	profiler_lapse( PROF_LAPSE_SND );
 	xmame_sound_update();			/* サウンド出力 */
-	profiler_lapse( PROF_LAPSE_AUDIO );
 	xmame_update_video_and_audio();		/* サウンド出力 その2 */
-	profiler_lapse( PROF_LAPSE_INPUT );
 	event_update();				/* イベント処理		*/
 	keyboard_update();
       }

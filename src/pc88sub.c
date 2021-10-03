@@ -118,11 +118,9 @@ void	sub_io_out( byte port, byte data )
 	/* ＰＩＯ */
 
   case 0xfc:
-    logpio("   <==%02x\n",data);
     pio_write_AB( PIO_SIDE_S, PIO_PORT_A, data );
     return;
   case 0xfd:
-    logpio("   <--%02x\n",data);
     pio_write_AB( PIO_SIDE_S, PIO_PORT_B, data );
     return;
   case 0xfe:
@@ -166,13 +164,11 @@ byte	sub_io_in( byte port )
   case 0xfc:
     {
       byte data = pio_read_AB( PIO_SIDE_S, PIO_PORT_A );
-      logpio("   ==>%02x\n",data);
       return data;
     }
   case 0xfd:
     {
       byte data = pio_read_AB( PIO_SIDE_S, PIO_PORT_B );
-      logpio("   -->%02x\n",data);
       return data;
     }
   case 0xfe:
