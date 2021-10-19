@@ -125,18 +125,7 @@ static bool      rumble_enabled                 = true;
 static char      download_dir[OSD_MAX_FILENAME] = { '\0' };
 static char      system_dir[OSD_MAX_FILENAME]   = { '\0' };
 
-void display_message(const char *msg)
-{
-   char *str = (char*)calloc(4096, sizeof(char));
-   struct retro_message rmsg;
-
-   snprintf(str, 4096, "%s", msg);
-   rmsg.frames = 300;
-   rmsg.msg = str;
-   environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &rmsg);
-}
-
-void handle_key(uint8_t key, uint16_t retro_key)
+static void handle_key(uint8_t key, uint16_t retro_key)
 {
    bool key_on = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, retro_key);
    
@@ -155,7 +144,7 @@ void handle_key(uint8_t key, uint16_t retro_key)
    }
 }
 
-void handle_pad(uint8_t key, uint16_t retro_button, uint8_t pad)
+static void handle_pad(uint8_t key, uint16_t retro_button, uint8_t pad)
 {
    bool button_on = input_state_cb(pad, RETRO_DEVICE_JOYPAD, 0, retro_button);
    
@@ -174,7 +163,7 @@ void handle_pad(uint8_t key, uint16_t retro_button, uint8_t pad)
    }
 }
 
-bool handle_disk_swap(bool is_first_drive, uint8_t key)
+static bool handle_disk_swap(bool is_first_drive, uint8_t key)
 {
    if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, key))
    {
@@ -214,7 +203,7 @@ bool handle_disk_swap(bool is_first_drive, uint8_t key)
    return false;
 }
 
-void handle_input()
+static void handle_input(void)
 {
    uint8_t i;
    
@@ -318,11 +307,8 @@ void handle_input()
    handle_key(KEY88_PAD2_B,     RETRO_DEVICE_ID_JOYPAD_B);
 }
 
-void handle_rumble()
+static void handle_rumble(void)
 {
-   if (!rumble_cb)
-      return;
-
    if (rumble_enabled && (!get_drive_ready(0) || !get_drive_ready(1)))
    {
       rumble_cb(0, RETRO_RUMBLE_STRONG, 65535);
@@ -335,7 +321,7 @@ void handle_rumble()
    }
 }
 
-void init_variables()
+static void init_variables(void)
 {
    struct retro_variable var = {0};
 
@@ -448,7 +434,7 @@ void init_variables()
       rumble_enabled = (!strcmp(var.value, "disabled")) ? false : true;
 }
 
-bool load_system_file(uint8_t bios_index, byte *rom_data, uint32_t rom_size)
+static bool load_system_file(uint8_t bios_index, byte *rom_data, uint32_t rom_size)
 {
    char filename[256];
    char rom_filename[OSD_MAX_FILENAME];
@@ -618,7 +604,7 @@ void retro_reset(void)
    quasi88_reset(NULL);
 }
 
-bool load_m3u(const char *filename)
+static bool load_m3u(const char *filename)
 {
    char basedir[OSD_MAX_FILENAME];
    char line[OSD_MAX_FILENAME];
@@ -716,9 +702,8 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info *info, 
    return true;
 }
 
-void retro_unload_game()
+void retro_unload_game(void)
 {
-   
 }
 
 void retro_run(void)
@@ -726,7 +711,8 @@ void retro_run(void)
    handle_input();
    quasi88_loop();
    quasi88_loop();
-   handle_rumble();
+   if (rumble_cb)
+      handle_rumble();
    video_cb(screen_buf, WIDTH, HEIGHT, WIDTH * 2);
    
    /* Prevent a loud audio pop */
@@ -757,15 +743,17 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->timing.sample_rate    = 44100;
 }
 
-void retro_deinit()
+void retro_deinit(void)
 {
    /* Stop the emulator */
    quasi88_stop(TRUE);
 
    /* Free our input buffers */
-   free(key_buffer);
+   if (key_buffer)
+      free(key_buffer);
+   if (pad_buffer)
+      free(pad_buffer);
    key_buffer = NULL;
-   free(pad_buffer);
    pad_buffer = NULL;
 
    /* Free all our file handles */
@@ -788,19 +776,19 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 
 void retro_set_environment(retro_environment_t cb)
 {
-   unsigned core_options_version = 0;
-   unsigned language = RETRO_LANGUAGE_ENGLISH;
-   bool no_game = true;
+   static struct retro_core_options_intl 
+      variables_intl              = { variables_english, variables_english };
+   unsigned core_options_version  = 0;
+   unsigned language              = RETRO_LANGUAGE_ENGLISH;
+   bool no_game                   = true;
    enum retro_pixel_format rgb565 = RETRO_PIXEL_FORMAT_RGB565;
    
-   environ_cb = cb;
+   environ_cb                     = cb;
    cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
    cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT,    &rgb565);
    cb(RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO,  (void*)subsystems);
    cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &no_game);
    
-   static struct retro_core_options_intl variables_intl = { variables_english, variables_english };
-
    /* Set localized core options if available */
    if (cb(RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION, &core_options_version) && core_options_version > 0)
    {
@@ -846,23 +834,27 @@ size_t retro_serialize_size(void)
 /* TODO: Not safe across endianness yet! */
 bool retro_serialize(void *data, size_t size)
 {
-  OSD_FILE *fp = osd_file_mem(data, size, 1);
-  if (!fp) {
-    return false;
-  }
-  int success = statesave_by_fp (fp);
-  if (osd_file_did_overflow(fp)) {
-    fprintf(stderr, "OSD file overflown\n");
-    success = false;
-  }
+   int success;
+   OSD_FILE *fp = osd_file_mem(data, size, 1);
+   if (!fp)
+      return false;
 
-  osd_fclose(fp);
-  
-  return success;
+   success = statesave_by_fp (fp);
+
+   if (osd_file_did_overflow(fp))
+   {
+      log_cb(RETRO_LOG_ERROR, "OSD file overflown\n");
+      success = false;
+   }
+
+   osd_fclose(fp);
+
+   return success;
 }
 
 bool retro_unserialize(const void *data, size_t size)
 {
+   int success;
    OSD_FILE *fp = osd_file_mem(data, size, 0);
    if (!fp)
      return false;
@@ -870,7 +862,7 @@ bool retro_unserialize(const void *data, size_t size)
    pc88main_term();
    pc88sub_term();
 
-   int success = stateload_by_fp (fp);
+   success = stateload_by_fp (fp);
 
    osd_fclose(fp);
 
@@ -892,8 +884,10 @@ void *retro_get_memory_data(unsigned type)
       case RETRO_MEMORY_PC88_VIDEO_RAM:
          return main_vram;
       default:
-         return NULL;
+         break;
    }
+
+   return NULL;
 }
 
 size_t retro_get_memory_size(unsigned type)
@@ -907,8 +901,10 @@ size_t retro_get_memory_size(unsigned type)
       case RETRO_MEMORY_PC88_VIDEO_RAM:
          return 0x10000;
       default:
-         return 0;
+         break;
    }
+
+   return 0;
 }
 
 void retro_cheat_reset(void)
