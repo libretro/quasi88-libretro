@@ -221,7 +221,9 @@ static void handle_input(void)
    handle_pad(KEY88_X,       RETRO_DEVICE_ID_JOYPAD_A,      0);
    handle_pad(KEY88_Z,       RETRO_DEVICE_ID_JOYPAD_B,      0);
    handle_pad(KEY88_SPACE,   RETRO_DEVICE_ID_JOYPAD_Y,      0);
+   handle_pad(KEY88_RETURN,  RETRO_DEVICE_ID_JOYPAD_START,  0);
    handle_pad(KEY88_RETURNL, RETRO_DEVICE_ID_JOYPAD_START,  0);
+   handle_pad(KEY88_RETURNR, RETRO_DEVICE_ID_JOYPAD_START,  0);
    handle_pad(KEY88_I,       RETRO_DEVICE_ID_JOYPAD_SELECT, 0);
 
    handle_pad(KEY88_R,      RETRO_DEVICE_ID_JOYPAD_UP,     1);
