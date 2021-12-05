@@ -29,7 +29,9 @@
 #include "pc88cpu.h"
 #include "pseudo_bios.h"
 #include "disks.h"
-#include "libretro_options.h"
+#include "libretro_core_options.h"
+static bool libretro_supports_option_categories = false;
+
 #include "libretro-file.h"
 #include "suspend.h"
 
@@ -778,29 +780,19 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 
 void retro_set_environment(retro_environment_t cb)
 {
-   static struct retro_core_options_intl 
-      variables_intl              = { variables_english, variables_english };
-   unsigned core_options_version  = 0;
-   unsigned language              = RETRO_LANGUAGE_ENGLISH;
    bool no_game                   = true;
    enum retro_pixel_format rgb565 = RETRO_PIXEL_FORMAT_RGB565;
    
    environ_cb                     = cb;
+
    cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
    cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT,    &rgb565);
    cb(RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO,  (void*)subsystems);
    cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &no_game);
    
    /* Set localized core options if available */
-   if (cb(RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION, &core_options_version) && core_options_version > 0)
-   {
-      cb(RETRO_ENVIRONMENT_GET_LANGUAGE, &language);
-      if (language < RETRO_LANGUAGE_LAST)
-         variables_intl.local = variables[language];
-      cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL, (void*)(&variables_intl));
-   }
-   else
-      cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)variables_old);
+   libretro_set_core_options(environ_cb,
+                             &libretro_supports_option_categories);
 }
 
 void retro_set_audio_sample(retro_audio_sample_t cb)
