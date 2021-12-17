@@ -2716,7 +2716,7 @@ struct retro_core_options_v2 options_fa = {
 #define OPTION_VAL_1_FI NULL
 #define OPTION_VAL_2_FI NULL
 #define Q88_CPU_CLOCK_LABEL_FI NULL
-#define Q88_CPU_CLOCK_INFO_0_FI NULL
+#define Q88_CPU_CLOCK_INFO_0_FI "Suositus: 4 MHz tai 8 MHz. Jotkin ohjelmistot saattavat toimia liian nopeasti, jos asetus on 8 MHz."
 #define OPTION_VAL_4_FI NULL
 #define OPTION_VAL_8_FI NULL
 #define OPTION_VAL_16_FI NULL
@@ -2736,7 +2736,7 @@ struct retro_core_options_v2 options_fa = {
 #define Q88_SAVE_TO_DISK_IMAGE_INFO_0_FI NULL
 #define Q88_RUMBLE_LABEL_FI NULL
 #define Q88_RUMBLE_INFO_0_FI NULL
-#define Q88_SCREEN_SIZE_LABEL_FI NULL
+#define Q88_SCREEN_SIZE_LABEL_FI "Näytön koko"
 #define Q88_SCREEN_SIZE_INFO_0_FI NULL
 #define Q88_SCREEN_SIZE_INFO_1_FI NULL
 #define Q88_SCREEN_SIZE_INFO_2_FI NULL
@@ -4152,8 +4152,8 @@ struct retro_core_options_v2 options_it = {
 #define OPTION_VAL_2_JA "常時、両CPUを駆動させる"
 #define Q88_CPU_CLOCK_LABEL_JA "CPU クロック"
 #define Q88_CPU_CLOCK_INFO_0_JA "推奨：4MHzまたは8MHz。 一部のソフトウェアは、8MHz CPUでは高速に実行される場合があります。"
-#define OPTION_VAL_4_JA NULL
-#define OPTION_VAL_8_JA NULL
+#define OPTION_VAL_4_JA "4 MHz (NEC μPD780)"
+#define OPTION_VAL_8_JA "8 MHz (NEC μPD70008)"
 #define OPTION_VAL_16_JA "16 MHz (オーバークロック)"
 #define OPTION_VAL_32_JA "32 MHz (オーバークロック)"
 #define OPTION_VAL_64_JA "64 MHz (オーバークロック)"
@@ -4344,44 +4344,44 @@ struct retro_core_options_v2 options_ja = {
 
 /* RETRO_LANGUAGE_KO */
 
-#define Q88_BASIC_MODE_LABEL_KO NULL
-#define Q88_BASIC_MODE_INFO_0_KO NULL
+#define Q88_BASIC_MODE_LABEL_KO "BASIC 모드"
+#define Q88_BASIC_MODE_INFO_0_KO "권장: PC-8800 소프트웨어에는 N88-BASIC V2/V1H, PC-8000 소프트웨어에는 N-BASIC\n\- PC-8800 소프트웨어가 V2 모드에서 너무 빨리 실행된다면 V1 모드를 사용하십시오.\n\- N-BASIC 모드를 사용하려면 BIOS 파일이 필요합니다. 코어 정보를 참조하십시오."
 #define OPTION_VAL_N88_V2_KO NULL
 #define OPTION_VAL_N88_V1H_KO NULL
 #define OPTION_VAL_N88_V1S_KO NULL
 #define OPTION_VAL_N_KO NULL
-#define Q88_SUB_CPU_MODE_LABEL_KO NULL
-#define Q88_SUB_CPU_MODE_INFO_0_KO NULL
-#define OPTION_VAL_0_KO NULL
-#define OPTION_VAL_1_KO NULL
-#define OPTION_VAL_2_KO NULL
-#define Q88_CPU_CLOCK_LABEL_KO NULL
-#define Q88_CPU_CLOCK_INFO_0_KO NULL
+#define Q88_SUB_CPU_MODE_LABEL_KO "보조 CPU 모드"
+#define Q88_SUB_CPU_MODE_INFO_0_KO "권장: 디스크 액세스 중일 때 보조 CPU만 사용"
+#define OPTION_VAL_0_KO "디스크 액세스 중일 때 보조 CPU만 사용"
+#define OPTION_VAL_1_KO "디스크 액세스 중일 때 두 CPU 모두 사용"
+#define OPTION_VAL_2_KO "항상 두 CPU 모두 사용"
+#define Q88_CPU_CLOCK_LABEL_KO "CPU 클럭"
+#define Q88_CPU_CLOCK_INFO_0_KO "권장: 4MHz 또는 8MHz. 일부 소프트웨어는 8MHz CPU에서 너무 빠르게 실행될 수도 있습니다."
 #define OPTION_VAL_4_KO NULL
 #define OPTION_VAL_8_KO NULL
-#define OPTION_VAL_16_KO NULL
-#define OPTION_VAL_32_KO NULL
-#define OPTION_VAL_64_KO NULL
-#define OPTION_VAL_1_O2_KO NULL
-#define OPTION_VAL_2_O2_KO NULL
-#define Q88_SOUND_BOARD_LABEL_KO NULL
-#define Q88_SOUND_BOARD_INFO_0_KO NULL
+#define OPTION_VAL_16_KO "16 MHz (오버클럭)"
+#define OPTION_VAL_32_KO "32 MHz (오버클럭)"
+#define OPTION_VAL_64_KO "64 MHz (오버클럭)"
+#define OPTION_VAL_1_O2_KO "1 MHz (언더클럭)"
+#define OPTION_VAL_2_O2_KO "2 MHz (언더클럭)"
+#define Q88_SOUND_BOARD_LABEL_KO "사운드 보드"
+#define Q88_SOUND_BOARD_INFO_0_KO "권장: OPNA. 일부 소프트웨어는 OPN 하드웨어 사용 시 소리 출력이 달라질 수 있습니다."
 #define OPTION_VAL_OPN_KO NULL
 #define OPTION_VAL_OPNA_KO NULL
 #define Q88_USE_FDC_WAIT_LABEL_KO NULL
-#define Q88_USE_FDC_WAIT_INFO_0_KO NULL
-#define Q88_PCG_8100_LABEL_KO NULL
-#define Q88_PCG_8100_INFO_0_KO NULL
-#define Q88_SAVE_TO_DISK_IMAGE_LABEL_KO NULL
-#define Q88_SAVE_TO_DISK_IMAGE_INFO_0_KO NULL
-#define Q88_RUMBLE_LABEL_KO NULL
-#define Q88_RUMBLE_INFO_0_KO NULL
-#define Q88_SCREEN_SIZE_LABEL_KO NULL
-#define Q88_SCREEN_SIZE_INFO_0_KO NULL
-#define Q88_SCREEN_SIZE_INFO_1_KO NULL
-#define Q88_SCREEN_SIZE_INFO_2_KO NULL
-#define OPTION_VAL_FULL_KO NULL
-#define OPTION_VAL_HALF_KO NULL
+#define Q88_USE_FDC_WAIT_INFO_0_KO "권장: ON. 플로피 디스크 컨트롤러의 IO 타이밍을 더욱 정확하게 합니다."
+#define Q88_PCG_8100_LABEL_KO "PCG-8100 사용"
+#define Q88_PCG_8100_INFO_0_KO "권장: OFF. 일부 PC-8000 소프트웨어의 구동에 필요할 수도 있습니다."
+#define Q88_SAVE_TO_DISK_IMAGE_LABEL_KO "디스크 이미지에 저장"
+#define Q88_SAVE_TO_DISK_IMAGE_INFO_0_KO "권장: OFF. 코어가 선호할 저장 방식을 변경합니다.\n\- OFF: 플로피 디스크에 저장된 데이터는 프론트엔드의 저장 디렉토리에 개별 파일로 보관됩니다.\n\- ON: 데이터가 불러와진 디스크 파일에 직접 쓰여집니다. 압축된 컨텐츠에서는 작동하지 않습니다."
+#define Q88_RUMBLE_LABEL_KO "디스크 액세스 중 진동"
+#define Q88_RUMBLE_INFO_0_KO "권장: N/A. 플로피 디스크 컨트롤러가 디스크 읽는 소리를 컨트롤러의 진동으로 흉내냅니다."
+#define Q88_SCREEN_SIZE_LABEL_KO "화면 크기"
+#define Q88_SCREEN_SIZE_INFO_0_KO "권장: 절반. 코어가 출력되는 이미지를 줄일 수 있게 합니다. PSP 화면에 권장됩니다."
+#define Q88_SCREEN_SIZE_INFO_1_KO "권장: 절반. 코어가 출력되는 이미지를 줄일 수 있게 합니다. Nintendo 3DS 화면에 권장됩니다."
+#define Q88_SCREEN_SIZE_INFO_2_KO "권장: 전체. 코어가 출력되는 이미지를 줄일 수 있게 합니다. 화면 높이가 400 미만인 화면에만 사용할 것을 권장합니다."
+#define OPTION_VAL_FULL_KO "전체 (640x400)"
+#define OPTION_VAL_HALF_KO "절반 (320x200)"
 
 struct retro_core_option_v2_category option_cats_ko[] = {
    { NULL, NULL, NULL },
@@ -5376,10 +5376,10 @@ struct retro_core_options_v2 options_pl = {
 #define OPTION_VAL_N88_V1S_PT_BR NULL
 #define OPTION_VAL_N_PT_BR NULL
 #define Q88_SUB_CPU_MODE_LABEL_PT_BR "Modo da sub-CPU"
-#define Q88_SUB_CPU_MODE_INFO_0_PT_BR "Recomendado: Executar só a sub-CPU ao acessar o disco."
-#define OPTION_VAL_0_PT_BR "Executar só a sub-CPU ao acessar o disco"
-#define OPTION_VAL_1_PT_BR "Executar ambas CPUs ao acessar o disco"
-#define OPTION_VAL_2_PT_BR "Sempre executar ambas as CPUs"
+#define Q88_SUB_CPU_MODE_INFO_0_PT_BR "Recomendado: Executa só a sub-CPU ao acessar o disco."
+#define OPTION_VAL_0_PT_BR "Executa só a sub-CPU ao acessar o disco"
+#define OPTION_VAL_1_PT_BR "Executa ambas as CPUs ao acessar o disco"
+#define OPTION_VAL_2_PT_BR "Sempre executa ambas as CPUs"
 #define Q88_CPU_CLOCK_LABEL_PT_BR "Velocidade da CPU"
 #define Q88_CPU_CLOCK_INFO_0_PT_BR "Recomendado: 4MHz ou 8MHz. Alguns aplicativos podem ser executados muito rápido com uma CPU de 8MHz."
 #define OPTION_VAL_4_PT_BR NULL
@@ -5984,28 +5984,28 @@ struct retro_core_options_v2 options_ro = {
 
 /* RETRO_LANGUAGE_RU */
 
-#define Q88_BASIC_MODE_LABEL_RU NULL
-#define Q88_BASIC_MODE_INFO_0_RU NULL
+#define Q88_BASIC_MODE_LABEL_RU "Режим BASIC"
+#define Q88_BASIC_MODE_INFO_0_RU "Рекомендованный режим: N88-BASIC V2/V1H для программ PC-8800, N-BASIC для программ PC-8000.\n\ - Если программа PC-8800 идёт слишком быстро в режиме V2, используйте режим V1.\n\ - Файлы BIOS необходимы для режима N-BASIC. См. информацию о ядре."
 #define OPTION_VAL_N88_V2_RU NULL
 #define OPTION_VAL_N88_V1H_RU NULL
 #define OPTION_VAL_N88_V1S_RU NULL
 #define OPTION_VAL_N_RU NULL
-#define Q88_SUB_CPU_MODE_LABEL_RU NULL
-#define Q88_SUB_CPU_MODE_INFO_0_RU NULL
-#define OPTION_VAL_0_RU NULL
-#define OPTION_VAL_1_RU NULL
-#define OPTION_VAL_2_RU NULL
-#define Q88_CPU_CLOCK_LABEL_RU NULL
-#define Q88_CPU_CLOCK_INFO_0_RU NULL
-#define OPTION_VAL_4_RU NULL
-#define OPTION_VAL_8_RU NULL
-#define OPTION_VAL_16_RU NULL
-#define OPTION_VAL_32_RU NULL
-#define OPTION_VAL_64_RU NULL
-#define OPTION_VAL_1_O2_RU NULL
-#define OPTION_VAL_2_O2_RU NULL
-#define Q88_SOUND_BOARD_LABEL_RU NULL
-#define Q88_SOUND_BOARD_INFO_0_RU NULL
+#define Q88_SUB_CPU_MODE_LABEL_RU "Режим доп. CPU"
+#define Q88_SUB_CPU_MODE_INFO_0_RU "Рекомендованный режим: запускать доп. CPU только при чтении с диска."
+#define OPTION_VAL_0_RU "Запускать доп. CPU только при чтении с диска"
+#define OPTION_VAL_1_RU "Запускать оба CPU при чтении с диска"
+#define OPTION_VAL_2_RU "Всегда запускать оба CPU"
+#define Q88_CPU_CLOCK_LABEL_RU "Частота CPU"
+#define Q88_CPU_CLOCK_INFO_0_RU "Рекомендованный режим: 4 МГц или 8 МГц. Некоторые программы могут идти слишком быстро на 8 МГц."
+#define OPTION_VAL_4_RU "4 МГц (NEC µPD780)"
+#define OPTION_VAL_8_RU "8 МГц (NEC µPD70008)"
+#define OPTION_VAL_16_RU "16 МГц (разгон)"
+#define OPTION_VAL_32_RU "32 МГц (разгон)"
+#define OPTION_VAL_64_RU "64 МГц (разгон)"
+#define OPTION_VAL_1_O2_RU "1 МГц (замедление)"
+#define OPTION_VAL_2_O2_RU "2 МГц (замедление)"
+#define Q88_SOUND_BOARD_LABEL_RU "Звуковая плата"
+#define Q88_SOUND_BOARD_INFO_0_RU "Рекомендованный режим: OPNA. Некоторые программы будут звучать иначе на оборудовании OPN."
 #define OPTION_VAL_OPN_RU NULL
 #define OPTION_VAL_OPNA_RU NULL
 #define Q88_USE_FDC_WAIT_LABEL_RU NULL
@@ -6014,14 +6014,14 @@ struct retro_core_options_v2 options_ro = {
 #define Q88_PCG_8100_INFO_0_RU NULL
 #define Q88_SAVE_TO_DISK_IMAGE_LABEL_RU NULL
 #define Q88_SAVE_TO_DISK_IMAGE_INFO_0_RU NULL
-#define Q88_RUMBLE_LABEL_RU NULL
-#define Q88_RUMBLE_INFO_0_RU NULL
-#define Q88_SCREEN_SIZE_LABEL_RU NULL
-#define Q88_SCREEN_SIZE_INFO_0_RU NULL
-#define Q88_SCREEN_SIZE_INFO_1_RU NULL
-#define Q88_SCREEN_SIZE_INFO_2_RU NULL
-#define OPTION_VAL_FULL_RU NULL
-#define OPTION_VAL_HALF_RU NULL
+#define Q88_RUMBLE_LABEL_RU "Вибрация при чтении диска"
+#define Q88_RUMBLE_INFO_0_RU "Рекомендованный режим: Н/Д. Имитирует с помощью вибрации геймпада звук считывания контроллера гибких дисков."
+#define Q88_SCREEN_SIZE_LABEL_RU "Размер экрана"
+#define Q88_SCREEN_SIZE_INFO_0_RU "Рекомендованный режим: Половина. Позволяет ядру уменьшать размер изображения. Рекомендуется для экрана PSP."
+#define Q88_SCREEN_SIZE_INFO_1_RU "Рекомендованный режим: Половина. Позволяет ядру уменьшать размер изображения. Рекомендуется для экрана Nintendo 3DS."
+#define Q88_SCREEN_SIZE_INFO_2_RU "Рекомендованный режим: Полный. Позволяет ядру уменьшать размер изображения. Рекомендуется для экранов с высотой меньше 400."
+#define OPTION_VAL_FULL_RU "Полный (640x480)"
+#define OPTION_VAL_HALF_RU "Половина (320x200)"
 
 struct retro_core_option_v2_category option_cats_ru[] = {
    { NULL, NULL, NULL },
