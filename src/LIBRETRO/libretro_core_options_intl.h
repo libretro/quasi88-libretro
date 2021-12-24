@@ -2301,9 +2301,9 @@ struct retro_core_options_v2 options_eo = {
 #define OPTION_VAL_N88_V1S_ES NULL
 #define OPTION_VAL_N_ES NULL
 #define Q88_SUB_CPU_MODE_LABEL_ES "Modo del subprocesador"
-#define Q88_SUB_CPU_MODE_INFO_0_ES "Recomendación: ejecutar la sub-CPU solo al acceder al disco."
-#define OPTION_VAL_0_ES "Ejecutar la sub-CPU solo al acceder al disco"
-#define OPTION_VAL_1_ES "Ejecutar ambas CPU al acceder al disco"
+#define Q88_SUB_CPU_MODE_INFO_0_ES "Recomendación: ejecutar la sub-CPU solo al acceder al disquete."
+#define OPTION_VAL_0_ES "Ejecutar la sub-CPU solo al acceder al disquete"
+#define OPTION_VAL_1_ES "Ejecutar ambas CPU al acceder al disquete"
 #define OPTION_VAL_2_ES "Ejecutar siempre ambas CPU"
 #define Q88_CPU_CLOCK_LABEL_ES "Reloj de la CPU"
 #define Q88_CPU_CLOCK_INFO_0_ES "Recomendación: 4 u 8 MHz. Algunas aplicaciones podrían ejecutarse demasiado rápido con una CPU a 8 MHz."
@@ -2322,9 +2322,9 @@ struct retro_core_options_v2 options_eo = {
 #define Q88_USE_FDC_WAIT_INFO_0_ES "Recomendación: Sí. Mejora la sincronía del I/O con el controlador de la disquetera."
 #define Q88_PCG_8100_LABEL_ES "Utilizar PCG-8100"
 #define Q88_PCG_8100_INFO_0_ES "Recomendación: No. Algunas aplicaciones para PC-8000 sí podrían necesitarlo."
-#define Q88_SAVE_TO_DISK_IMAGE_LABEL_ES "Guardar a una imagen de disco"
-#define Q88_SAVE_TO_DISK_IMAGE_INFO_0_ES "Recomendación: No. Cambia el método preferido por el núcleo para guardar datos.\n\- No: Los datos que se escriban en disquetes serán almacenados en un archivo aparte, en el directorio de guardados del front-end.\n\- Sí: Los datos se escribirán directamente en el(los) archivo(s) de disco cargado(s). No se escribirán contenidos que estén en archivos .zip."
-#define Q88_RUMBLE_LABEL_ES "Vibrar el mando al acceder al disco"
+#define Q88_SAVE_TO_DISK_IMAGE_LABEL_ES "Guardar a una imagen de disquete"
+#define Q88_SAVE_TO_DISK_IMAGE_INFO_0_ES "Recomendación: No. Cambia el método preferido por el núcleo para guardar datos.\n\- No: Los datos que se escriban en disquetes serán almacenados en un archivo aparte, en el directorio de guardados del front-end.\n\- Sí: Los datos se escribirán directamente en el(los) archivo(s) de disquete cargado(s). No se escribirán contenidos que estén en archivos .zip."
+#define Q88_RUMBLE_LABEL_ES "Vibrar el mando al acceder al disquete"
 #define Q88_RUMBLE_INFO_0_ES "Recomendación: No disponible. Imita los sonidos de lectura del controlador de la disquetera con la vibración del mando."
 #define Q88_SCREEN_SIZE_LABEL_ES "Tamaño de la pantalla"
 #define Q88_SCREEN_SIZE_INFO_0_ES "Recomendación: Baja resolución. Permite que el núcleo pueda hacer la imagen más pequeña (recomendado para la pantalla de PSP)."
@@ -7009,44 +7009,44 @@ struct retro_core_options_v2 options_sv = {
 
 /* RETRO_LANGUAGE_TR */
 
-#define Q88_BASIC_MODE_LABEL_TR NULL
-#define Q88_BASIC_MODE_INFO_0_TR NULL
+#define Q88_BASIC_MODE_LABEL_TR "BASIC kipi"
+#define Q88_BASIC_MODE_INFO_0_TR "Önerilen: PC-8800 yazılımı için N88-BASIC V2/V1H, PC-8000 yazılımı için N-BASIC.\n\- PC-8800 yazılımı V2 kipinde çok hızlı çalışıyorsa, bir V1 kipi kullanın.\n\- N-BASIC kipi için BIOS dosyaları gereklidir. Çekirdek bilgilerine bakın."
 #define OPTION_VAL_N88_V2_TR NULL
 #define OPTION_VAL_N88_V1H_TR NULL
 #define OPTION_VAL_N88_V1S_TR NULL
 #define OPTION_VAL_N_TR NULL
-#define Q88_SUB_CPU_MODE_LABEL_TR NULL
-#define Q88_SUB_CPU_MODE_INFO_0_TR NULL
-#define OPTION_VAL_0_TR NULL
-#define OPTION_VAL_1_TR NULL
-#define OPTION_VAL_2_TR NULL
-#define Q88_CPU_CLOCK_LABEL_TR NULL
-#define Q88_CPU_CLOCK_INFO_0_TR NULL
+#define Q88_SUB_CPU_MODE_LABEL_TR "Alt CPU kipi"
+#define Q88_SUB_CPU_MODE_INFO_0_TR "Önerilen: Disket erişimi sırasında yalnızca Alt CPU'yu çalıştırın."
+#define OPTION_VAL_0_TR "Disket erişimi sırasında yalnızca Alt CPU'yu çalıştırın"
+#define OPTION_VAL_1_TR "Disket erişimi sırasında her iki CPU'yu da çalıştırın"
+#define OPTION_VAL_2_TR "Her zaman iki CPU'yu da çalıştırın"
+#define Q88_CPU_CLOCK_LABEL_TR "CPU hızı"
+#define Q88_CPU_CLOCK_INFO_0_TR "Önerilen: 4MHz veya 8MHz. Bazı yazılımlar 8MHz CPU ile çok hızlı çalışabilir."
 #define OPTION_VAL_4_TR NULL
 #define OPTION_VAL_8_TR NULL
-#define OPTION_VAL_16_TR NULL
-#define OPTION_VAL_32_TR NULL
-#define OPTION_VAL_64_TR NULL
-#define OPTION_VAL_1_O2_TR NULL
-#define OPTION_VAL_2_O2_TR NULL
-#define Q88_SOUND_BOARD_LABEL_TR NULL
-#define Q88_SOUND_BOARD_INFO_0_TR NULL
+#define OPTION_VAL_16_TR "16 MHz (hız aşırtmalı)"
+#define OPTION_VAL_32_TR "32 MHz (hız aşırtmalı)"
+#define OPTION_VAL_64_TR "64 MHz (hız aşırtmalı)"
+#define OPTION_VAL_1_O2_TR "1 MHz (hız düşürmeli)"
+#define OPTION_VAL_2_O2_TR "2 MHz (hız düşürmeli)"
+#define Q88_SOUND_BOARD_LABEL_TR "Ses kartı"
+#define Q88_SOUND_BOARD_INFO_0_TR "Önerilen: OPNA. OPN donanımını kullanırken bazı yazılımlar farklı gelebilir."
 #define OPTION_VAL_OPN_TR NULL
 #define OPTION_VAL_OPNA_TR NULL
-#define Q88_USE_FDC_WAIT_LABEL_TR NULL
-#define Q88_USE_FDC_WAIT_INFO_0_TR NULL
-#define Q88_PCG_8100_LABEL_TR NULL
-#define Q88_PCG_8100_INFO_0_TR NULL
-#define Q88_SAVE_TO_DISK_IMAGE_LABEL_TR NULL
-#define Q88_SAVE_TO_DISK_IMAGE_INFO_0_TR NULL
-#define Q88_RUMBLE_LABEL_TR NULL
-#define Q88_RUMBLE_INFO_0_TR NULL
-#define Q88_SCREEN_SIZE_LABEL_TR NULL
-#define Q88_SCREEN_SIZE_INFO_0_TR NULL
-#define Q88_SCREEN_SIZE_INFO_1_TR NULL
-#define Q88_SCREEN_SIZE_INFO_2_TR NULL
-#define OPTION_VAL_FULL_TR NULL
-#define OPTION_VAL_HALF_TR NULL
+#define Q88_USE_FDC_WAIT_LABEL_TR "FDC-Beklemesi"
+#define Q88_USE_FDC_WAIT_INFO_0_TR "Önerilen: AÇIK. Disket denetleyicisi için daha doğru IO zamanlaması sağlar."
+#define Q88_PCG_8100_LABEL_TR "PCG-8100 Kullan"
+#define Q88_PCG_8100_INFO_0_TR "Önerilen: KAPALI. Bazı PC-8000 yazılımları için gerekli olabilir."
+#define Q88_SAVE_TO_DISK_IMAGE_LABEL_TR "Kalıbı diskete kaydet"
+#define Q88_SAVE_TO_DISK_IMAGE_INFO_0_TR "Önerilen: KAPALI. Çekirdeğin tercih edilen kaydetme davranışını değiştirir.\n\- KAPALI: Disketlere yazılan veriler, ön ucun kaydetme dizininde ayrı bir dosyada saklanacaktır.\n\- AÇIK: Veriler doğrudan yüklenen disket dosyasına/dosyalarına yazılacaktır. Sıkıştırılmış içerikle çalışmaz."
+#define Q88_RUMBLE_LABEL_TR "Disket erişim sesi"
+#define Q88_RUMBLE_INFO_0_TR "Önerilen: Yok. Denetleyicinin gürültüsünü kullanarak disket denetleyicisindeki okuma seslerini taklit eder."
+#define Q88_SCREEN_SIZE_LABEL_TR "Ekran boyutu"
+#define Q88_SCREEN_SIZE_INFO_0_TR "Önerilen: Yarım. Çekirdeğin görüntüyü küçültmesine izin verir. PSP ekranı için önerilir."
+#define Q88_SCREEN_SIZE_INFO_1_TR "Önerilen: Yarım. Çekirdeğin görüntüyü küçültmesine izin verir. Nintendo 3DS ekranı için önerilir."
+#define Q88_SCREEN_SIZE_INFO_2_TR "Önerilen: Tam. Çekirdeğin görüntüyü küçültmesine izin verir. Yalnızca 400'ün altındaki ekran yükseklikleri için önerilir."
+#define OPTION_VAL_FULL_TR "Tam (640x400)"
+#define OPTION_VAL_HALF_TR "Yarım (320x200)"
 
 struct retro_core_option_v2_category option_cats_tr[] = {
    { NULL, NULL, NULL },
