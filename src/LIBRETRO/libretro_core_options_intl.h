@@ -2740,8 +2740,8 @@ struct retro_core_options_v2 options_fa = {
 #define Q88_SCREEN_SIZE_INFO_0_FI NULL
 #define Q88_SCREEN_SIZE_INFO_1_FI NULL
 #define Q88_SCREEN_SIZE_INFO_2_FI NULL
-#define OPTION_VAL_FULL_FI NULL
-#define OPTION_VAL_HALF_FI NULL
+#define OPTION_VAL_FULL_FI "Täysi (640x400)"
+#define OPTION_VAL_HALF_FI "Puolikas (320x200)"
 
 struct retro_core_option_v2_category option_cats_fi[] = {
    { NULL, NULL, NULL },
