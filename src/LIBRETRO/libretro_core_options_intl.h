@@ -2313,7 +2313,7 @@ struct retro_core_options_v2 options_eo = {
 #define OPTION_VAL_32_ES "32 MHz (acelerar CPU)"
 #define OPTION_VAL_64_ES "64 MHz (acelerar CPU)"
 #define OPTION_VAL_1_O2_ES "1 MHz (ralentizar CPU)"
-#define OPTION_VAL_2_O2_ES "2 MHz (underclockear)"
+#define OPTION_VAL_2_O2_ES "2 MHz (ralentizar CPU)"
 #define Q88_SOUND_BOARD_LABEL_ES "Tarjeta de sonido"
 #define Q88_SOUND_BOARD_INFO_0_ES "Recomendación: OPNA. Algunas aplicaciones podrían tener un sonido alterado al utilizar un hardware OPN."
 #define OPTION_VAL_OPN_ES NULL
@@ -4955,6 +4955,211 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
 struct retro_core_options_v2 options_nl = {
    option_cats_nl,
    option_defs_nl
+};
+
+/* RETRO_LANGUAGE_NO */
+
+#define Q88_BASIC_MODE_LABEL_NO NULL
+#define Q88_BASIC_MODE_INFO_0_NO NULL
+#define OPTION_VAL_N88_V2_NO NULL
+#define OPTION_VAL_N88_V1H_NO NULL
+#define OPTION_VAL_N88_V1S_NO NULL
+#define OPTION_VAL_N_NO NULL
+#define Q88_SUB_CPU_MODE_LABEL_NO NULL
+#define Q88_SUB_CPU_MODE_INFO_0_NO NULL
+#define OPTION_VAL_0_NO NULL
+#define OPTION_VAL_1_NO NULL
+#define OPTION_VAL_2_NO NULL
+#define Q88_CPU_CLOCK_LABEL_NO NULL
+#define Q88_CPU_CLOCK_INFO_0_NO NULL
+#define OPTION_VAL_4_NO NULL
+#define OPTION_VAL_8_NO NULL
+#define OPTION_VAL_16_NO NULL
+#define OPTION_VAL_32_NO NULL
+#define OPTION_VAL_64_NO NULL
+#define OPTION_VAL_1_O2_NO NULL
+#define OPTION_VAL_2_O2_NO NULL
+#define Q88_SOUND_BOARD_LABEL_NO NULL
+#define Q88_SOUND_BOARD_INFO_0_NO NULL
+#define OPTION_VAL_OPN_NO NULL
+#define OPTION_VAL_OPNA_NO NULL
+#define Q88_USE_FDC_WAIT_LABEL_NO NULL
+#define Q88_USE_FDC_WAIT_INFO_0_NO NULL
+#define Q88_PCG_8100_LABEL_NO NULL
+#define Q88_PCG_8100_INFO_0_NO NULL
+#define Q88_SAVE_TO_DISK_IMAGE_LABEL_NO NULL
+#define Q88_SAVE_TO_DISK_IMAGE_INFO_0_NO NULL
+#define Q88_RUMBLE_LABEL_NO NULL
+#define Q88_RUMBLE_INFO_0_NO NULL
+#define Q88_SCREEN_SIZE_LABEL_NO NULL
+#define Q88_SCREEN_SIZE_INFO_0_NO NULL
+#define Q88_SCREEN_SIZE_INFO_1_NO NULL
+#define Q88_SCREEN_SIZE_INFO_2_NO NULL
+#define OPTION_VAL_FULL_NO NULL
+#define OPTION_VAL_HALF_NO NULL
+
+struct retro_core_option_v2_category option_cats_no[] = {
+   { NULL, NULL, NULL },
+};
+struct retro_core_option_v2_definition option_defs_no[] = {
+   { 
+      "q88_basic_mode", 
+      Q88_BASIC_MODE_LABEL_NO,
+      NULL, 
+      Q88_BASIC_MODE_INFO_0_NO,
+      NULL,
+      NULL,
+      {
+         { "N88 V2",  OPTION_VAL_N88_V2_NO },
+         { "N88 V1H", OPTION_VAL_N88_V1H_NO },
+         { "N88 V1S", OPTION_VAL_N88_V1S_NO },
+         { "N",       OPTION_VAL_N_NO },
+         { NULL, NULL }
+      },
+      "N88 V2"
+   },
+
+   { 
+      "q88_sub_cpu_mode",
+      Q88_SUB_CPU_MODE_LABEL_NO,
+      NULL,
+      Q88_SUB_CPU_MODE_INFO_0_NO,
+      NULL,
+      NULL,
+      {
+         { "0", OPTION_VAL_0_NO},
+         { "1", OPTION_VAL_1_NO},
+         { "2", OPTION_VAL_2_NO},
+         { NULL, NULL },
+      },
+      "0"
+   },
+
+   { 
+      "q88_cpu_clock", 
+      Q88_CPU_CLOCK_LABEL_NO,
+      NULL, 
+      Q88_CPU_CLOCK_INFO_0_NO,
+      NULL,
+      NULL,
+      {
+         { "4",  OPTION_VAL_4_NO },
+         { "8",  OPTION_VAL_8_NO },
+         { "16", OPTION_VAL_16_NO },
+         { "32", OPTION_VAL_32_NO },
+         { "64", OPTION_VAL_64_NO },
+         { "1",  OPTION_VAL_1_O2_NO },
+         { "2",  OPTION_VAL_2_O2_NO },
+         { NULL, NULL }
+      },
+      "4"
+   },
+
+   { 
+      "q88_sound_board", 
+      Q88_SOUND_BOARD_LABEL_NO,
+      NULL, 
+      Q88_SOUND_BOARD_INFO_0_NO,
+      NULL,
+      NULL,
+      {
+         { "OPN",  OPTION_VAL_OPN_NO },
+         { "OPNA", OPTION_VAL_OPNA_NO},
+         { NULL, NULL}
+      },
+      "OPNA"
+   },
+         
+   { 
+      "q88_use_fdc_wait", 
+      Q88_USE_FDC_WAIT_LABEL_NO,
+      NULL, 
+      Q88_USE_FDC_WAIT_INFO_0_NO,
+      NULL,
+      NULL,
+      {
+         { "enabled",  "enabled" },
+         { "disabled", "disabled" },
+         { NULL, NULL }
+      },
+      "enabled"
+   },
+
+   { 
+      "q88_pcg-8100", 
+      Q88_PCG_8100_LABEL_NO,
+      NULL, 
+      Q88_PCG_8100_INFO_0_NO,
+      NULL,
+      NULL,
+      {
+         { "enabled",  "enabled" },
+         { "disabled", "disabled" },
+         { NULL, NULL }
+      },
+      "disabled"
+   },
+
+   {
+      "q88_save_to_disk_image", 
+      Q88_SAVE_TO_DISK_IMAGE_LABEL_NO,
+      NULL, 
+      Q88_SAVE_TO_DISK_IMAGE_INFO_0_NO,
+      NULL,
+      NULL,
+      {
+         { "enabled",  "enabled" },
+         { "disabled", "disabled" },
+         { NULL, NULL }
+      },
+      "disabled"
+   },
+
+   { 
+      "q88_rumble", 
+      Q88_RUMBLE_LABEL_NO,
+      NULL, 
+      Q88_RUMBLE_INFO_0_NO,
+      NULL,
+      NULL,
+      {
+         { "enabled",  "enabled" },
+         { "disabled", "disabled" },
+         { NULL, NULL }
+      },
+      "enabled"
+   },
+
+   { 
+      "q88_screen_size", 
+      Q88_SCREEN_SIZE_LABEL_NO,
+      NULL, 
+#if defined (PSP)
+      Q88_SCREEN_SIZE_INFO_0_NO,
+#elif defined (_3DS)
+      Q88_SCREEN_SIZE_INFO_1_NO,
+#else
+      Q88_SCREEN_SIZE_INFO_2_NO,
+#endif
+      NULL,
+      NULL,
+      {
+         { "full",  OPTION_VAL_FULL_NO },
+         { "half",  OPTION_VAL_HALF_NO },
+         { NULL, NULL }
+      },
+#if defined (PSP) || defined (_3DS)
+      "half"
+#else
+      "full"
+#endif
+   },
+
+   { NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
+};
+struct retro_core_options_v2 options_no = {
+   option_cats_no,
+   option_defs_no
 };
 
 /* RETRO_LANGUAGE_OC */
