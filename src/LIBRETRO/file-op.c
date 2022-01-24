@@ -361,7 +361,7 @@ static size_t osd_fread_real(OSD_FILE *stream, void *data, size_t length)
          real_len = stream->mem_size - stream->mem_ptr;
       if (real_len < 0)
          return -1;
-      memcpy(data, stream->mem_file + stream->mem_ptr, real_len);
+      memcpy(data, (char *) stream->mem_file + stream->mem_ptr, real_len);
       stream->mem_ptr += real_len;
 
       return real_len;
@@ -379,7 +379,7 @@ static size_t osd_fwrite_real(OSD_FILE *stream, const void *data, size_t length)
          stream->mem_did_overflow = 1;
          return -1;
       }
-      memcpy(stream->mem_file + stream->mem_ptr, data, length);
+      memcpy((char *) stream->mem_file + stream->mem_ptr, data, length);
       stream->mem_ptr += length;
 
       return length;
@@ -467,11 +467,11 @@ char *osd_fgets(char *str, int size, OSD_FILE *stream)
 {
    if (stream->mem_file)
    {
-      void *ptr;
+      char *ptr;
       int l;
       
-      for (ptr = stream->mem_file + stream->mem_ptr, l = 0;
-         ptr < stream->mem_file + stream->mem_size &&
+      for (ptr = (char *) stream->mem_file + stream->mem_ptr, l = 0;
+         ptr < (char *) stream->mem_file + stream->mem_size &&
          l < size - 1;
          ptr++, l++);
       osd_fread_real(stream, str, l);
