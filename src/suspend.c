@@ -685,6 +685,7 @@ int	statesave_by_fp(OSD_FILE *fp)
 int	statesave( void )
 {
   int success = FALSE;
+  OSD_FILE * fp;
 
   if( file_state[0] == '\0' ){
     printf( "state-file name not defined\n" );
@@ -694,7 +695,7 @@ int	statesave( void )
   if( verbose_suspend )
     printf( "statesave : %s\n", file_state );
 
-  OSD_FILE * fp = osd_fopen( FTYPE_STATE_SAVE, file_state, "wb" );
+  fp = osd_fopen( FTYPE_STATE_SAVE, file_state, "wb" );
   if (!fp)
     return FALSE;
 
@@ -756,6 +757,7 @@ int	stateload_by_fp( OSD_FILE *fp )
 int	stateload( void )
 {
   int success = FALSE;
+  OSD_FILE *fp;
 
   if( file_state[0] == '\0' ){
     printf( "state-file name not defined\n" );
@@ -765,7 +767,7 @@ int	stateload( void )
   if( verbose_suspend )
     printf( "stateload: %s\n", file_state );
 
-  OSD_FILE *fp = osd_fopen( FTYPE_STATE_LOAD, file_state, "rb" );
+  fp = osd_fopen( FTYPE_STATE_LOAD, file_state, "rb" );
 
   if (fp == NULL)
     return FALSE;
