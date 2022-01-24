@@ -442,8 +442,9 @@ static bool load_system_file(uint8_t bios_index, byte *rom_data, uint32_t rom_si
 {
    char filename[256];
    char rom_filename[OSD_MAX_FILENAME];
+   uint8_t i;
 
-   for (uint8_t i = 0; i < 4; i++)
+   for (i = 0; i < 4; i++)
    {
       if (string_is_empty(bios_filenames[bios_index][i]))
          continue;
