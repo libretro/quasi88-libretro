@@ -2,6 +2,7 @@
 #include <streams/file_stream.h>
 #include <string/stdstring.h>
 #include <vfs/vfs_implementation.h>
+#include <compat/msvc.h>
 #include <wchar.h>
 
 #include "quasi88.h"
