@@ -782,6 +782,7 @@ void retro_set_environment(retro_environment_t cb)
 {
    bool no_game                   = true;
    enum retro_pixel_format rgb565 = RETRO_PIXEL_FORMAT_RGB565;
+   struct retro_vfs_interface_info vfs_interface_info;
    
    environ_cb                     = cb;
 
@@ -793,6 +794,13 @@ void retro_set_environment(retro_environment_t cb)
    /* Set localized core options if available */
    libretro_set_core_options(environ_cb,
                              &libretro_supports_option_categories);
+
+   vfs_interface_info.required_interface_version = FILESTREAM_REQUIRED_VFS_VERSION;
+   vfs_interface_info.iface = NULL;
+   if (cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_interface_info)) {
+     vfs_interface = vfs_interface_info.iface;
+     filestream_vfs_init(&vfs_interface_info);
+   }
 }
 
 void retro_set_audio_sample(retro_audio_sample_t cb)
