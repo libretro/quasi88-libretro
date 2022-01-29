@@ -480,13 +480,15 @@ void	discover_index_params( int drv )
   full_size = (long)c[0]+((long)c[1]<<8)+((long)c[2]<<16)+((long)c[3]<<24);
 
   for (trk = 2; trk < 20; trk++) {
+    long track_top;
+    int cyl;
     if( osd_fseek( drive[ drv ].fp,
 		   drive[ drv ].disk_top + DISK_TRACK + trk*4,  SEEK_SET ) !=0
 	|| osd_fread( c, sizeof(Uchar), 4, drive[ drv ].fp ) != 4){
       break;
     }
 
-    long track_top = (long)c[0]+((long)c[1]<<8)+((long)c[2]<<16)+((long)c[3]<<24);
+   track_top = (long)c[0]+((long)c[1]<<8)+((long)c[2]<<16)+((long)c[3]<<24);
     if (track_top == 0 || track_top >= full_size)
       continue;
 
@@ -496,7 +498,7 @@ void	discover_index_params( int drv )
       continue;
     }
 
-    int cyl = c[0];
+    cyl = c[0];
 
     if (cyl * 4 == (trk & ~1)) {
       drive[drv].index_heads = 4;
@@ -821,7 +823,7 @@ static	void	disk_now_track( int drv, int trk )
   int	error = 0;
   Uchar c[4];
   long	track_top;
-
+  int trk_idx;
 
 
 	/* シーク可能シリンダのチェック */
@@ -839,7 +841,7 @@ static	void	disk_now_track( int drv, int trk )
 
 
 	/* トラックのインデックスで指定されたファイル位置を取得 */
-  int trk_idx = (trk & 1) | ((trk >> 1) * (drive[drv].index_heads));
+  trk_idx = (trk & 1) | ((trk >> 1) * (drive[drv].index_heads));
 
   if( osd_fseek( drive[ drv ].fp,
 		 drive[ drv ].disk_top + DISK_TRACK + trk_idx*4,  SEEK_SET )==0 ){
