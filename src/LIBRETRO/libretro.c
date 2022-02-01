@@ -799,7 +799,6 @@ void retro_set_environment(retro_environment_t cb)
    vfs_interface_info.required_interface_version = FILESTREAM_REQUIRED_VFS_VERSION;
    vfs_interface_info.iface = NULL;
    if (cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_interface_info)) {
-     vfs_interface = vfs_interface_info.iface;
      filestream_vfs_init(&vfs_interface_info);
    }
 }
