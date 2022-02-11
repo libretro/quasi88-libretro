@@ -2315,7 +2315,7 @@ struct retro_core_options_v2 options_eo = {
 #define OPTION_VAL_1_O2_ES "1 MHz (ralentizar CPU)"
 #define OPTION_VAL_2_O2_ES "2 MHz (ralentizar CPU)"
 #define Q88_SOUND_BOARD_LABEL_ES "Tarjeta de sonido"
-#define Q88_SOUND_BOARD_INFO_0_ES "Recomendación: OPNA. Algunas aplicaciones podrían tener un sonido alterado al utilizar un hardware OPN."
+#define Q88_SOUND_BOARD_INFO_0_ES "Recomendación: OPNA. Algunas aplicaciones podrían sonar de una forma distinta al utilizar un hardware OPN."
 #define OPTION_VAL_OPN_ES NULL
 #define OPTION_VAL_OPNA_ES NULL
 #define Q88_USE_FDC_WAIT_LABEL_ES "Esperar al FDC"
