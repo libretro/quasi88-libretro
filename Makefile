@@ -503,6 +503,15 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.dll
 	LDFLAGS += -DLL
 
+# DOS
+else ifeq ($(platform), dos)
+	TARGET := $(TARGET_NAME)_libretro_$(platform).a
+	CC = i586-pc-msdosdjgpp-gcc
+	AR = i586-pc-msdosdjgpp-ar
+	CXX = i586-pc-msdosdjgpp-g++
+	FLAGS += -march=i386
+	STATIC_LINKING=1
+
 # Windows
 else
    TARGET := $(TARGET_NAME)_libretro.dll
