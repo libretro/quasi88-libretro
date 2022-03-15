@@ -202,6 +202,15 @@ else ifeq ($(platform), psp1)
    FLAGS += -DPSP -G0
    STATIC_LINKING = 1
 
+# PS2
+else ifeq ($(platform), ps2)
+	TARGET := $(TARGET_NAME)_libretro_$(platform).a
+	CC = mips64r5900el-ps2-elf-gcc
+	CXX = mips64r5900el-ps2-elf-g++
+	AR = mips64r5900el-ps2-elf-ar
+	FLAGS += -G0 -DPS2 -DUSE_RGB565 -DABGR1555
+        NEED_BPP := 16
+	STATIC_LINKING=1
 # Vita
 else ifeq ($(platform), vita)
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
@@ -292,7 +301,33 @@ else ifeq ($(platform), gcw0)
    fpic := -fPIC
    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
    FLAGS += -ffast-math -march=mips32 -mtune=mips32r2 -mhard-float
-
+# RS90
+else ifeq ($(platform), rs90)
+   TARGET := $(TARGET_NAME)_libretro.so
+   CC = /opt/rs90-toolchain/usr/bin/mipsel-linux-gcc
+   CXX = /opt/rs90-toolchain/usr/bin/mipsel-linux-g++
+   AR = /opt/rs90-toolchain/usr/bin/mipsel-linux-ar
+   fpic := -fPIC
+   SHARED := -shared -Wl,-version-script=link.T
+   FLAGS += -fomit-frame-pointer -ffast-math -march=mips32 -mtune=mips32
+# RETROFW
+else ifeq ($(platform), retrofw)
+	EXT ?= so
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	CC = /opt/retrofw-toolchain/usr/bin/mipsel-linux-gcc
+	AR = /opt/retrofw-toolchain/usr/bin/mipsel-linux-ar
+	fpic := -fPIC
+	SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined
+	FLAGS += -ffast-math -march=mips32 -mtune=mips32 -mhard-float
+# MIYOO
+else ifeq ($(platform), miyoo)
+	TARGET := $(TARGET_NAME)_libretro.so
+	fpic := -fPIC
+	SHARED := -shared -Wl,-version-script=link.T
+	CC = /opt/miyoo/usr/bin/arm-linux-gcc
+	AR = /opt/miyoo/usr/bin/arm-linux-ar
+	FLAGS += -fomit-frame-pointer -ffast-math -march=armv5te -mtune=arm926ej-s
+	FLAGS += -fno-common -ftree-vectorize -funswitch-loops
 # Windows MSVC 2010 x64
 else ifeq ($(platform), windows_msvc2010_x64)
 	CC  = cl.exe
@@ -502,6 +537,15 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 	export LIB := $(LIB);$(WindowsSDKUCRTLibDir);$(WindowsSDKUMLibDir)
 	TARGET := $(TARGET_NAME)_libretro.dll
 	LDFLAGS += -DLL
+
+# DOS
+else ifeq ($(platform), dos)
+	TARGET := $(TARGET_NAME)_libretro_$(platform).a
+	CC = i586-pc-msdosdjgpp-gcc
+	AR = i586-pc-msdosdjgpp-ar
+	CXX = i586-pc-msdosdjgpp-g++
+	FLAGS += -march=i386
+	STATIC_LINKING=1
 
 # Windows
 else
