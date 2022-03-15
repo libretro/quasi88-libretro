@@ -104,9 +104,15 @@ void	graph_add_color(const PC88_PALETTE_T color[],
 {
     int i;
     for (i=0; i<nr_color; i++) {
+#ifdef ABGR1555
+	pixel[i] = ((((unsigned long) color[i].blue  & 0xf8) << 7) |
+	    	    (((unsigned long) color[i].green & 0xf8) << 2) |
+	    	    (((unsigned long) color[i].red   & 0xf8) >> 3));
+#else
 	pixel[i] = ((((unsigned long) color[i].red   >> 3) << 11) |
-	    	    (((unsigned long) color[i].green >> 3) <<  6) |
+		    (((unsigned long) color[i].green >> 2) <<  5) |
 	    	    (((unsigned long) color[i].blue  >> 3)));
+#endif
     }
 }
 
