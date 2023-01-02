@@ -9,7 +9,6 @@ The original files will be preserved as *.v1
 """
 import core_option_regex as cor
 import os
-import sys
 import glob
 
 
@@ -372,7 +371,7 @@ def create_v2_code_file(struct_text, file_name):
          content = construct.group(2)
          new_content = cor.p_option.sub(replace_option, content)
 
-         repl_text = repl_text + new_content + cor.re.sub(r'{\s*NULL,\s*NULL,\s*NULL,\s*{\{0}},\s*NULL\s*},?\s*};',
+         repl_text = repl_text + new_content + cor.re.sub(r'{\s*NULL,\s*NULL,\s*NULL,\s*{\{0}},\s*NULL\s*},\s*};',
                                                           '{ NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },\n};'
                                                           '\n\nstruct retro_core_options_v2 options' +
                                                           struct_type_name_lang[2] + ' = {\n'
@@ -381,7 +380,7 @@ def create_v2_code_file(struct_text, file_name):
                                                                                      '};',
                                                           construct.group(0)[construct.end(2) - offset:])
          out_text = out_text.replace(construct.group(0), repl_text)
-         #out_text = cor.re.sub(cor.re.escape(construct.group(0)), repl_text, out_text)
+         #out_text = cor.re.sub(cor.re.escape(construct.group(0)), repl_text, raw_out)
       else:
          return -2
    with open(file_name, 'w', encoding='utf-8') as code_file:
@@ -410,11 +409,19 @@ def create_v2_code_file(struct_text, file_name):
                       '   &options_ar,      /* RETRO_LANGUAGE_ARABIC */\n' \
                       '   &options_el,      /* RETRO_LANGUAGE_GREEK */\n' \
                       '   &options_tr,      /* RETRO_LANGUAGE_TURKISH */\n' \
-                      '   &options_sv,      /* RETRO_LANGUAGE_SLOVAK */\n' \
+                      '   &options_sk,      /* RETRO_LANGUAGE_SLOVAK */\n' \
                       '   &options_fa,      /* RETRO_LANGUAGE_PERSIAN */\n' \
                       '   &options_he,      /* RETRO_LANGUAGE_HEBREW */\n' \
                       '   &options_ast,     /* RETRO_LANGUAGE_ASTURIAN */\n' \
                       '   &options_fi,      /* RETRO_LANGUAGE_FINNISH */\n' \
+                      '   &options_id,      /* RETRO_LANGUAGE_INDONESIAN */\n' \
+                      '   &options_sv,      /* RETRO_LANGUAGE_SWEDISH */\n' \
+                      '   &options_uk,      /* RETRO_LANGUAGE_UKRAINIAN */\n' \
+                      '   &options_cs,      /* RETRO_LANGUAGE_CZECH */\n' \
+                      '   &options_val,     /* RETRO_LANGUAGE_CATALAN_VALENCIA */\n' \
+                      '   &options_ca,      /* RETRO_LANGUAGE_CATALAN */\n' \
+                      '   &options_en,      /* RETRO_LANGUAGE_BRITISH_ENGLISH */\n' \
+                      '   &options_hu,      /* RETRO_LANGUAGE_HUNGARIAN */\n' \
                     + out_text[intl.end(2):]
          out_text = p_set.sub(new_set, new_intl)
       else:
@@ -457,7 +464,6 @@ if __name__ == '__main__':
 
    H_FILE_PATH = core_op_file
    INTL_FILE_PATH = core_op_file.replace("libretro_core_options.h", 'libretro_core_options_intl.h')
-
    for file in (H_FILE_PATH, INTL_FILE_PATH):
       if os.path.isfile(file):
          with open(file, 'r+', encoding='utf-8') as h_file:
