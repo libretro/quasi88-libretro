@@ -27,12 +27,12 @@ void disk_display_message(retro_environment_t cb)
       struct  retro_message rmsg;
 
       if (*index == NO_DISK)
-         snprintf(msg, 2048, "Drive %c: %s", drive_id, "No disk");
+         snprintf((char*)msg, 2048, "Drive %c: %s", drive_id, "No disk");
       else
-         snprintf(msg, 2048, "Drive %c: %s", drive_id, retro_disks[*index].basename);
+         snprintf((char*)msg, 2048, "Drive %c: %s", drive_id, retro_disks[*index].basename);
 
       rmsg.frames = MESSAGE_DISPLAY_FRAMES;
-      rmsg.msg = msg;
+      rmsg.msg = (const char*)msg;
       cb(RETRO_ENVIRONMENT_SET_MESSAGE, &rmsg);
    }
 }
