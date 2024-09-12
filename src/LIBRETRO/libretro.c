@@ -138,7 +138,7 @@ static void handle_key(uint8_t key, uint16_t retro_key)
          quasi88_key(key, 1);
          key_buffer[key] = true;
       }
-      else if (!key_on)
+      else if (key_buffer[key] && !key_on)
       {
          quasi88_key(key, 0);
          key_buffer[key] = false;
@@ -157,7 +157,7 @@ static void handle_pad(uint8_t key, uint16_t retro_button, uint8_t pad)
          quasi88_key(key, 1);
          pad_buffer[key] = true;
       }
-      else if (!button_on)
+      else if (pad_buffer[key] && !button_on)
       {
          quasi88_key(key, 0);
          pad_buffer[key] = false;
@@ -222,6 +222,7 @@ static void handle_input(void)
    handle_pad(KEY88_KP_6,    RETRO_DEVICE_ID_JOYPAD_RIGHT,  0);
    handle_pad(KEY88_X,       RETRO_DEVICE_ID_JOYPAD_A,      0);
    handle_pad(KEY88_Z,       RETRO_DEVICE_ID_JOYPAD_B,      0);
+   handle_pad(KEY88_SHIFTL,  RETRO_DEVICE_ID_JOYPAD_X,      0);
    handle_pad(KEY88_SPACE,   RETRO_DEVICE_ID_JOYPAD_Y,      0);
    handle_pad(KEY88_RETURN,  RETRO_DEVICE_ID_JOYPAD_START,  0);
    handle_pad(KEY88_RETURNL, RETRO_DEVICE_ID_JOYPAD_START,  0);
@@ -291,7 +292,7 @@ static void handle_input(void)
       handle_key(KEY88_A + i, RETROK_a + i);
 
    /* Function keys */
-   for (i = 0; i < 8; i++)
+   for (i = 0; i < 5; i++)
       handle_key(KEY88_F6 + i, RETROK_F1 + i);
 
    /* Joypads */
