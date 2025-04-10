@@ -293,7 +293,9 @@ static void handle_input(void)
 
    /* Function keys */
    for (i = 0; i < 5; i++)
-      handle_key(KEY88_F6 + i, RETROK_F1 + i);
+      handle_key(KEY88_F1 + i, RETROK_F1 + i);
+   for (i = 0; i < 5; i++)
+      handle_key(KEY88_F6 + i, RETROK_F6 + i);
 
    /* Joypads */
    mouse_mode = 3;
