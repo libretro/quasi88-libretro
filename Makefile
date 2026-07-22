@@ -562,6 +562,10 @@ else
    LDFLAGS += -static-libgcc -static-libstdc++ -lwinmm
 endif
 
+ifneq (,$(or $(findstring webos,$(CROSS_COMPILE)),$(findstring starfish,$(CROSS_COMPILE))))
+   CFLAGS += -std=gnu17
+endif
+
 include Makefile.common
 
 ifneq (,$(findstring msvc,$(platform)))
