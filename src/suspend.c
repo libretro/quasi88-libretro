@@ -670,6 +670,7 @@ int	statesave_by_fp(OSD_FILE *fp)
   if( statesave_pc88main() == FALSE ) return FALSE;
   if( statesave_crtcdmac() == FALSE ) return FALSE;
   if( statesave_sound()    == FALSE ) return FALSE;
+  if( statesave_pcg8100()  == FALSE ) return FALSE;
   if( statesave_pio()      == FALSE ) return FALSE;
   if( statesave_screen()   == FALSE ) return FALSE;
   if( statesave_intr()     == FALSE ) return FALSE;
@@ -738,6 +739,7 @@ int	stateload_by_fp( OSD_FILE *fp )
 
   if( stateload_emu()      == FALSE ) return FALSE;
   if( stateload_sound()    == FALSE ) return FALSE;
+  if( stateload_pcg8100()  == FALSE ) return FALSE;
   if( stateload_memory()   == FALSE ) return FALSE;
   if( stateload_pc88main() == FALSE ) return FALSE;
   if( stateload_crtcdmac() == FALSE ) return FALSE;

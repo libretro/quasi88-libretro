@@ -98,8 +98,9 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       NULL,
       NULL,
       {
-         { "4",  "4 MHz (NEC µPD780)" },
-         { "8",  "8 MHz (NEC µPD70008)" },
+         { "4",    "4 MHz (NEC µPD780)" },
+         { "2.53", "2.53 MHz (PC80)" },
+         { "8",    "8 MHz (NEC µPD70008)" },
          { "16", "16 MHz (overclock)" },
          { "32", "32 MHz (overclock)" },
          { "64", "64 MHz (overclock)" },

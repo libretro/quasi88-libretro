@@ -35,6 +35,7 @@ SOURCES_C := $(CORE_DIR)/quasi88.c \
    $(CORE_DIR)/status.c \
    $(CORE_DIR)/getconf.c \
    $(CORE_DIR)/pc88main.c \
+   $(CORE_DIR)/pcg8100.c \
    $(CORE_DIR)/crtcdmac.c \
    $(CORE_DIR)/soundbd.c \
    $(CORE_DIR)/pio.c \
