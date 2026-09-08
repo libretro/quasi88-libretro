@@ -5372,7 +5372,7 @@ static	char		snap_filename[ QUASI88_MAX_FILENAME ];
 
 /*----------------------------------------------------------------------*/
 /*	スナップショット セーブ (「実行」クリック時)			*/
-static	void	cb_misc_snapshot_do(void)
+static	void	cb_misc_snapshot_do(UNUSED_WIDGET, UNUSED_PARM)
 {
     /* 念のため、スナップショットのファイル名を再設定 */
     filename_set_snap_base(q8tk_entry_get_text(misc_snapshot_entry));
@@ -5582,7 +5582,7 @@ static void sub_misc_waveout_sensitive(void)
 }
 /*----------------------------------------------------------------------*/
 /*	サウンド出力 保存開始 (「開始」クリック時)			*/
-static	void	cb_misc_waveout_start(void)
+static	void	cb_misc_waveout_start(UNUSED_WIDGET, UNUSED_PARM)
 {
     /* 念のため、サウンド出力のファイル名を再設定 */
     filename_set_wav_base(q8tk_entry_get_text(misc_waveout_entry));
@@ -5598,7 +5598,7 @@ static	void	cb_misc_waveout_start(void)
 
 /*----------------------------------------------------------------------*/
 /*	サウンド出力 保存終了 (「停止」クリック時)			*/
-static	void	cb_misc_waveout_stop(void)
+static	void	cb_misc_waveout_stop(UNUSED_WIDGET, UNUSED_PARM)
 {
     quasi88_waveout(FALSE);
 
@@ -5911,8 +5911,9 @@ static	struct{
    アクセラレータキーを設定する。そのため、ダミーウィジット利用 */
 
 #define	cb_note_fake(fn,n)						\
-static	void	cb_note_fake_##fn(UNUSED_WIDGET, Q8tkWidget *notebook)	\
+static	void	cb_note_fake_##fn(UNUSED_WIDGET, void *p)		\
 {									\
+    Q8tkWidget *notebook = (Q8tkWidget *)p;				\
     q8tk_notebook_set_page(notebook, n);				\
 }
 cb_note_fake(f1,0)
@@ -5927,15 +5928,17 @@ cb_note_fake(f9,8)
 cb_note_fake(f10,9)
 
      /* 以下のアクセラレータキー処理は、 floi氏 提供。 Thanks ! */
-static	void	cb_note_fake_prev(UNUSED_WIDGET, Q8tkWidget *notebook)
+static	void	cb_note_fake_prev(UNUSED_WIDGET, void *p)
 {
+    Q8tkWidget *notebook = (Q8tkWidget *)p;
     int n = q8tk_notebook_current_page(notebook) - 1;
     if (n < 0) n = COUNTOF(menu_page) - 1;
     q8tk_notebook_set_page(notebook, n);
 }
 
-static	void	cb_note_fake_next(UNUSED_WIDGET, Q8tkWidget *notebook)
+static	void	cb_note_fake_next(UNUSED_WIDGET, void *p)
 {
+    Q8tkWidget *notebook = (Q8tkWidget *)p;
     int n = q8tk_notebook_current_page(notebook) + 1;
     if (COUNTOF(menu_page) <= n) n = 0;
     q8tk_notebook_set_page(notebook, n);
@@ -5943,7 +5946,7 @@ static	void	cb_note_fake_next(UNUSED_WIDGET, Q8tkWidget *notebook)
 
 static	struct {
     int		key;
-    void	(*cb_func)(Q8tkWidget *, Q8tkWidget *);
+    Q8tkSignalFunc	cb_func;
 } menu_fkey[] =
 {
     { Q8TK_KEY_F1,	cb_note_fake_f1,  },
