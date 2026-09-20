@@ -557,6 +557,7 @@ else ifeq ($(platform), dos)
 # Windows
 else
    TARGET := $(TARGET_NAME)_libretro.dll
+   CFLAGS += -std=gnu17
    CC ?= gcc
    CXX ?= g++
    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
