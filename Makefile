@@ -206,6 +206,7 @@ else ifeq ($(platform), psp1)
    AR = psp-ar$(EXE_EXT)
    FLAGS += -DPSP -G0
    STATIC_LINKING = 1
+   CFLAGS += -std=gnu17
 
 # PS2
 else ifeq ($(platform), ps2)
