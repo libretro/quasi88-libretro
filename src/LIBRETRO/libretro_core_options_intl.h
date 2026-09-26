@@ -59,6 +59,7 @@ extern "C" {
 #define OPTION_VAL_64_AR NULL
 #define OPTION_VAL_1_O2_AR NULL
 #define OPTION_VAL_2_O2_AR NULL
+#define OPTION_VAL_253_AR NULL
 #define Q88_SOUND_BOARD_LABEL_AR NULL
 #define Q88_SOUND_BOARD_INFO_0_AR NULL
 #define OPTION_VAL_OPN_AR NULL
@@ -124,6 +125,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_AR },
+         { "2.53", OPTION_VAL_253_AR },
          { "8",  OPTION_VAL_8_AR },
          { "16", OPTION_VAL_16_AR },
          { "32", OPTION_VAL_32_AR },
@@ -264,6 +266,7 @@ struct retro_core_options_v2 options_ar = {
 #define OPTION_VAL_64_AST NULL
 #define OPTION_VAL_1_O2_AST NULL
 #define OPTION_VAL_2_O2_AST NULL
+#define OPTION_VAL_253_AST NULL
 #define Q88_SOUND_BOARD_LABEL_AST NULL
 #define Q88_SOUND_BOARD_INFO_0_AST NULL
 #define OPTION_VAL_OPN_AST NULL
@@ -329,6 +332,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_AST },
+         { "2.53", OPTION_VAL_253_AST },
          { "8",  OPTION_VAL_8_AST },
          { "16", OPTION_VAL_16_AST },
          { "32", OPTION_VAL_32_AST },
@@ -469,6 +473,7 @@ struct retro_core_options_v2 options_ast = {
 #define OPTION_VAL_64_CA NULL
 #define OPTION_VAL_1_O2_CA NULL
 #define OPTION_VAL_2_O2_CA NULL
+#define OPTION_VAL_253_CA NULL
 #define Q88_SOUND_BOARD_LABEL_CA NULL
 #define Q88_SOUND_BOARD_INFO_0_CA NULL
 #define OPTION_VAL_OPN_CA NULL
@@ -534,6 +539,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_CA },
+         { "2.53", OPTION_VAL_253_CA },
          { "8",  OPTION_VAL_8_CA },
          { "16", OPTION_VAL_16_CA },
          { "32", OPTION_VAL_32_CA },
@@ -674,6 +680,7 @@ struct retro_core_options_v2 options_ca = {
 #define OPTION_VAL_64_CHS NULL
 #define OPTION_VAL_1_O2_CHS NULL
 #define OPTION_VAL_2_O2_CHS NULL
+#define OPTION_VAL_253_CHS NULL
 #define Q88_SOUND_BOARD_LABEL_CHS NULL
 #define Q88_SOUND_BOARD_INFO_0_CHS NULL
 #define OPTION_VAL_OPN_CHS NULL
@@ -739,6 +746,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_CHS },
+         { "2.53", OPTION_VAL_253_CHS },
          { "8",  OPTION_VAL_8_CHS },
          { "16", OPTION_VAL_16_CHS },
          { "32", OPTION_VAL_32_CHS },
@@ -879,6 +887,7 @@ struct retro_core_options_v2 options_chs = {
 #define OPTION_VAL_64_CHT "64 MHz (超頻)"
 #define OPTION_VAL_1_O2_CHT "1 MHz (降頻)"
 #define OPTION_VAL_2_O2_CHT "2 MHz (降頻)"
+#define OPTION_VAL_253_CHT NULL
 #define Q88_SOUND_BOARD_LABEL_CHT NULL
 #define Q88_SOUND_BOARD_INFO_0_CHT NULL
 #define OPTION_VAL_OPN_CHT NULL
@@ -944,6 +953,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_CHT },
+         { "2.53", OPTION_VAL_253_CHT },
          { "8",  OPTION_VAL_8_CHT },
          { "16", OPTION_VAL_16_CHT },
          { "32", OPTION_VAL_32_CHT },
@@ -1084,6 +1094,7 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_64_CS "64 MHz (přetaktování)"
 #define OPTION_VAL_1_O2_CS "1 MHz (podtaktování)"
 #define OPTION_VAL_2_O2_CS "2 MHz (podtaktování)"
+#define OPTION_VAL_253_CS NULL
 #define Q88_SOUND_BOARD_LABEL_CS "Zvuková deska"
 #define Q88_SOUND_BOARD_INFO_0_CS "Doporučeno: OPNA. Některý software se bude lišit při používání OPN hardwaru."
 #define OPTION_VAL_OPN_CS NULL
@@ -1149,6 +1160,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_CS },
+         { "2.53", OPTION_VAL_253_CS },
          { "8",  OPTION_VAL_8_CS },
          { "16", OPTION_VAL_16_CS },
          { "32", OPTION_VAL_32_CS },
@@ -1289,6 +1301,7 @@ struct retro_core_options_v2 options_cs = {
 #define OPTION_VAL_64_CY NULL
 #define OPTION_VAL_1_O2_CY NULL
 #define OPTION_VAL_2_O2_CY NULL
+#define OPTION_VAL_253_CY NULL
 #define Q88_SOUND_BOARD_LABEL_CY NULL
 #define Q88_SOUND_BOARD_INFO_0_CY NULL
 #define OPTION_VAL_OPN_CY NULL
@@ -1354,6 +1367,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_CY },
+         { "2.53", OPTION_VAL_253_CY },
          { "8",  OPTION_VAL_8_CY },
          { "16", OPTION_VAL_16_CY },
          { "32", OPTION_VAL_32_CY },
@@ -1494,6 +1508,7 @@ struct retro_core_options_v2 options_cy = {
 #define OPTION_VAL_64_DA NULL
 #define OPTION_VAL_1_O2_DA NULL
 #define OPTION_VAL_2_O2_DA NULL
+#define OPTION_VAL_253_DA NULL
 #define Q88_SOUND_BOARD_LABEL_DA NULL
 #define Q88_SOUND_BOARD_INFO_0_DA NULL
 #define OPTION_VAL_OPN_DA NULL
@@ -1559,6 +1574,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_DA },
+         { "2.53", OPTION_VAL_253_DA },
          { "8",  OPTION_VAL_8_DA },
          { "16", OPTION_VAL_16_DA },
          { "32", OPTION_VAL_32_DA },
@@ -1699,6 +1715,7 @@ struct retro_core_options_v2 options_da = {
 #define OPTION_VAL_64_DE "64 MHz (Übertaktung)"
 #define OPTION_VAL_1_O2_DE "1 MHz (Untertaktung)"
 #define OPTION_VAL_2_O2_DE "2 MHz (Untertaktung)"
+#define OPTION_VAL_253_DE NULL
 #define Q88_SOUND_BOARD_LABEL_DE "Soundkarte"
 #define Q88_SOUND_BOARD_INFO_0_DE "Empfohlen: OPNA Einige Software klingen bei Verwendung von OPN-Hardware anders."
 #define OPTION_VAL_OPN_DE NULL
@@ -1764,6 +1781,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_DE },
+         { "2.53", OPTION_VAL_253_DE },
          { "8",  OPTION_VAL_8_DE },
          { "16", OPTION_VAL_16_DE },
          { "32", OPTION_VAL_32_DE },
@@ -1904,6 +1922,7 @@ struct retro_core_options_v2 options_de = {
 #define OPTION_VAL_64_EL NULL
 #define OPTION_VAL_1_O2_EL NULL
 #define OPTION_VAL_2_O2_EL NULL
+#define OPTION_VAL_253_EL NULL
 #define Q88_SOUND_BOARD_LABEL_EL NULL
 #define Q88_SOUND_BOARD_INFO_0_EL NULL
 #define OPTION_VAL_OPN_EL NULL
@@ -1969,6 +1988,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_EL },
+         { "2.53", OPTION_VAL_253_EL },
          { "8",  OPTION_VAL_8_EL },
          { "16", OPTION_VAL_16_EL },
          { "32", OPTION_VAL_32_EL },
@@ -2109,6 +2129,7 @@ struct retro_core_options_v2 options_el = {
 #define OPTION_VAL_64_EN "64 MHz (over-clock)"
 #define OPTION_VAL_1_O2_EN "1 MHz (under-clock)"
 #define OPTION_VAL_2_O2_EN "2 MHz (under-clock)"
+#define OPTION_VAL_253_EN NULL
 #define Q88_SOUND_BOARD_LABEL_EN NULL
 #define Q88_SOUND_BOARD_INFO_0_EN NULL
 #define OPTION_VAL_OPN_EN NULL
@@ -2174,6 +2195,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_EN },
+         { "2.53", OPTION_VAL_253_EN },
          { "8",  OPTION_VAL_8_EN },
          { "16", OPTION_VAL_16_EN },
          { "32", OPTION_VAL_32_EN },
@@ -2314,6 +2336,7 @@ struct retro_core_options_v2 options_en = {
 #define OPTION_VAL_64_EO NULL
 #define OPTION_VAL_1_O2_EO NULL
 #define OPTION_VAL_2_O2_EO NULL
+#define OPTION_VAL_253_EO NULL
 #define Q88_SOUND_BOARD_LABEL_EO NULL
 #define Q88_SOUND_BOARD_INFO_0_EO NULL
 #define OPTION_VAL_OPN_EO NULL
@@ -2379,6 +2402,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_EO },
+         { "2.53", OPTION_VAL_253_EO },
          { "8",  OPTION_VAL_8_EO },
          { "16", OPTION_VAL_16_EO },
          { "32", OPTION_VAL_32_EO },
@@ -2519,6 +2543,7 @@ struct retro_core_options_v2 options_eo = {
 #define OPTION_VAL_64_ES "64 MHz (acelerar CPU)"
 #define OPTION_VAL_1_O2_ES "1 MHz (ralentizar CPU)"
 #define OPTION_VAL_2_O2_ES "2 MHz (ralentizar CPU)"
+#define OPTION_VAL_253_ES NULL
 #define Q88_SOUND_BOARD_LABEL_ES "Tarjeta de sonido"
 #define Q88_SOUND_BOARD_INFO_0_ES "Recomendación: OPNA. Algunas aplicaciones podrían sonar de una forma distinta al utilizar un hardware OPN."
 #define OPTION_VAL_OPN_ES NULL
@@ -2584,6 +2609,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_ES },
+         { "2.53", OPTION_VAL_253_ES },
          { "8",  OPTION_VAL_8_ES },
          { "16", OPTION_VAL_16_ES },
          { "32", OPTION_VAL_32_ES },
@@ -2724,6 +2750,7 @@ struct retro_core_options_v2 options_es = {
 #define OPTION_VAL_64_FA NULL
 #define OPTION_VAL_1_O2_FA NULL
 #define OPTION_VAL_2_O2_FA NULL
+#define OPTION_VAL_253_FA NULL
 #define Q88_SOUND_BOARD_LABEL_FA NULL
 #define Q88_SOUND_BOARD_INFO_0_FA NULL
 #define OPTION_VAL_OPN_FA NULL
@@ -2789,6 +2816,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_FA },
+         { "2.53", OPTION_VAL_253_FA },
          { "8",  OPTION_VAL_8_FA },
          { "16", OPTION_VAL_16_FA },
          { "32", OPTION_VAL_32_FA },
@@ -2929,6 +2957,7 @@ struct retro_core_options_v2 options_fa = {
 #define OPTION_VAL_64_FI NULL
 #define OPTION_VAL_1_O2_FI NULL
 #define OPTION_VAL_2_O2_FI NULL
+#define OPTION_VAL_253_FI NULL
 #define Q88_SOUND_BOARD_LABEL_FI NULL
 #define Q88_SOUND_BOARD_INFO_0_FI NULL
 #define OPTION_VAL_OPN_FI NULL
@@ -2994,6 +3023,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_FI },
+         { "2.53", OPTION_VAL_253_FI },
          { "8",  OPTION_VAL_8_FI },
          { "16", OPTION_VAL_16_FI },
          { "32", OPTION_VAL_32_FI },
@@ -3134,6 +3164,7 @@ struct retro_core_options_v2 options_fi = {
 #define OPTION_VAL_64_FR NULL
 #define OPTION_VAL_1_O2_FR NULL
 #define OPTION_VAL_2_O2_FR NULL
+#define OPTION_VAL_253_FR NULL
 #define Q88_SOUND_BOARD_LABEL_FR "Carte son"
 #define Q88_SOUND_BOARD_INFO_0_FR "Recommandé : OPNA. Certains logiciels sonneront différemment lors de l'utilisation du matériel OPN."
 #define OPTION_VAL_OPN_FR NULL
@@ -3199,6 +3230,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_FR },
+         { "2.53", OPTION_VAL_253_FR },
          { "8",  OPTION_VAL_8_FR },
          { "16", OPTION_VAL_16_FR },
          { "32", OPTION_VAL_32_FR },
@@ -3339,6 +3371,7 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_64_GL NULL
 #define OPTION_VAL_1_O2_GL NULL
 #define OPTION_VAL_2_O2_GL NULL
+#define OPTION_VAL_253_GL NULL
 #define Q88_SOUND_BOARD_LABEL_GL NULL
 #define Q88_SOUND_BOARD_INFO_0_GL NULL
 #define OPTION_VAL_OPN_GL NULL
@@ -3404,6 +3437,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_GL },
+         { "2.53", OPTION_VAL_253_GL },
          { "8",  OPTION_VAL_8_GL },
          { "16", OPTION_VAL_16_GL },
          { "32", OPTION_VAL_32_GL },
@@ -3544,6 +3578,7 @@ struct retro_core_options_v2 options_gl = {
 #define OPTION_VAL_64_HE NULL
 #define OPTION_VAL_1_O2_HE NULL
 #define OPTION_VAL_2_O2_HE NULL
+#define OPTION_VAL_253_HE NULL
 #define Q88_SOUND_BOARD_LABEL_HE NULL
 #define Q88_SOUND_BOARD_INFO_0_HE NULL
 #define OPTION_VAL_OPN_HE NULL
@@ -3609,6 +3644,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_HE },
+         { "2.53", OPTION_VAL_253_HE },
          { "8",  OPTION_VAL_8_HE },
          { "16", OPTION_VAL_16_HE },
          { "32", OPTION_VAL_32_HE },
@@ -3749,6 +3785,7 @@ struct retro_core_options_v2 options_he = {
 #define OPTION_VAL_64_HR NULL
 #define OPTION_VAL_1_O2_HR NULL
 #define OPTION_VAL_2_O2_HR NULL
+#define OPTION_VAL_253_HR NULL
 #define Q88_SOUND_BOARD_LABEL_HR NULL
 #define Q88_SOUND_BOARD_INFO_0_HR NULL
 #define OPTION_VAL_OPN_HR NULL
@@ -3814,6 +3851,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_HR },
+         { "2.53", OPTION_VAL_253_HR },
          { "8",  OPTION_VAL_8_HR },
          { "16", OPTION_VAL_16_HR },
          { "32", OPTION_VAL_32_HR },
@@ -3954,6 +3992,7 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_64_HU "64 MHz (órajelnövelés)"
 #define OPTION_VAL_1_O2_HU "1 MHz (órajelcsökkentés)"
 #define OPTION_VAL_2_O2_HU "2 MHz (órajelcsökkentés)"
+#define OPTION_VAL_253_HU NULL
 #define Q88_SOUND_BOARD_LABEL_HU "Hangmodul"
 #define Q88_SOUND_BOARD_INFO_0_HU "Az OPNA ajánlott. Néhány szoftver máshogy szól OPN hardveren."
 #define OPTION_VAL_OPN_HU NULL
@@ -4019,6 +4058,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_HU },
+         { "2.53", OPTION_VAL_253_HU },
          { "8",  OPTION_VAL_8_HU },
          { "16", OPTION_VAL_16_HU },
          { "32", OPTION_VAL_32_HU },
@@ -4159,6 +4199,7 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_64_ID NULL
 #define OPTION_VAL_1_O2_ID NULL
 #define OPTION_VAL_2_O2_ID NULL
+#define OPTION_VAL_253_ID NULL
 #define Q88_SOUND_BOARD_LABEL_ID NULL
 #define Q88_SOUND_BOARD_INFO_0_ID NULL
 #define OPTION_VAL_OPN_ID NULL
@@ -4224,6 +4265,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_ID },
+         { "2.53", OPTION_VAL_253_ID },
          { "8",  OPTION_VAL_8_ID },
          { "16", OPTION_VAL_16_ID },
          { "32", OPTION_VAL_32_ID },
@@ -4364,6 +4406,7 @@ struct retro_core_options_v2 options_id = {
 #define OPTION_VAL_64_IT NULL
 #define OPTION_VAL_1_O2_IT NULL
 #define OPTION_VAL_2_O2_IT NULL
+#define OPTION_VAL_253_IT NULL
 #define Q88_SOUND_BOARD_LABEL_IT "Scheda audio"
 #define Q88_SOUND_BOARD_INFO_0_IT "Consigliato: OPNA. Alcuni software suoneranno diversi quando si utilizza l'hardware OPN."
 #define OPTION_VAL_OPN_IT NULL
@@ -4429,6 +4472,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_IT },
+         { "2.53", OPTION_VAL_253_IT },
          { "8",  OPTION_VAL_8_IT },
          { "16", OPTION_VAL_16_IT },
          { "32", OPTION_VAL_32_IT },
@@ -4569,6 +4613,7 @@ struct retro_core_options_v2 options_it = {
 #define OPTION_VAL_64_JA "64 MHz (オーバークロック)"
 #define OPTION_VAL_1_O2_JA "1 MHz (アンダークロック)"
 #define OPTION_VAL_2_O2_JA "2 MHz (アンダークロック)"
+#define OPTION_VAL_253_JA "2.53 MHz (PC80)"
 #define Q88_SOUND_BOARD_LABEL_JA "サウンドボード"
 #define Q88_SOUND_BOARD_INFO_0_JA "推奨：OPNA。 OPNハードウェアを使用すると、一部のソフトウェアのサウンドが異なります。"
 #define OPTION_VAL_OPN_JA NULL
@@ -4634,6 +4679,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_JA },
+         { "2.53", OPTION_VAL_253_JA },
          { "8",  OPTION_VAL_8_JA },
          { "16", OPTION_VAL_16_JA },
          { "32", OPTION_VAL_32_JA },
@@ -4774,6 +4820,7 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_64_KO "64 MHz (오버클럭)"
 #define OPTION_VAL_1_O2_KO "1 MHz (언더클럭)"
 #define OPTION_VAL_2_O2_KO "2 MHz (언더클럭)"
+#define OPTION_VAL_253_KO NULL
 #define Q88_SOUND_BOARD_LABEL_KO "사운드 보드"
 #define Q88_SOUND_BOARD_INFO_0_KO "권장: OPNA. 일부 소프트웨어는 OPN 하드웨어 사용 시 소리 출력이 달라질 수 있습니다."
 #define OPTION_VAL_OPN_KO NULL
@@ -4839,6 +4886,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_KO },
+         { "2.53", OPTION_VAL_253_KO },
          { "8",  OPTION_VAL_8_KO },
          { "16", OPTION_VAL_16_KO },
          { "32", OPTION_VAL_32_KO },
@@ -4979,6 +5027,7 @@ struct retro_core_options_v2 options_ko = {
 #define OPTION_VAL_64_MT NULL
 #define OPTION_VAL_1_O2_MT NULL
 #define OPTION_VAL_2_O2_MT NULL
+#define OPTION_VAL_253_MT NULL
 #define Q88_SOUND_BOARD_LABEL_MT NULL
 #define Q88_SOUND_BOARD_INFO_0_MT NULL
 #define OPTION_VAL_OPN_MT NULL
@@ -5044,6 +5093,7 @@ struct retro_core_option_v2_definition option_defs_mt[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_MT },
+         { "2.53", OPTION_VAL_253_MT },
          { "8",  OPTION_VAL_8_MT },
          { "16", OPTION_VAL_16_MT },
          { "32", OPTION_VAL_32_MT },
@@ -5184,6 +5234,7 @@ struct retro_core_options_v2 options_mt = {
 #define OPTION_VAL_64_NL NULL
 #define OPTION_VAL_1_O2_NL NULL
 #define OPTION_VAL_2_O2_NL NULL
+#define OPTION_VAL_253_NL NULL
 #define Q88_SOUND_BOARD_LABEL_NL NULL
 #define Q88_SOUND_BOARD_INFO_0_NL NULL
 #define OPTION_VAL_OPN_NL NULL
@@ -5249,6 +5300,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_NL },
+         { "2.53", OPTION_VAL_253_NL },
          { "8",  OPTION_VAL_8_NL },
          { "16", OPTION_VAL_16_NL },
          { "32", OPTION_VAL_32_NL },
@@ -5389,6 +5441,7 @@ struct retro_core_options_v2 options_nl = {
 #define OPTION_VAL_64_NO NULL
 #define OPTION_VAL_1_O2_NO NULL
 #define OPTION_VAL_2_O2_NO NULL
+#define OPTION_VAL_253_NO NULL
 #define Q88_SOUND_BOARD_LABEL_NO NULL
 #define Q88_SOUND_BOARD_INFO_0_NO NULL
 #define OPTION_VAL_OPN_NO NULL
@@ -5454,6 +5507,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_NO },
+         { "2.53", OPTION_VAL_253_NO },
          { "8",  OPTION_VAL_8_NO },
          { "16", OPTION_VAL_16_NO },
          { "32", OPTION_VAL_32_NO },
@@ -5594,6 +5648,7 @@ struct retro_core_options_v2 options_no = {
 #define OPTION_VAL_64_OC NULL
 #define OPTION_VAL_1_O2_OC NULL
 #define OPTION_VAL_2_O2_OC NULL
+#define OPTION_VAL_253_OC NULL
 #define Q88_SOUND_BOARD_LABEL_OC NULL
 #define Q88_SOUND_BOARD_INFO_0_OC NULL
 #define OPTION_VAL_OPN_OC NULL
@@ -5659,6 +5714,7 @@ struct retro_core_option_v2_definition option_defs_oc[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_OC },
+         { "2.53", OPTION_VAL_253_OC },
          { "8",  OPTION_VAL_8_OC },
          { "16", OPTION_VAL_16_OC },
          { "32", OPTION_VAL_32_OC },
@@ -5799,6 +5855,7 @@ struct retro_core_options_v2 options_oc = {
 #define OPTION_VAL_64_PL NULL
 #define OPTION_VAL_1_O2_PL NULL
 #define OPTION_VAL_2_O2_PL NULL
+#define OPTION_VAL_253_PL NULL
 #define Q88_SOUND_BOARD_LABEL_PL NULL
 #define Q88_SOUND_BOARD_INFO_0_PL NULL
 #define OPTION_VAL_OPN_PL NULL
@@ -5864,6 +5921,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_PL },
+         { "2.53", OPTION_VAL_253_PL },
          { "8",  OPTION_VAL_8_PL },
          { "16", OPTION_VAL_16_PL },
          { "32", OPTION_VAL_32_PL },
@@ -6004,6 +6062,7 @@ struct retro_core_options_v2 options_pl = {
 #define OPTION_VAL_64_PT_BR NULL
 #define OPTION_VAL_1_O2_PT_BR NULL
 #define OPTION_VAL_2_O2_PT_BR NULL
+#define OPTION_VAL_253_PT_BR NULL
 #define Q88_SOUND_BOARD_LABEL_PT_BR "Placa de som"
 #define Q88_SOUND_BOARD_INFO_0_PT_BR "Recomendado: OPNA. Alguns softwares podem ter um som alterado ao utilizar o hardware OPN."
 #define OPTION_VAL_OPN_PT_BR NULL
@@ -6069,6 +6128,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_PT_BR },
+         { "2.53", OPTION_VAL_253_PT_BR },
          { "8",  OPTION_VAL_8_PT_BR },
          { "16", OPTION_VAL_16_PT_BR },
          { "32", OPTION_VAL_32_PT_BR },
@@ -6209,6 +6269,7 @@ struct retro_core_options_v2 options_pt_br = {
 #define OPTION_VAL_64_PT_PT NULL
 #define OPTION_VAL_1_O2_PT_PT NULL
 #define OPTION_VAL_2_O2_PT_PT NULL
+#define OPTION_VAL_253_PT_PT NULL
 #define Q88_SOUND_BOARD_LABEL_PT_PT NULL
 #define Q88_SOUND_BOARD_INFO_0_PT_PT NULL
 #define OPTION_VAL_OPN_PT_PT NULL
@@ -6274,6 +6335,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_PT_PT },
+         { "2.53", OPTION_VAL_253_PT_PT },
          { "8",  OPTION_VAL_8_PT_PT },
          { "16", OPTION_VAL_16_PT_PT },
          { "32", OPTION_VAL_32_PT_PT },
@@ -6414,6 +6476,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_64_RO NULL
 #define OPTION_VAL_1_O2_RO NULL
 #define OPTION_VAL_2_O2_RO NULL
+#define OPTION_VAL_253_RO NULL
 #define Q88_SOUND_BOARD_LABEL_RO NULL
 #define Q88_SOUND_BOARD_INFO_0_RO NULL
 #define OPTION_VAL_OPN_RO NULL
@@ -6479,6 +6542,7 @@ struct retro_core_option_v2_definition option_defs_ro[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_RO },
+         { "2.53", OPTION_VAL_253_RO },
          { "8",  OPTION_VAL_8_RO },
          { "16", OPTION_VAL_16_RO },
          { "32", OPTION_VAL_32_RO },
@@ -6619,6 +6683,7 @@ struct retro_core_options_v2 options_ro = {
 #define OPTION_VAL_64_RU "64 МГц (разгон)"
 #define OPTION_VAL_1_O2_RU "1 МГц (замедление)"
 #define OPTION_VAL_2_O2_RU "2 МГц (замедление)"
+#define OPTION_VAL_253_RU NULL
 #define Q88_SOUND_BOARD_LABEL_RU "Звуковая плата"
 #define Q88_SOUND_BOARD_INFO_0_RU "Рекомендованный режим: OPNA. Некоторые программы будут звучать иначе на оборудовании OPN."
 #define OPTION_VAL_OPN_RU NULL
@@ -6684,6 +6749,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_RU },
+         { "2.53", OPTION_VAL_253_RU },
          { "8",  OPTION_VAL_8_RU },
          { "16", OPTION_VAL_16_RU },
          { "32", OPTION_VAL_32_RU },
@@ -6824,6 +6890,7 @@ struct retro_core_options_v2 options_ru = {
 #define OPTION_VAL_64_SI NULL
 #define OPTION_VAL_1_O2_SI NULL
 #define OPTION_VAL_2_O2_SI NULL
+#define OPTION_VAL_253_SI NULL
 #define Q88_SOUND_BOARD_LABEL_SI NULL
 #define Q88_SOUND_BOARD_INFO_0_SI NULL
 #define OPTION_VAL_OPN_SI NULL
@@ -6889,6 +6956,7 @@ struct retro_core_option_v2_definition option_defs_si[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_SI },
+         { "2.53", OPTION_VAL_253_SI },
          { "8",  OPTION_VAL_8_SI },
          { "16", OPTION_VAL_16_SI },
          { "32", OPTION_VAL_32_SI },
@@ -7029,6 +7097,7 @@ struct retro_core_options_v2 options_si = {
 #define OPTION_VAL_64_SK "64 MHz (pretaktovať)"
 #define OPTION_VAL_1_O2_SK NULL
 #define OPTION_VAL_2_O2_SK "2 MHz (podtaktovať)"
+#define OPTION_VAL_253_SK NULL
 #define Q88_SOUND_BOARD_LABEL_SK "Zvukový adaptér"
 #define Q88_SOUND_BOARD_INFO_0_SK NULL
 #define OPTION_VAL_OPN_SK NULL
@@ -7094,6 +7163,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_SK },
+         { "2.53", OPTION_VAL_253_SK },
          { "8",  OPTION_VAL_8_SK },
          { "16", OPTION_VAL_16_SK },
          { "32", OPTION_VAL_32_SK },
@@ -7234,6 +7304,7 @@ struct retro_core_options_v2 options_sk = {
 #define OPTION_VAL_64_SR NULL
 #define OPTION_VAL_1_O2_SR NULL
 #define OPTION_VAL_2_O2_SR NULL
+#define OPTION_VAL_253_SR NULL
 #define Q88_SOUND_BOARD_LABEL_SR NULL
 #define Q88_SOUND_BOARD_INFO_0_SR NULL
 #define OPTION_VAL_OPN_SR NULL
@@ -7299,6 +7370,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_SR },
+         { "2.53", OPTION_VAL_253_SR },
          { "8",  OPTION_VAL_8_SR },
          { "16", OPTION_VAL_16_SR },
          { "32", OPTION_VAL_32_SR },
@@ -7439,6 +7511,7 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_64_SV NULL
 #define OPTION_VAL_1_O2_SV NULL
 #define OPTION_VAL_2_O2_SV NULL
+#define OPTION_VAL_253_SV NULL
 #define Q88_SOUND_BOARD_LABEL_SV NULL
 #define Q88_SOUND_BOARD_INFO_0_SV NULL
 #define OPTION_VAL_OPN_SV NULL
@@ -7504,6 +7577,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_SV },
+         { "2.53", OPTION_VAL_253_SV },
          { "8",  OPTION_VAL_8_SV },
          { "16", OPTION_VAL_16_SV },
          { "32", OPTION_VAL_32_SV },
@@ -7644,6 +7718,7 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_64_TR "64 MHz (hız aşırtmalı)"
 #define OPTION_VAL_1_O2_TR "1 MHz (hız düşürmeli)"
 #define OPTION_VAL_2_O2_TR "2 MHz (hız düşürmeli)"
+#define OPTION_VAL_253_TR NULL
 #define Q88_SOUND_BOARD_LABEL_TR "Ses kartı"
 #define Q88_SOUND_BOARD_INFO_0_TR "Önerilen: OPNA. OPN donanımını kullanırken bazı yazılımlar farklı gelebilir."
 #define OPTION_VAL_OPN_TR NULL
@@ -7709,6 +7784,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_TR },
+         { "2.53", OPTION_VAL_253_TR },
          { "8",  OPTION_VAL_8_TR },
          { "16", OPTION_VAL_16_TR },
          { "32", OPTION_VAL_32_TR },
@@ -7849,6 +7925,7 @@ struct retro_core_options_v2 options_tr = {
 #define OPTION_VAL_64_UK NULL
 #define OPTION_VAL_1_O2_UK NULL
 #define OPTION_VAL_2_O2_UK NULL
+#define OPTION_VAL_253_UK NULL
 #define Q88_SOUND_BOARD_LABEL_UK NULL
 #define Q88_SOUND_BOARD_INFO_0_UK NULL
 #define OPTION_VAL_OPN_UK NULL
@@ -7914,6 +7991,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_UK },
+         { "2.53", OPTION_VAL_253_UK },
          { "8",  OPTION_VAL_8_UK },
          { "16", OPTION_VAL_16_UK },
          { "32", OPTION_VAL_32_UK },
@@ -8054,6 +8132,7 @@ struct retro_core_options_v2 options_uk = {
 #define OPTION_VAL_64_VAL NULL
 #define OPTION_VAL_1_O2_VAL NULL
 #define OPTION_VAL_2_O2_VAL NULL
+#define OPTION_VAL_253_VAL NULL
 #define Q88_SOUND_BOARD_LABEL_VAL NULL
 #define Q88_SOUND_BOARD_INFO_0_VAL NULL
 #define OPTION_VAL_OPN_VAL NULL
@@ -8119,6 +8198,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_VAL },
+         { "2.53", OPTION_VAL_253_VAL },
          { "8",  OPTION_VAL_8_VAL },
          { "16", OPTION_VAL_16_VAL },
          { "32", OPTION_VAL_32_VAL },
@@ -8259,6 +8339,7 @@ struct retro_core_options_v2 options_val = {
 #define OPTION_VAL_64_VN NULL
 #define OPTION_VAL_1_O2_VN NULL
 #define OPTION_VAL_2_O2_VN NULL
+#define OPTION_VAL_253_VN NULL
 #define Q88_SOUND_BOARD_LABEL_VN NULL
 #define Q88_SOUND_BOARD_INFO_0_VN NULL
 #define OPTION_VAL_OPN_VN NULL
@@ -8324,6 +8405,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       NULL,
       {
          { "4",  OPTION_VAL_4_VN },
+         { "2.53", OPTION_VAL_253_VN },
          { "8",  OPTION_VAL_8_VN },
          { "16", OPTION_VAL_16_VN },
          { "32", OPTION_VAL_32_VN },

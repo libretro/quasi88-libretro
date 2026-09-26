@@ -31,6 +31,7 @@
 #include "snddrv.h"
 #include "suspend.h"
 #include "status.h"
+#include "pcg8100.h"
 
 
 
@@ -778,13 +779,18 @@ void	main_io_out( byte port, byte data )
   case 0x02:
     /*if( use_pcg )*/
       pcg_out_addr_high( data );
+
+    if( use_pcg )
+      pcg8100_out( 0x02, data );
     return;
 
   case 0x0c:
   case 0x0d:
   case 0x0e:
   case 0x0f:
-    /* PCG のサウンド出力のポートらしい */
+    /* PCG-8100 8253 PIT */
+    if( use_pcg )
+      pcg8100_out( port, data );
     return;
 
 
@@ -2741,6 +2747,8 @@ void	pc88main_init( int init )
 
   if( init == INIT_POWERON ){
     power_on_ram_init();
+    if( use_pcg )
+      pcg8100_reset();
   }
 
 

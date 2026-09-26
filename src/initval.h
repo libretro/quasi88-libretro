@@ -7,6 +7,7 @@
 /*----------------------------------------------------------------------*/
 #define	CONST_4MHZ_CLOCK	(3.9936)
 #define	CONST_8MHZ_CLOCK	(CONST_4MHZ_CLOCK*2.0)
+#define	CONST_PC80_CLOCK	(2.53)	/* PC-8001, CRTC ON 実効速度 */
 #define	CONST_VSYNC_FREQ	(55.4)
 
 

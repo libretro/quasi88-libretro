@@ -30,6 +30,7 @@
 #include "pseudo_bios.h"
 #include "disks.h"
 #include "libretro_core_options.h"
+#include "pcg8100.h"
 static bool libretro_supports_option_categories = false;
 
 #include "libretro-file.h"
@@ -360,37 +361,42 @@ static void init_variables(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       cmt_speed = 0;
-      if (!strncmp(var.value, "4 MHz", 1))
+      if (!strcmp(var.value, "4"))
       {
          boot_clock_4mhz = CLOCK_4MHZ;
          cpu_clock_mhz = CONST_4MHZ_CLOCK;
       }
-      else if (!strncmp(var.value, "8 MHz", 1))
+      else if (!strcmp(var.value, "2.53"))
+      {
+         boot_clock_4mhz = CLOCK_4MHZ;
+         cpu_clock_mhz = CONST_PC80_CLOCK;
+      }
+      else if (!strcmp(var.value, "8"))
       {
          boot_clock_4mhz = CLOCK_8MHZ;
          cpu_clock_mhz = CONST_8MHZ_CLOCK;
       }
-      else if (!strncmp(var.value, "16 MHz (overclock)", 2))
+      else if (!strcmp(var.value, "16"))
       {
          boot_clock_4mhz = CLOCK_8MHZ;
          cpu_clock_mhz = CONST_8MHZ_CLOCK * 2.0;
       }
-      else if (!strncmp(var.value, "32 MHz (overclock)", 2))
+      else if (!strcmp(var.value, "32"))
       {
          boot_clock_4mhz = CLOCK_8MHZ;
          cpu_clock_mhz = CONST_8MHZ_CLOCK * 4.0;
       }
-      else if (!strncmp(var.value, "64 MHz (overclock)", 2))
+      else if (!strcmp(var.value, "64"))
       {
          boot_clock_4mhz = CLOCK_8MHZ;
          cpu_clock_mhz = CONST_8MHZ_CLOCK * 8.0;
       }
-      else if (!strncmp(var.value, "1 MHz (underclock)", 1))
+      else if (!strcmp(var.value, "1"))
       {
          boot_clock_4mhz = CLOCK_4MHZ;
          cpu_clock_mhz = CONST_4MHZ_CLOCK * 0.25;
       }
-      else if (!strncmp(var.value, "2 MHz (underclock)", 1))
+      else if (!strcmp(var.value, "2"))
       {
          boot_clock_4mhz = CLOCK_4MHZ;
          cpu_clock_mhz = CONST_4MHZ_CLOCK * 0.50;
@@ -723,6 +729,9 @@ void retro_run(void)
    if (rumble_cb)
       handle_rumble();
    video_cb(screen_buf, WIDTH, HEIGHT, WIDTH * 2);
+
+   if (use_pcg && finalmix && samples_this_frame > 0)
+      pcg8100_mix((short *)finalmix, samples_this_frame, 44100);
    
    /* Prevent a loud audio pop */
    if (frames > FRAMES_BEFORE_AUDIO)
