@@ -155,7 +155,7 @@ struct	_Q8Adjust {
 typedef	struct	_Q8tkWidget	Q8tkWidget;
 typedef	struct	_Q8List		Q8List;
 
-typedef void (*Q8tkSignalFunc)	();
+typedef void (*Q8tkSignalFunc)	(Q8tkWidget *, void *);
 
 struct	_Q8tkWidget {
 

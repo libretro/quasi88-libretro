@@ -2624,8 +2624,8 @@ static struct{
     int		*get_ro;		/* RO かどうかのフラグ      */
     Q8tkWidget	*accel;
 } FSEL;
-static void cb_fsel_ok(UNUSED_WIDGET, Q8tkWidget *f);
-static void cb_fsel_cancel(UNUSED_WIDGET, Q8tkWidget *f);
+static void cb_fsel_ok(UNUSED_WIDGET, void *p);
+static void cb_fsel_cancel(UNUSED_WIDGET, void *p);
 
 static void START_FILE_SELECTION(const char *label,	/* タイトル       */
 				 int select_ro,		/* RO選択状態     */
@@ -2664,15 +2664,17 @@ static void START_FILE_SELECTION(const char *label,	/* タイトル       */
 }
 
 
-static void cb_fsel_cancel(UNUSED_WIDGET, Q8tkWidget *f)
+static void cb_fsel_cancel(UNUSED_WIDGET, void *p)
 {
+    Q8tkWidget *f = (Q8tkWidget *)p;
     q8tk_grab_remove(f);
     q8tk_widget_destroy(f);
     q8tk_widget_destroy(FSEL.accel);
 }
 
-static void cb_fsel_ok(UNUSED_WIDGET, Q8tkWidget *f)
+static void cb_fsel_ok(UNUSED_WIDGET, void *p)
 {
+    Q8tkWidget *f = (Q8tkWidget *)p;
     *FSEL.get_filename = '\0';
     strncat(FSEL.get_filename, q8tk_file_selection_get_filename(f), 
 	    FSEL.sz_get_filename - 1);
