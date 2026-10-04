@@ -751,7 +751,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->geometry.max_width    = WIDTH;
    info->geometry.max_height   = HEIGHT;
    info->geometry.aspect_ratio = 1.6;
-   info->timing.fps            = 60;
+   info->timing.fps            = vsync_freq_hz;
    info->timing.sample_rate    = 44100;
 }
 
