@@ -3315,6 +3315,7 @@ static int fill_sector_gap(int ptr, int drv, Uchar fdc_mf)
 #define	SID		"FDC "
 #define	SID_DATA	"FDC0"
 #define	SID2		"FDC2"
+#define	SID3		"FDC3"
 
 static	T_SUSPEND_W	suspend_fdc_work[]=
 {
@@ -3416,6 +3417,27 @@ static	T_SUSPEND_W	suspend_fdc_work2[]=
 };
 
 
+/* Where each drive's head is in its image. Loading a state used to leave the
+   heads where they were, so a read in progress went on from the wrong sector
+   when a state was loaded without reopening the images, as run-ahead does. */
+static	T_SUSPEND_W	suspend_fdc_work3[]=
+{
+  { TYPE_INT,	&drive[0].track		},
+  { TYPE_INT,	&drive[0].sec_nr	},
+  { TYPE_INT,	&drive[0].sec		},
+  { TYPE_LONG,	&drive[0].sec_pos	},
+  { TYPE_LONG,	&drive[0].track_top	},
+  { TYPE_INT,	&drive[1].track		},
+  { TYPE_INT,	&drive[1].sec_nr	},
+  { TYPE_INT,	&drive[1].sec		},
+  { TYPE_LONG,	&drive[1].sec_pos	},
+  { TYPE_LONG,	&drive[1].track_top	},
+  { TYPE_INT,	&sec_buf.drv		},
+
+  { TYPE_END,	0			},
+};
+
+
 int	statesave_fdc( void )
 {
   image_disk[0] = drive[0].selected_image;
@@ -3428,6 +3450,8 @@ int	statesave_fdc( void )
 								return FALSE;
 
   if( statesave_table( SID2, suspend_fdc_work2 ) != STATE_OK ) return FALSE;
+
+  if( statesave_table( SID3, suspend_fdc_work3 ) != STATE_OK ) return FALSE;
 
   return TRUE;
 }
@@ -3460,6 +3484,12 @@ int	stateload_fdc( void )
 
     return TRUE;
 
+  }
+
+  /* An older state leaves the heads where they are */
+  if( stateload_table( SID3, suspend_fdc_work3 ) == STATE_OK ){
+    if( sec_buf.drv >= 0 && drive[ sec_buf.drv ].fp )
+      disk_now_sec( sec_buf.drv );	/* the sector ID under the head */
   }
 
   return TRUE;
