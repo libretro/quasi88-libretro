@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdarg.h>
 #include <string.h>
 
@@ -168,6 +169,375 @@ static void handle_pad(uint8_t key, uint16_t retro_button, uint8_t pad)
          pad_buffer[key] = false;
       }
    }
+}
+
+/* A game on tape is loaded from the BASIC prompt, as on the machine: by the
+ * commands its file name gives in braces, as in "{V1 mode, MON R G8F00}", or
+ * else by loading the BASIC program on it and running that. */
+enum autotype_kind { AUTOTYPE_LINE, AUTOTYPE_KEY, AUTOTYPE_CTRL };
+
+struct autotype_step
+{
+   enum autotype_kind kind;
+   char text[32];
+   bool reads_tape;
+};
+
+#define AUTOTYPE_MAX_STEPS   16
+#define AUTOTYPE_BOOT_FRAMES 240
+#define AUTOTYPE_KEY_FRAMES  3
+#define AUTOTYPE_STEP_FRAMES 30
+/* Machine frames a tape can stand still and still be loading: between blocks
+ * a T88 tape holds timed silences */
+#define TAPE_IDLE_FRAMES     330
+/* Machine frames the motor can stop between blocks within one load */
+#define MOTOR_IDLE_FRAMES    120
+/* Frames run for each one shown while the tape is being read, so that a
+ * load keeps its timing but takes seconds rather than minutes */
+#define TAPE_TURBO_FRAMES    8
+
+static struct autotype_step autotype_steps[AUTOTYPE_MAX_STEPS];
+static int  autotype_count       = 0;
+static int  autotype_step        = 0;
+static int  autotype_char        = 0;
+static int  autotype_wait        = 0;
+static int  autotype_shift       = 0;
+static int  autotype_held        = -1;
+static bool autotype_tape        = false;
+static long tape_last_pos        = -1;
+static int  tape_still           = 0;
+static int  motor_still          = 0;
+static int  tape_boot_basic      = -1;
+static bool autotype_files_asked = false;
+static char tape_path[OSD_MAX_FILENAME] = { '\0' };
+
+static void autotype_add(enum autotype_kind kind, const char *text, bool reads_tape)
+{
+   struct autotype_step *step;
+
+   if (autotype_count >= AUTOTYPE_MAX_STEPS)
+      return;
+   step = &autotype_steps[autotype_count++];
+   step->kind = kind;
+   strlcpy(step->text, text, sizeof(step->text));
+   step->reads_tape = reads_tape;
+}
+
+static bool word_is(const char *word, const char *wanted)
+{
+   return string_is_equal_noncase(word, wanted);
+}
+
+static bool is_address(const char *word)
+{
+   size_t i;
+
+   if (toupper((unsigned char)word[0]) != 'G' || !word[1])
+      return false;
+   for (i = 1; word[i]; i++)
+      if (!isxdigit((unsigned char)word[i]))
+         return false;
+   return true;
+}
+
+/* Reads the loading instructions from a tape's file name */
+static void autotype_plan(const char *path)
+{
+   char instructions[256] = { '\0' };
+   char *words[64];
+   int count = 0;
+   int i;
+   const char *open  = strchr(path_basename(path), '{');
+   const char *close = open ? strchr(open, '}') : NULL;
+
+   autotype_count  = 0;
+   tape_boot_basic = -1;
+
+   if (open && close && close - open - 1 < (int)sizeof(instructions))
+   {
+      char *c = instructions;
+
+      memcpy(instructions, open + 1, close - open - 1);
+      while (*c && count < 64)
+      {
+         while (*c == ',' || *c == ' ')
+            *c++ = '\0';
+         if (!*c)
+            break;
+         words[count++] = c;
+         while (*c && *c != ',' && *c != ' ')
+            c++;
+      }
+   }
+
+   for (i = 0; i < count; i++)
+   {
+      const char *word = words[i];
+      const char *next = i + 1 < count ? words[i + 1] : "";
+
+      if (word_is(next, "mode"))
+      {
+         if (word_is(word, "N") || word_is(word, "N80"))
+            tape_boot_basic = BASIC_N;
+         else if (word_is(word, "V1") || word_is(word, "V1S"))
+            tape_boot_basic = BASIC_V1S;
+         else if (word_is(word, "V1H"))
+            tape_boot_basic = BASIC_V1H;
+         else if (word_is(word, "V2"))
+            tape_boot_basic = BASIC_V2;
+         i++;
+      }
+      else if (word_is(word, "MON") || word_is(word, "RUN") || is_address(word))
+         autotype_add(AUTOTYPE_LINE, word, false);
+      else if (word_is(word, "R") || word_is(word, "L") || word_is(word, "RDATA"))
+         autotype_add(AUTOTYPE_LINE, word, true);
+      else if (word_is(word, "LOAD") && word_is(next, "CAS"))
+      {
+         autotype_add(AUTOTYPE_LINE, "LOAD\"CAS:\"", true);
+         i++;
+      }
+      else if (word_is(word, "Ctrl-B") || word_is(word, "Ctrl+B"))
+         autotype_add(AUTOTYPE_CTRL, "B", false);
+      else if (word_is(word, "press") && strlen(next) == 1)
+      {
+         autotype_add(AUTOTYPE_KEY, next, false);
+         i++;
+      }
+      else if (word_is(word, "F5"))
+         autotype_add(AUTOTYPE_KEY, "\x05", false);
+   }
+
+   if (autotype_count == 0)
+   {
+      autotype_add(AUTOTYPE_LINE, "LOAD\"CAS:\"", true);
+      autotype_add(AUTOTYPE_LINE, "RUN", false);
+   }
+}
+
+static void autotype_start(void)
+{
+   /* N88-BASIC first asks how many files to open; N-BASIC goes straight to Ok */
+   autotype_files_asked = boot_basic != BASIC_N;
+   autotype_step       = 0;
+   autotype_char       = 0;
+   autotype_wait       = AUTOTYPE_BOOT_FRAMES;
+   autotype_held       = -1;
+   autotype_shift      = 0;
+   autotype_tape       = false;
+   tape_last_pos       = -1;
+   tape_still          = TAPE_IDLE_FRAMES;
+   motor_still         = MOTOR_IDLE_FRAMES;
+}
+
+/* Counts the machine frames since the tape last moved */
+static void tape_tick(void)
+{
+   long cur, end;
+
+   if (!tape_path[0])
+      return;
+   if (sys_ctrl & 0x08)
+      motor_still = 0;
+   else if (motor_still < MOTOR_IDLE_FRAMES)
+      motor_still++;
+   sio_tape_pos(&cur, &end);
+   if (cur != tape_last_pos)
+   {
+      tape_last_pos = cur;
+      tape_still    = 0;
+   }
+   else if (tape_still < TAPE_IDLE_FRAMES)
+      tape_still++;
+}
+
+/* Whether a program is reading the tape: its motor has turned and the tape
+ * has moved lately. A loader stops the motor between blocks. */
+static bool tape_loading(void)
+{
+   return tape_path[0] && motor_still < MOTOR_IDLE_FRAMES && tape_still < TAPE_IDLE_FRAMES;
+}
+
+/* The key that types a character, and whether it needs shift */
+static int key_for(char c, bool *shift)
+{
+   *shift = false;
+   if (c == '\x05')
+      return KEY88_F5;
+   if (c == '"')
+   {
+      *shift = true;
+      return KEY88_2;
+   }
+   if (c >= 'a' && c <= 'z')
+      return KEY88_A + (c - 'a');
+   *shift = c >= 'A' && c <= 'Z';
+   return (unsigned char)c;
+}
+
+static void release_typed_key(void)
+{
+   if (autotype_held >= 0)
+      quasi88_key(autotype_held, 0);
+   if (autotype_shift)
+      quasi88_key(autotype_shift, 0);
+   autotype_held  = -1;
+   autotype_shift = 0;
+}
+
+static void handle_autotype(void)
+{
+   const struct autotype_step *step;
+   char c;
+   bool shift;
+
+   if (autotype_wait > 0)
+   {
+      autotype_wait--;
+      return;
+   }
+   if (autotype_held >= 0)
+   {
+      release_typed_key();
+      autotype_wait = AUTOTYPE_KEY_FRAMES;
+      return;
+   }
+   if (autotype_step >= autotype_count)
+      return;
+   /* Nothing is typed while the tape is being read */
+   if (tape_loading())
+      return;
+
+   if (autotype_files_asked)
+   {
+      autotype_files_asked = false;
+      autotype_held = KEY88_RETURN;
+      quasi88_key(KEY88_RETURN, 1);
+      autotype_wait = AUTOTYPE_KEY_FRAMES + 2 * AUTOTYPE_STEP_FRAMES;
+      return;
+   }
+
+   step = &autotype_steps[autotype_step];
+
+   /* A read is over once nothing is reading the tape */
+   if (autotype_tape)
+   {
+      autotype_tape = false;
+      autotype_step++;
+      autotype_char = 0;
+      autotype_wait = AUTOTYPE_STEP_FRAMES;
+      return;
+   }
+
+   if (step->kind == AUTOTYPE_CTRL || step->kind == AUTOTYPE_KEY)
+   {
+      if (step->kind == AUTOTYPE_CTRL)
+      {
+         autotype_shift = KEY88_CTRL;
+         quasi88_key(KEY88_CTRL, 1);
+      }
+      autotype_held = key_for(step->text[0], &shift);
+      quasi88_key(autotype_held, 1);
+      autotype_step++;
+      autotype_wait = AUTOTYPE_KEY_FRAMES;
+      if (autotype_step < autotype_count)
+         autotype_wait += AUTOTYPE_STEP_FRAMES;
+      return;
+   }
+
+   c = step->text[autotype_char];
+   if (c)
+   {
+      autotype_char++;
+      autotype_held = key_for(c, &shift);
+      if (shift)
+      {
+         autotype_shift = KEY88_SHIFT;
+         quasi88_key(KEY88_SHIFT, 1);
+      }
+      quasi88_key(autotype_held, 1);
+      autotype_wait = AUTOTYPE_KEY_FRAMES;
+      return;
+   }
+
+   /* The end of a line */
+   autotype_held = KEY88_RETURN;
+   quasi88_key(KEY88_RETURN, 1);
+   autotype_wait = AUTOTYPE_KEY_FRAMES;
+   if (step->reads_tape)
+   {
+      autotype_tape = true;
+      tape_still    = 0;
+      motor_still   = 0;
+      /* The command starts the motor once it is entered */
+      autotype_wait += AUTOTYPE_STEP_FRAMES;
+   }
+   else
+   {
+      autotype_step++;
+      autotype_char = 0;
+      autotype_wait += AUTOTYPE_STEP_FRAMES;
+   }
+}
+
+/* What a state keeps of the typing and the tape watch, so that run-ahead and
+ * rewind take them back with the machine */
+struct autotype_state
+{
+   char    magic[4];
+   int32_t step, chr, wait, shift, held, files_asked, tape;
+   int32_t tape_still, motor_still, tape_last_pos;
+};
+
+#define AUTOTYPE_STATE_MAGIC "QATS"
+
+static void autotype_save(struct autotype_state *out)
+{
+   memcpy(out->magic, AUTOTYPE_STATE_MAGIC, 4);
+   out->step          = autotype_step;
+   out->chr           = autotype_char;
+   out->wait          = autotype_wait;
+   out->shift         = autotype_shift;
+   out->held          = autotype_held;
+   out->files_asked   = autotype_files_asked;
+   out->tape          = autotype_tape;
+   out->tape_still    = tape_still;
+   out->motor_still   = motor_still;
+   out->tape_last_pos = (int32_t)tape_last_pos;
+}
+
+static void autotype_load(const struct autotype_state *in)
+{
+   if (memcmp(in->magic, AUTOTYPE_STATE_MAGIC, 4) != 0)
+      return;
+   autotype_step        = in->step;
+   autotype_char        = in->chr;
+   autotype_wait        = in->wait;
+   autotype_shift       = in->shift;
+   autotype_held        = in->held;
+   autotype_files_asked = in->files_asked != 0;
+   autotype_tape        = in->tape != 0;
+   tape_still           = in->tape_still;
+   motor_still          = in->motor_still;
+   tape_last_pos        = in->tape_last_pos;
+   /* Loading the machine released the key being typed */
+   if (autotype_shift)
+      quasi88_key(autotype_shift, 1);
+   if (autotype_held >= 0)
+      quasi88_key(autotype_held, 1);
+}
+
+static bool is_tape(const char *path)
+{
+   const char *ext = path_get_extension(path);
+   return ext && (string_is_equal_noncase(ext, "t88") || string_is_equal_noncase(ext, "cmt"));
+}
+
+static void insert_tape(void)
+{
+   if (tape_boot_basic >= 0)
+      boot_basic = tape_boot_basic;
+   quasi88_load_tape_insert(tape_path);
+   autotype_start();
 }
 
 /* Disk swapper button state, kept apart from the emulated key state so
@@ -626,6 +996,8 @@ void retro_reset(void)
 {
    init_variables();
    frames = 0;
+   if (tape_path[0])
+      insert_tape();
    quasi88_reset(NULL);
 }
 
@@ -691,10 +1063,23 @@ bool retro_load_game(const struct retro_game_info *info)
    quasi88_start();
    quasi88_disk_eject_all();
 
+   tape_path[0] = '\0';
+   autotype_count = 0;
    if (info && !string_is_empty(info->path))
    {
       if (strstr(info->path, ".m3u") != NULL)
          load_m3u(info->path);
+      else if (is_tape(info->path))
+      {
+         /* A tape restored every frame doesn't load the same, so run-ahead,
+          * which restores a state each frame, can't be used with one */
+         uint64_t quirks = RETRO_SERIALIZATION_QUIRK_INCOMPLETE;
+
+         environ_cb(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &quirks);
+         strlcpy(tape_path, info->path, sizeof(tape_path));
+         autotype_plan(info->path);
+         insert_tape();
+      }
       else
       {
          retro_disks_append(info->path);
@@ -745,16 +1130,24 @@ void retro_audio_append(const INT16 *buf, int count)
 void retro_run(void)
 {
    int stat;
+   int frame;
+   int count = 1;
 
    handle_input();
-
-   /* Run the emulation loop until one VSYNC period has completed */
+   handle_autotype();
+   /* A held key would repeat if the machine ran ahead */
+   if (tape_loading() && autotype_held < 0)
+      count = TAPE_TURBO_FRAMES;
    audio_buf_frames = 0;
-   do
+   for (frame = 0; frame < count; frame++)
    {
-      stat = quasi88_loop();
-   } while (stat == QUASI88_LOOP_BUSY);
-
+      /* Run the emulation loop until one VSYNC period has completed */
+      do
+      {
+         stat = quasi88_loop();
+      } while (stat == QUASI88_LOOP_BUSY);
+      tape_tick();
+   }
    if (rumble_cb)
       handle_rumble();
    video_cb(screen_buf, WIDTH, HEIGHT, WIDTH * 2);
@@ -776,7 +1169,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #endif
    info->library_version  = "0.6.4" GIT_VERSION;
    info->need_fullpath    = false;
-   info->valid_extensions = "d88|m3u";
+   info->valid_extensions = "d88|m3u|t88|cmt";
    info->block_extract    = false;
 }
 
@@ -882,7 +1275,11 @@ bool retro_serialize(void *data, size_t size)
 {
    long used;
    int success;
-   OSD_FILE *fp = osd_file_mem(data, size, 1);
+   OSD_FILE *fp;
+
+   if (size < sizeof(struct autotype_state))
+      return false;
+   fp = osd_file_mem(data, size - sizeof(struct autotype_state), 1);
    if (!fp)
       return false;
 
@@ -890,8 +1287,10 @@ bool retro_serialize(void *data, size_t size)
 
    /* Clear what the state does not use, so equal states are equal bytes */
    used = osd_ftell(fp);
-   if (used >= 0 && (size_t)used < size)
-      memset((char*)data + used, 0, size - (size_t)used);
+   if (used >= 0 && (size_t)used < size - sizeof(struct autotype_state))
+      memset((char*)data + used, 0, size - sizeof(struct autotype_state) - (size_t)used);
+
+   autotype_save((struct autotype_state *)((char *)data + size - sizeof(struct autotype_state)));
 
    if (osd_file_did_overflow(fp))
    {
@@ -930,6 +1329,19 @@ bool retro_unserialize(const void *data, size_t size)
       memset(key_buffer, 0, KEY88_END * sizeof(bool));
    if (pad_buffer)
       memset(pad_buffer, 0, KEY88_END * sizeof(bool));
+
+   /* The state names the tape and how far it was read: open it there again,
+    * as QUASI88's own state loading does */
+   if (file_tape[CLOAD][0])
+      sio_open_tapeload(file_tape[CLOAD]);
+
+   if (size >= sizeof(struct autotype_state))
+   {
+      struct autotype_state state;
+
+      memcpy(&state, (const char *)data + size - sizeof(state), sizeof(state));
+      autotype_load(&state);
+   }
 
    return success;
 }
