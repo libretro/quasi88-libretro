@@ -143,6 +143,7 @@ void	sio_mouse_init(int initial);
 int	sio_tape_rewind( void );
 
 int	sio_tape_pos( long *cur, long *end );
+int	sio_tape_in_gap( void );
 int	sio_com_pos( long *cur, long *end );
 int	sio_intr( void );
 void	sio_data_clear(void);

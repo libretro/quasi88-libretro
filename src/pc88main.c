@@ -1741,6 +1741,13 @@ int	sio_tape_rewind( void )
   return FALSE;
 }
 
+/*-------- Whether the tape is playing out a timed gap (T88) --------*/
+
+int	sio_tape_in_gap( void )
+{
+  return ( fp_ti && cmt_skip > 0 );
+}
+
 /*-------- 開いているテープの現在位置を返す (何%読んだかの確認用) --------*/
 
 int	sio_tape_pos( long *cur, long *end )
