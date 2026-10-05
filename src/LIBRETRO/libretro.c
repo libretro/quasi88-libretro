@@ -344,7 +344,8 @@ static void tape_tick(void)
    else if (motor_still < MOTOR_IDLE_FRAMES)
       motor_still++;
    sio_tape_pos(&cur, &end);
-   if (cur != tape_last_pos)
+   /* A T88 gap is timed with the tape standing still */
+   if (cur != tape_last_pos || sio_tape_in_gap())
    {
       tape_last_pos = cur;
       tape_still    = 0;
