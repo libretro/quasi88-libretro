@@ -201,6 +201,8 @@ static int  autotype_count       = 0;
 static int  autotype_step        = 0;
 static int  autotype_char        = 0;
 static int  autotype_wait        = 0;
+/* Frames to wait once the key being typed is let go */
+static int  autotype_pause       = 0;
 static int  autotype_shift       = 0;
 static int  autotype_held        = -1;
 static bool autotype_tape        = false;
@@ -321,6 +323,7 @@ static void autotype_start(void)
    autotype_step       = 0;
    autotype_char       = 0;
    autotype_wait       = AUTOTYPE_BOOT_FRAMES;
+   autotype_pause      = 0;
    autotype_held       = -1;
    autotype_shift      = 0;
    autotype_tape       = false;
@@ -398,7 +401,8 @@ static void handle_autotype(void)
    if (autotype_held >= 0)
    {
       release_typed_key();
-      autotype_wait = AUTOTYPE_KEY_FRAMES;
+      autotype_wait  = AUTOTYPE_KEY_FRAMES + autotype_pause;
+      autotype_pause = 0;
       return;
    }
    if (autotype_step >= autotype_count)
@@ -412,7 +416,8 @@ static void handle_autotype(void)
       autotype_files_asked = false;
       autotype_held = KEY88_RETURN;
       quasi88_key(KEY88_RETURN, 1);
-      autotype_wait = AUTOTYPE_KEY_FRAMES + 2 * AUTOTYPE_STEP_FRAMES;
+      autotype_wait  = AUTOTYPE_KEY_FRAMES;
+      autotype_pause = 2 * AUTOTYPE_STEP_FRAMES;
       return;
    }
 
@@ -440,7 +445,7 @@ static void handle_autotype(void)
       autotype_step++;
       autotype_wait = AUTOTYPE_KEY_FRAMES;
       if (autotype_step < autotype_count)
-         autotype_wait += AUTOTYPE_STEP_FRAMES;
+         autotype_pause = AUTOTYPE_STEP_FRAMES;
       return;
    }
 
@@ -469,13 +474,13 @@ static void handle_autotype(void)
       tape_still    = 0;
       motor_still   = 0;
       /* The command starts the motor once it is entered */
-      autotype_wait += AUTOTYPE_STEP_FRAMES;
+      autotype_pause = AUTOTYPE_STEP_FRAMES;
    }
    else
    {
       autotype_step++;
-      autotype_char = 0;
-      autotype_wait += AUTOTYPE_STEP_FRAMES;
+      autotype_char  = 0;
+      autotype_pause = AUTOTYPE_STEP_FRAMES;
    }
 }
 
@@ -484,7 +489,7 @@ static void handle_autotype(void)
 struct autotype_state
 {
    char    magic[4];
-   int32_t step, chr, wait, shift, held, files_asked, tape;
+   int32_t step, chr, wait, pause, shift, held, files_asked, tape;
    int32_t tape_still, motor_still, tape_last_pos;
 };
 
@@ -496,6 +501,7 @@ static void autotype_save(struct autotype_state *out)
    out->step          = autotype_step;
    out->chr           = autotype_char;
    out->wait          = autotype_wait;
+   out->pause         = autotype_pause;
    out->shift         = autotype_shift;
    out->held          = autotype_held;
    out->files_asked   = autotype_files_asked;
@@ -512,6 +518,7 @@ static void autotype_load(const struct autotype_state *in)
    autotype_step        = in->step;
    autotype_char        = in->chr;
    autotype_wait        = in->wait;
+   autotype_pause       = in->pause;
    autotype_shift       = in->shift;
    autotype_held        = in->held;
    autotype_files_asked = in->files_asked != 0;
