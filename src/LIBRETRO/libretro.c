@@ -209,8 +209,13 @@ static bool autotype_tape        = false;
 static long tape_last_pos        = -1;
 static int  tape_still           = 0;
 static int  motor_still          = 0;
-static int  tape_boot_basic      = -1;
+/* The machine a file name's braces ask for: a BASIC mode and a clock in MHz */
+static int  brace_basic          = -1;
+static int  brace_clock          = 0;
 static bool autotype_files_asked = false;
+/* Whether the plan starts at the BASIC prompt, where N88-BASIC first asks
+ * how many files to open */
+static bool autotype_at_prompt   = false;
 static char tape_path[OSD_MAX_FILENAME] = { '\0' };
 
 static void autotype_add(enum autotype_kind kind, const char *text, bool reads_tape)
@@ -242,18 +247,55 @@ static bool is_address(const char *word)
    return true;
 }
 
-/* Reads the loading instructions from a tape's file name */
-static void autotype_plan(const char *path)
+static const char *after_prefix(const char *word, const char *prefix)
+{
+   for (; *prefix; word++, prefix++)
+      if (tolower((unsigned char)*word) != tolower((unsigned char)*prefix))
+         return NULL;
+   return word;
+}
+
+/* An answer the game asks for as it starts: "pass=AHONOOH" or a number */
+static const char *answer_in(const char *word)
+{
+   static const char *names[] = { "pass=", "password=", "Number=" };
+   const char *value;
+   size_t i;
+
+   for (i = 0; i < sizeof(names) / sizeof(names[0]); i++)
+      if ((value = after_prefix(word, names[i])) && *value)
+         return value;
+   for (i = 0; word[i]; i++)
+      if (!isdigit((unsigned char)word[i]))
+         return NULL;
+   return i >= 4 ? word : NULL;
+}
+
+/* Words in braces that are commands rather than a file to run */
+static bool is_command(const char *word)
+{
+   return word_is(word, "MON") || word_is(word, "RUN") || word_is(word, "R") || word_is(word, "L") ||
+          word_is(word, "RDATA") || word_is(word, "LOAD") || word_is(word, "Ctrl-B") ||
+          word_is(word, "Ctrl+B") || word_is(word, "press") || word_is(word, "F5") || is_address(word);
+}
+
+/* Reads the loading instructions from a file name. A tape with none is
+ * loaded as BASIC; a disk with none starts itself. */
+static void autotype_plan(const char *path, bool tape)
 {
    char instructions[256] = { '\0' };
    char *words[64];
    int count = 0;
    int i;
+   bool ran = false;
+   bool answering = false;
    const char *open  = strchr(path_basename(path), '{');
    const char *close = open ? strchr(open, '}') : NULL;
 
-   autotype_count  = 0;
-   tape_boot_basic = -1;
+   autotype_count     = 0;
+   autotype_at_prompt = tape;
+   brace_basic        = -1;
+   brace_clock        = 0;
 
    if (open && close && close - open - 1 < (int)sizeof(instructions))
    {
@@ -280,16 +322,57 @@ static void autotype_plan(const char *path)
       if (word_is(next, "mode"))
       {
          if (word_is(word, "N") || word_is(word, "N80"))
-            tape_boot_basic = BASIC_N;
+            brace_basic = BASIC_N;
          else if (word_is(word, "V1") || word_is(word, "V1S"))
-            tape_boot_basic = BASIC_V1S;
+            brace_basic = BASIC_V1S;
          else if (word_is(word, "V1H"))
-            tape_boot_basic = BASIC_V1H;
+            brace_basic = BASIC_V1H;
          else if (word_is(word, "V2"))
-            tape_boot_basic = BASIC_V2;
+            brace_basic = BASIC_V2;
          i++;
       }
-      else if (word_is(word, "MON") || word_is(word, "RUN") || is_address(word))
+      else if (word_is(word, "1MHz"))
+         brace_clock = 1;
+      else if (word_is(word, "4MHz"))
+         brace_clock = 4;
+      else if (word_is(word, "8MHz"))
+         brace_clock = 8;
+      /* Anything after a program is started would be typed into it */
+      else if (ran)
+         continue;
+      /* The words after an answer are the game's next questions' answers */
+      else if (!tape && (answer_in(word) || (answering && !is_command(word))))
+      {
+         autotype_add(AUTOTYPE_LINE, answer_in(word) ? answer_in(word) : word, false);
+         answering = true;
+      }
+      else if (word_is(word, "LOAD") && *next && !word_is(next, "CAS") && !is_command(next))
+      {
+         char line[sizeof(autotype_steps[0].text)];
+
+         snprintf(line, sizeof(line), "RUN\"%s\"", next);
+         autotype_add(AUTOTYPE_LINE, line, false);
+         autotype_at_prompt |= autotype_count == 1;
+         ran = true;
+         i++;
+      }
+      else if (word_is(word, "RUN") && *next && !is_command(next))
+      {
+         char line[sizeof(autotype_steps[0].text)];
+
+         snprintf(line, sizeof(line), "RUN\"%s\"", next);
+         autotype_add(AUTOTYPE_LINE, line, false);
+         autotype_at_prompt |= autotype_count == 1;
+         ran = true;
+         i++;
+      }
+      else if (word_is(word, "RUN"))
+      {
+         autotype_add(AUTOTYPE_LINE, word, false);
+         autotype_at_prompt |= autotype_count == 1;
+         ran = true;
+      }
+      else if (word_is(word, "MON") || is_address(word))
          autotype_add(AUTOTYPE_LINE, word, false);
       else if (word_is(word, "R") || word_is(word, "L") || word_is(word, "RDATA"))
          autotype_add(AUTOTYPE_LINE, word, true);
@@ -309,17 +392,19 @@ static void autotype_plan(const char *path)
          autotype_add(AUTOTYPE_KEY, "\x05", false);
    }
 
+   if (!tape)
+      return;
    if (autotype_count == 0)
-   {
       autotype_add(AUTOTYPE_LINE, "LOAD\"CAS:\"", true);
+   /* A BASIC program loaded last is there to be run */
+   if (string_is_equal(autotype_steps[autotype_count - 1].text, "LOAD\"CAS:\""))
       autotype_add(AUTOTYPE_LINE, "RUN", false);
-   }
 }
 
 static void autotype_start(void)
 {
    /* N88-BASIC first asks how many files to open; N-BASIC goes straight to Ok */
-   autotype_files_asked = boot_basic != BASIC_N;
+   autotype_files_asked = autotype_at_prompt && boot_basic != BASIC_N;
    autotype_step       = 0;
    autotype_char       = 0;
    autotype_wait       = AUTOTYPE_BOOT_FRAMES;
@@ -491,6 +576,7 @@ struct autotype_state
 {
    char    magic[4];
    int32_t step, chr, wait, pause, shift, held, files_asked, tape;
+   int32_t at_prompt;
    int32_t tape_still, motor_still, tape_last_pos;
 };
 
@@ -506,6 +592,7 @@ static void autotype_save(struct autotype_state *out)
    out->shift         = autotype_shift;
    out->held          = autotype_held;
    out->files_asked   = autotype_files_asked;
+   out->at_prompt     = autotype_at_prompt;
    out->tape          = autotype_tape;
    out->tape_still    = tape_still;
    out->motor_still   = motor_still;
@@ -523,6 +610,7 @@ static void autotype_load(const struct autotype_state *in)
    autotype_shift       = in->shift;
    autotype_held        = in->held;
    autotype_files_asked = in->files_asked != 0;
+   autotype_at_prompt   = in->at_prompt != 0;
    autotype_tape        = in->tape != 0;
    tape_still           = in->tape_still;
    motor_still          = in->motor_still;
@@ -540,12 +628,25 @@ static bool is_tape(const char *path)
    return ext && (string_is_equal_noncase(ext, "t88") || string_is_equal_noncase(ext, "cmt"));
 }
 
-static void insert_tape(void)
+static void apply_braces(void)
 {
-   if (tape_boot_basic >= 0)
-      boot_basic = tape_boot_basic;
-   quasi88_load_tape_insert(tape_path);
-   autotype_start();
+   if (brace_basic >= 0)
+      boot_basic = brace_basic;
+   if (brace_clock == 1)
+   {
+      boot_clock_4mhz = CLOCK_4MHZ;
+      cpu_clock_mhz   = CONST_4MHZ_CLOCK * 0.25;
+   }
+   else if (brace_clock == 4)
+   {
+      boot_clock_4mhz = CLOCK_4MHZ;
+      cpu_clock_mhz   = CONST_4MHZ_CLOCK;
+   }
+   else if (brace_clock == 8)
+   {
+      boot_clock_4mhz = CLOCK_8MHZ;
+      cpu_clock_mhz   = CONST_8MHZ_CLOCK;
+   }
 }
 
 /* Disk swapper button state, kept apart from the emulated key state so
@@ -1003,9 +1104,12 @@ void retro_init(void)
 void retro_reset(void)
 {
    init_variables();
+   apply_braces();
    frames = 0;
    if (tape_path[0])
-      insert_tape();
+      quasi88_load_tape_insert(tape_path);
+   if (autotype_count > 0)
+      autotype_start();
    quasi88_reset(NULL);
 }
 
@@ -1071,8 +1175,10 @@ bool retro_load_game(const struct retro_game_info *info)
    quasi88_start();
    quasi88_disk_eject_all();
 
-   tape_path[0] = '\0';
+   tape_path[0]   = '\0';
    autotype_count = 0;
+   brace_basic    = -1;
+   brace_clock    = 0;
    if (info && !string_is_empty(info->path))
    {
       if (strstr(info->path, ".m3u") != NULL)
@@ -1085,15 +1191,19 @@ bool retro_load_game(const struct retro_game_info *info)
 
          environ_cb(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &quirks);
          strlcpy(tape_path, info->path, sizeof(tape_path));
-         autotype_plan(info->path);
-         insert_tape();
+         autotype_plan(info->path, true);
+         quasi88_load_tape_insert(tape_path);
       }
       else
       {
+         autotype_plan(info->path, false);
          retro_disks_append(info->path);
          quasi88_disk_insert(DRIVE_1, info->path, 0, 0);
       }
    }
+   apply_braces();
+   if (autotype_count > 0)
+      autotype_start();
    quasi88_reset(NULL);
    quasi88_exec();
    
