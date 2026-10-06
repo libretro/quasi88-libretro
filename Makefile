@@ -636,10 +636,13 @@ endif
 clean:
 	rm -f $(TARGET) $(OBJECTS)
 
+print-objects:
+	@echo $(OBJECTS)
+
 install:
 	install -D -m 755 $(TARGET) $(DESTDIR)$(libdir)/$(LIBRETRO_DIR)/$(TARGET)
 
 uninstall:
 	rm $(DESTDIR)$(libdir)/$(LIBRETRO_DIR)/$(TARGET)
 
-.PHONY: clean install uninstall
+.PHONY: clean install uninstall print-objects

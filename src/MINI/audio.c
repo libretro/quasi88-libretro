@@ -12,6 +12,10 @@
 #ifdef	USE_SOUND
 
 #include "mame-quasi88.h"
+#include "intr.h"
+
+extern int samples_this_frame;
+void retro_audio_append(const INT16 *buf, int count);
 
 /*===========================================================================*/
 /*              QUASI88 から呼び出される、MAME の処理関数                    */
@@ -281,12 +285,13 @@ int	xmame_has_mastervolume(void)
  *****************************************************************************/
 int	osd_start_audio_stream(int stereo)
 {
-    return 44100 / DEFAULT_VSYNC_FREQ_HZ;
+    return (int)(44100 / vsync_freq_hz);
 }
 
 int	osd_update_audio_stream(INT16 *buffer)
 {
-    return 44100 / DEFAULT_VSYNC_FREQ_HZ;
+    retro_audio_append(buffer, samples_this_frame);
+    return (int)(44100 / vsync_freq_hz);
 }
 
 void	osd_stop_audio_stream(void)

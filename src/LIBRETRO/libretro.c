@@ -40,6 +40,11 @@ static bool libretro_supports_option_categories = false;
 INT16 *finalmix;
 int samples_this_frame;
 
+/* Every mix produced during one retro_run, in order (stereo frames) */
+#define AUDIO_BUF_FRAMES 44100
+static INT16 audio_buf[AUDIO_BUF_FRAMES * 2];
+static unsigned audio_buf_frames;
+
 #include "filename.h"
 char *save_path = NULL;
 bool save_to_disk_image = false;
@@ -715,18 +720,39 @@ void retro_unload_game(void)
 {
 }
 
+void retro_audio_append(const INT16 *buf, int count)
+{
+   unsigned room = AUDIO_BUF_FRAMES - audio_buf_frames;
+   unsigned n    = (count > 0) ? (unsigned)count : 0;
+
+   if (n > room)
+      n = room;
+   memcpy(audio_buf + audio_buf_frames * 2, buf, n * 2 * sizeof(INT16));
+   audio_buf_frames += n;
+}
+
 void retro_run(void)
 {
+   int stat;
+
    handle_input();
-   quasi88_loop();
-   quasi88_loop();
+
+   /* Run the emulation loop until one VSYNC period has completed */
+   audio_buf_frames = 0;
+   do
+   {
+      stat = quasi88_loop();
+   } while (stat == QUASI88_LOOP_BUSY);
+
    if (rumble_cb)
       handle_rumble();
    video_cb(screen_buf, WIDTH, HEIGHT, WIDTH * 2);
-   
+
    /* Prevent a loud audio pop */
-   if (frames > FRAMES_BEFORE_AUDIO)
-      audio_batch_cb(finalmix, samples_this_frame);
+   if (frames <= FRAMES_BEFORE_AUDIO)
+      memset(audio_buf, 0, audio_buf_frames * 2 * sizeof(INT16));
+   if (audio_buf_frames)
+      audio_batch_cb(audio_buf, audio_buf_frames);
    frames++;
 }
 
@@ -752,7 +778,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->geometry.max_height   = HEIGHT;
    info->geometry.aspect_ratio = 1.6;
    info->timing.fps            = vsync_freq_hz;
-   info->timing.sample_rate    = 44100;
+   info->timing.sample_rate    = (int)(44100 / vsync_freq_hz) * vsync_freq_hz;
 }
 
 void retro_deinit(void)
