@@ -1,5 +1,5 @@
-# Frame contract, savestate determinism and input-across-load test,
-# run by hand:
+# Frame contract, savestate determinism, input-across-load and disk
+# insertion test, run by hand:
 #   make check
 # Builds the core, then links the test against the core's own objects.
 # Works on Linux and MSYS2 MINGW64.
@@ -33,6 +33,11 @@ check: $(TEST)
 	./$(TEST) main
 	./$(TEST) dual
 	./$(TEST) input
+	head -c 348848 /dev/zero > frame_contract_disk.d88
+	./$(TEST) disk frame_contract_disk.d88
+	cp frame_contract_disk.d88 frame_contract_disk
+	./$(TEST) disk frame_contract_disk
+	rm -f frame_contract_disk.d88 frame_contract_disk
 
 clean:
 	rm -f frame_contract.o $(TEST)

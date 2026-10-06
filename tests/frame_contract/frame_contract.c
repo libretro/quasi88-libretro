@@ -14,6 +14,8 @@
  *   main  main CPU only: VSYNC paces frames
  *   dual  sub-CPU mode 1 with both CPUs stepping: VSYNC and the sub-CPU
  *         load counter both end frames
+ *   disk  a disk image is inserted (path given as the next argument): its
+ *         save file must be created as <name without extension>.srm
  *   input a pad direction held across frames, then the disk swapper
  *         driven by L + Right: the keyboard matrix after every frame and
  *         the swapper calls must match between a straight run and one
@@ -301,6 +303,34 @@ static int replay(const void *state, size_t size, int load_every_frame)
    return bad == 0;
 }
 
+static int disk_scenario(const char *image)
+{
+   char        srm[512];
+   const char *base = strrchr(image, '/');
+   const char *dot;
+   size_t      len;
+   FILE       *f;
+
+   base = base ? base + 1 : image;
+   dot  = strrchr(base, '.');
+   len  = dot ? (size_t)(dot - base) : strlen(base);
+   if (len + 6 > sizeof(srm))
+      return 0;
+   memcpy(srm, "./", 2);
+   memcpy(srm + 2, base, len);
+   strcpy(srm + 2 + len, ".srm");
+
+   f = fopen(srm, "rb");
+   if (!f)
+   {
+      printf("FAIL disk: %s was not created for %s\n", srm, image);
+      return 0;
+   }
+   fclose(f);
+   remove(srm);
+   return 1;
+}
+
 int main(int argc, char **argv)
 {
    struct retro_system_av_info av;
@@ -312,10 +342,11 @@ int main(int argc, char **argv)
 
    if (argc > 1)
       scenario = argv[1];
-   if (strcmp(scenario, "boot") && strcmp(scenario, "main") && strcmp(scenario, "dual")
-         && strcmp(scenario, "input"))
+   if ((strcmp(scenario, "boot") && strcmp(scenario, "main") && strcmp(scenario, "dual")
+         && strcmp(scenario, "input") && strcmp(scenario, "disk"))
+         || (!strcmp(scenario, "disk") && argc < 3))
    {
-      printf("usage: %s boot|main|dual|input\n", argv[0]);
+      printf("usage: %s boot|main|dual|input|disk <image>\n", argv[0]);
       return 2;
    }
 
@@ -326,6 +357,24 @@ int main(int argc, char **argv)
    retro_set_input_poll(poll_cb);
    retro_set_input_state(input_cb);
    retro_init();
+   if (!strcmp(scenario, "disk"))
+   {
+      struct retro_game_info info;
+      memset(&info, 0, sizeof(info));
+      info.path = argv[2];
+      if (!retro_load_game(&info))
+      {
+         printf("FAIL: retro_load_game %s\n", argv[2]);
+         return 1;
+      }
+      for (i = 0; i < 60; i++)
+         retro_run();
+      ok = disk_scenario(argv[2]);
+      retro_unload_game();
+      retro_deinit();
+      printf("%s %s %s\n", ok ? "PASS" : "FAIL", scenario, argv[2]);
+      return ok ? 0 : 1;
+   }
    if (!retro_load_game(NULL))
    {
       printf("FAIL: retro_load_game\n");
@@ -345,7 +394,7 @@ int main(int argc, char **argv)
    if (!strcmp(scenario, "input"))
    {
       ok &= input_scenario();
-      retro_unload_game();
+         retro_unload_game();
       retro_deinit();
       printf("%s %s\n", ok ? "PASS" : "FAIL", scenario);
       return ok ? 0 : 1;
