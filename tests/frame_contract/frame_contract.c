@@ -16,6 +16,10 @@
  *         load counter both end frames
  *   disk  a disk image is inserted (path given as the next argument): its
  *         save file must be created as <name without extension>.srm
+ *   tape  a tape image is loaded (path given as the next argument): the
+ *         typed load must run one VSYNC per retro_run, with the core
+ *         asking the frontend to fast-forward while the tape is read and
+ *         handing fast-forward back once it is over
  *   input a pad direction held across frames, then the disk swapper
  *         driven by L + Right: the keyboard matrix after every frame and
  *         the swapper calls must match between a straight run and one
@@ -41,6 +45,19 @@ void __real_retro_disks_cycle(retro_environment_t cb, bool right);
 void __real_retro_disks_set(retro_environment_t cb);
 
 static unsigned swap_starts, swap_cycles, swap_sets;
+static unsigned ff_on, ff_off;
+static int      ff_state;
+
+int __real_get_drive_ready(int drv);
+static const char *scenario = "boot";
+/* Without a disk ROM the sub-CPU keeps the FDC busy; report idle drives
+ * so the tape case reaches its typed load */
+int __wrap_get_drive_ready(int drv)
+{
+   if (!strcmp(scenario, "tape"))
+      return 1;
+   return __real_get_drive_ready(drv);
+}
 void __wrap_retro_disks_start(retro_environment_t cb, bool is_first_drive)
 {
    swap_starts++;
@@ -67,6 +84,7 @@ void __wrap_sound_frame_update(void)
 }
 
 #define WARMUP 40
+#define TAPE_FRAMES 900
 #define SAVE_AT 200
 #define REPLAY 150
 
@@ -82,7 +100,6 @@ struct run_rec
 
 static struct run_rec cur;
 static struct run_rec straight[REPLAY];
-static const char *scenario = "boot";
 static int input_frame;
 static unsigned samples_per_frame;
 
@@ -106,6 +123,20 @@ static bool env_cb(unsigned cmd, void *data)
       case RETRO_ENVIRONMENT_GET_CORE_ASSETS_DIRECTORY:
          *(const char**)data = ".";
          return true;
+      case RETRO_ENVIRONMENT_SET_FASTFORWARDING_OVERRIDE:
+      {
+         const struct retro_fastforwarding_override *ff =
+            (const struct retro_fastforwarding_override*)data;
+         if (ff)
+         {
+            if (ff->fastforward)
+               ff_on++;
+            else
+               ff_off++;
+            ff_state = ff->fastforward;
+         }
+         return true;
+      }
       case RETRO_ENVIRONMENT_GET_VARIABLE:
       {
          struct retro_variable *var = (struct retro_variable*)data;
@@ -369,10 +400,10 @@ int main(int argc, char **argv)
    if (argc > 1)
       scenario = argv[1];
    if ((strcmp(scenario, "boot") && strcmp(scenario, "main") && strcmp(scenario, "dual")
-         && strcmp(scenario, "input") && strcmp(scenario, "disk"))
-         || (!strcmp(scenario, "disk") && argc < 3))
+         && strcmp(scenario, "input") && strcmp(scenario, "disk") && strcmp(scenario, "tape"))
+         || ((!strcmp(scenario, "disk") || !strcmp(scenario, "tape")) && argc < 3))
    {
-      printf("usage: %s boot|main|dual|input|disk <image>\n", argv[0]);
+      printf("usage: %s boot|main|dual|input|disk <image>|tape <image>\n", argv[0]);
       return 2;
    }
 
@@ -397,6 +428,44 @@ int main(int argc, char **argv)
          retro_run();
       ok = disk_scenario(argv[2]) && state_bytes_stable();
       retro_unload_game();
+      retro_deinit();
+      printf("%s %s %s\n", ok ? "PASS" : "FAIL", scenario, argv[2]);
+      return ok ? 0 : 1;
+   }
+   if (!strcmp(scenario, "tape"))
+   {
+      struct retro_game_info info;
+      memset(&info, 0, sizeof(info));
+      info.path = argv[2];
+      if (!retro_load_game(&info))
+      {
+         printf("FAIL: retro_load_game %s\n", argv[2]);
+         return 1;
+      }
+      retro_get_system_av_info(&av);
+      samples_per_frame = (unsigned)(av.timing.sample_rate / av.timing.fps + 0.5);
+      for (i = 0; i < TAPE_FRAMES; i++)
+      {
+         ok &= run_frame(i);
+         if (cur.mixes > 1)
+         {
+            printf("FAIL tape frame %d: %u VSYNCs of audio mixed in one retro_run\n", i, cur.mixes);
+            ok = 0;
+            break;
+         }
+      }
+      if (!ff_on || !ff_off)
+      {
+         printf("FAIL tape: fast-forward requested %u times, released %u times\n", ff_on, ff_off);
+         ok = 0;
+      }
+      ok &= state_bytes_stable();
+      retro_unload_game();
+      if (ff_state)
+      {
+         printf("FAIL tape: fast-forward still held after unload\n");
+         ok = 0;
+      }
       retro_deinit();
       printf("%s %s %s\n", ok ? "PASS" : "FAIL", scenario, argv[2]);
       return ok ? 0 : 1;

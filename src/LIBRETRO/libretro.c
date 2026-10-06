@@ -192,9 +192,9 @@ struct autotype_step
 #define TAPE_IDLE_FRAMES     330
 /* Machine frames the motor can stop between blocks within one load */
 #define MOTOR_IDLE_FRAMES    120
-/* Frames run for each one shown while the tape is being read, so that a
- * load keeps its timing but takes seconds rather than minutes */
-#define TAPE_TURBO_FRAMES    8
+/* Speed the frontend runs at while the tape is being read, so that a load
+ * keeps its timing but takes seconds rather than minutes */
+#define TAPE_FASTFORWARD_RATIO 8.0f
 /* Machine frames a disk drive must stand idle before anything is typed, so
  * that a boot or a load from disk has finished and its prompt is up */
 #define DISK_IDLE_FRAMES     90
@@ -221,6 +221,7 @@ static bool autotype_files_asked = false;
  * how many files to open */
 static bool autotype_at_prompt   = false;
 static char tape_path[OSD_MAX_FILENAME] = { '\0' };
+static bool tape_fastforward      = false;
 
 static void autotype_add(enum autotype_kind kind, const char *text, bool reads_tape)
 {
@@ -458,6 +459,22 @@ static void disk_tick(void)
 static bool tape_loading(void)
 {
    return tape_path[0] && motor_still < MOTOR_IDLE_FRAMES && tape_still < TAPE_IDLE_FRAMES;
+}
+
+/* Has the frontend fast-forward while the tape is being read; the core
+ * keeps control of fast-forward until the read is over */
+static void set_tape_fastforward(bool on)
+{
+   struct retro_fastforwarding_override ff;
+
+   if (on == tape_fastforward)
+      return;
+   ff.ratio          = TAPE_FASTFORWARD_RATIO;
+   ff.fastforward    = on;
+   ff.notification   = false;
+   ff.inhibit_toggle = on;
+   environ_cb(RETRO_ENVIRONMENT_SET_FASTFORWARDING_OVERRIDE, &ff);
+   tape_fastforward = on;
 }
 
 /* The key that types a character, and whether it needs shift */
@@ -1248,6 +1265,7 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info *info, 
 
 void retro_unload_game(void)
 {
+   set_tape_fastforward(false);
 }
 
 void retro_audio_append(const INT16 *buf, int count)
@@ -1264,25 +1282,20 @@ void retro_audio_append(const INT16 *buf, int count)
 void retro_run(void)
 {
    int stat;
-   int frame;
-   int count = 1;
 
    handle_input();
    handle_autotype();
-   /* A held key would repeat if the machine ran ahead */
-   if (tape_loading() && autotype_held < 0)
-      count = TAPE_TURBO_FRAMES;
+   set_tape_fastforward(tape_loading());
+
+   /* Run the emulation loop until one VSYNC period has completed */
    audio_buf_frames = 0;
-   for (frame = 0; frame < count; frame++)
+   do
    {
-      /* Run the emulation loop until one VSYNC period has completed */
-      do
-      {
-         stat = quasi88_loop();
-      } while (stat == QUASI88_LOOP_BUSY);
-      tape_tick();
-      disk_tick();
-   }
+      stat = quasi88_loop();
+   } while (stat == QUASI88_LOOP_BUSY);
+   tape_tick();
+   disk_tick();
+
    if (rumble_cb)
       handle_rumble();
    video_cb(screen_buf, WIDTH, HEIGHT, WIDTH * 2);
