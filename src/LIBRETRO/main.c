@@ -11,7 +11,6 @@
 #include "device.h"
 
 #include "getconf.h"   /* config_init */
-#include "suspend.h"   /* stateload_system */
 #include "menu.h"   /* menu_about_osd_msg */
 
 
@@ -24,19 +23,6 @@ static void finish(void);
 static void finish(void)
 {
    config_exit();
-}
-
-/***********************************************************************
- * Savestates (more stubs)
- ************************************************************************/
-
-int stateload_system(void)
-{
-   return TRUE;
-}
-int statesave_system(void)
-{
-   return TRUE;
 }
 
 /***********************************************************************

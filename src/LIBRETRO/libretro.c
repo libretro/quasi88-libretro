@@ -126,7 +126,7 @@ const char *bios_filenames[ROM_END][4] =
   { "FONT3.ROM",    "font3.rom",    "",           ""           }
 };
 
-static uint32_t  frames                         = 0;
+static int       frames                         = 0;
 static bool     *key_buffer                     = NULL;
 static bool     *pad_buffer                     = NULL;
 static bool      rumble_enabled                 = true;
@@ -1310,7 +1310,8 @@ void retro_run(void)
       memset(audio_buf, 0, audio_buf_frames * 2 * sizeof(INT16));
    if (audio_buf_frames)
       audio_batch_cb(audio_buf, audio_buf_frames);
-   frames++;
+   if (frames <= FRAMES_BEFORE_AUDIO)
+      frames++;
 }
 
 void retro_get_system_info(struct retro_system_info *info)
@@ -1416,6 +1417,26 @@ void retro_set_input_state(retro_input_state_t cb)
 void retro_set_video_refresh(retro_video_refresh_t cb)
 {
    video_cb = cb;
+}
+
+/* What the frontend side of the core adds to a state */
+static T_SUSPEND_W suspend_libretro_work[] =
+{
+   { TYPE_INT, &frames },
+   { TYPE_END, 0       },
+};
+
+int statesave_system(void)
+{
+   return statesave_table("LBRT", suspend_libretro_work) == STATE_OK;
+}
+
+int stateload_system(void)
+{
+   /* A state without it is past the start-up mute */
+   if (stateload_table("LBRT", suspend_libretro_work) != STATE_OK)
+      frames = FRAMES_BEFORE_AUDIO + 1;
+   return TRUE;
 }
 
 size_t retro_serialize_size(void)

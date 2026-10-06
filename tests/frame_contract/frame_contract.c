@@ -91,8 +91,8 @@ void __wrap_sound_frame_update(void)
 
 #define WARMUP 40
 #define TAPE_FRAMES 900
-/* Audio is compared from here: the start-up mute is not in the state */
-#define PCG_FIRST_COMPARED (40L * 796)
+/* Audio is compared from the first sample */
+#define PCG_FIRST_COMPARED 0L
 #define SAVE_AT 200
 #define REPLAY 150
 
