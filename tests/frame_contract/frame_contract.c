@@ -21,6 +21,9 @@
  *         the swapper calls must match between a straight run and one
  *         with a save+load before every frame
  *
+ * Every case also saves one state into buffers holding different bytes
+ * and requires identical results.
+ *
  * No content or system files are needed. */
 #include <stdio.h>
 #include <stdlib.h>
@@ -303,6 +306,29 @@ static int replay(const void *state, size_t size, int load_every_frame)
    return bad == 0;
 }
 
+static int state_bytes_stable(void)
+{
+   size_t         size = retro_serialize_size();
+   unsigned char *a    = (unsigned char*)malloc(size);
+   unsigned char *b    = (unsigned char*)malloc(size);
+   int            ok   = 0;
+
+   if (a && b)
+   {
+      memset(a, 0x00, size);
+      memset(b, 0xa5, size);
+      if (!retro_serialize(a, size) || !retro_serialize(b, size))
+         printf("FAIL %s: serialize\n", scenario);
+      else if (memcmp(a, b, size))
+         printf("FAIL %s: a state depends on what its buffer held before\n", scenario);
+      else
+         ok = 1;
+   }
+   free(a);
+   free(b);
+   return ok;
+}
+
 static int disk_scenario(const char *image)
 {
    char        srm[512];
@@ -369,7 +395,7 @@ int main(int argc, char **argv)
       }
       for (i = 0; i < 60; i++)
          retro_run();
-      ok = disk_scenario(argv[2]);
+      ok = disk_scenario(argv[2]) && state_bytes_stable();
       retro_unload_game();
       retro_deinit();
       printf("%s %s %s\n", ok ? "PASS" : "FAIL", scenario, argv[2]);
@@ -394,7 +420,8 @@ int main(int argc, char **argv)
    if (!strcmp(scenario, "input"))
    {
       ok &= input_scenario();
-         retro_unload_game();
+      ok &= state_bytes_stable();
+      retro_unload_game();
       retro_deinit();
       printf("%s %s\n", ok ? "PASS" : "FAIL", scenario);
       return ok ? 0 : 1;
@@ -402,6 +429,7 @@ int main(int argc, char **argv)
 
    for (i = 0; i < SAVE_AT; i++)
       ok &= run_frame(i);
+   ok &= state_bytes_stable();
 
    size  = retro_serialize_size();
    state = malloc(size);

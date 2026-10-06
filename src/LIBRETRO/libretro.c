@@ -880,12 +880,18 @@ size_t retro_serialize_size(void)
 /* TODO: Not safe across endianness yet! */
 bool retro_serialize(void *data, size_t size)
 {
+   long used;
    int success;
    OSD_FILE *fp = osd_file_mem(data, size, 1);
    if (!fp)
       return false;
 
    success = statesave_by_fp (fp);
+
+   /* Clear what the state does not use, so equal states are equal bytes */
+   used = osd_ftell(fp);
+   if (used >= 0 && (size_t)used < size)
+      memset((char*)data + used, 0, size - (size_t)used);
 
    if (osd_file_did_overflow(fp))
    {
