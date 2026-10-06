@@ -31,7 +31,6 @@
 #include "pseudo_bios.h"
 #include "disks.h"
 #include "libretro_core_options.h"
-#include "pcg8100.h"
 static bool libretro_supports_option_categories = false;
 
 #include "libretro-file.h"
@@ -1305,9 +1304,6 @@ void retro_run(void)
    if (rumble_cb)
       handle_rumble();
    video_cb(screen_buf, WIDTH, HEIGHT, WIDTH * 2);
-
-   if (use_pcg && audio_buf_frames > 0)
-      pcg8100_mix((short *)audio_buf, (int)audio_buf_frames, 44100);
 
    /* Prevent a loud audio pop */
    if (frames <= FRAMES_BEFORE_AUDIO)

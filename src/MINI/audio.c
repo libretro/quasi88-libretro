@@ -13,6 +13,7 @@
 
 #include "mame-quasi88.h"
 #include "intr.h"
+#include "pcg8100.h"
 
 extern int samples_this_frame;
 void retro_audio_append(const INT16 *buf, int count);
@@ -290,6 +291,7 @@ int	osd_start_audio_stream(int stereo)
 
 int	osd_update_audio_stream(INT16 *buffer)
 {
+    pcg8100_update(buffer, samples_this_frame);
     retro_audio_append(buffer, samples_this_frame);
     return (int)(44100 / vsync_freq_hz);
 }

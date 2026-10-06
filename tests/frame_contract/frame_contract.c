@@ -20,6 +20,10 @@
  *         typed load must run one VSYNC per retro_run, with the core
  *         asking the frontend to fast-forward while the tape is read and
  *         handing fast-forward back once it is over
+ *   pcg   a program in the main ROM area drives the PCG-8100: bursts of a
+ *         1 kHz square must start at a steady spacing, the audio must not
+ *         change when a state is saved, or saved and loaded, before every
+ *         frame, and squares far above hearing must settle flat
  *   input a pad direction held across frames, then the disk swapper
  *         driven by L + Right: the keyboard matrix after every frame and
  *         the swapper calls must match between a straight run and one
@@ -39,6 +43,8 @@ extern int select_main_cpu;
 extern int cpu_timing;
 extern int dual_cpu_count;
 extern unsigned char key_scan[0x10];
+extern unsigned char *main_rom;
+extern unsigned char *main_rom_n;
 
 void __real_retro_disks_start(retro_environment_t cb, bool is_first_drive);
 void __real_retro_disks_cycle(retro_environment_t cb, bool right);
@@ -85,6 +91,8 @@ void __wrap_sound_frame_update(void)
 
 #define WARMUP 40
 #define TAPE_FRAMES 900
+/* Audio is compared from here: the start-up mute is not in the state */
+#define PCG_FIRST_COMPARED (40L * 796)
 #define SAVE_AT 200
 #define REPLAY 150
 
@@ -141,7 +149,9 @@ static bool env_cb(unsigned cmd, void *data)
       {
          struct retro_variable *var = (struct retro_variable*)data;
          var->value = NULL;
-         return false;
+         if (!strcmp(scenario, "pcg") && !strcmp(var->key, "q88_pcg-8100"))
+            var->value = "enabled";
+         return var->value != NULL;
       }
       default:
          break;
@@ -159,8 +169,19 @@ static void video_cb(const void *data, unsigned w, unsigned h, size_t pitch)
       cur.vhash = fnv(cur.vhash, (const unsigned char*)data + y * pitch, w * 2);
 }
 
+#define PCG_RUNS       400
+#define PCG_MAX_SAMPLES (PCG_RUNS * 1600)
+static short   *pcg_pcm;
+static long     pcg_npcm;
+
 static size_t audio_batch_cb(const int16_t *data, size_t frames)
 {
+   if (pcg_pcm)
+   {
+      size_t i;
+      for (i = 0; i < frames && pcg_npcm < PCG_MAX_SAMPLES; i++)
+         pcg_pcm[pcg_npcm++] = data[i * 2];
+   }
    cur.samples += (unsigned)frames;
    cur.ahash    = fnv(cur.ahash, (const unsigned char*)data, frames * 4);
    return frames;
@@ -337,6 +358,142 @@ static int replay(const void *state, size_t size, int load_every_frame)
    return bad == 0;
 }
 
+/* PIT channel 0 in mode 3 at count (bytes 6 and 10); output enable on
+ * port 02h switched on and off by CPU delay loops (from byte 13), or left
+ * on (bytes 13..16 then JR $) */
+static unsigned char pcg_prog[] = {
+   0xF3,
+   0x3E, 0x36, 0xD3, 0x0F,
+   0x3E, 0x9A, 0xD3, 0x0C,
+   0x3E, 0x0F, 0xD3, 0x0C,
+   0x3E, 0x08, 0xD3, 0x02,
+   0x01, 0xD0, 0x07,
+   0x0B, 0x78, 0xB1, 0x20, 0xFB,
+   0x3E, 0x00, 0xD3, 0x02,
+   0x01, 0xD0, 0x07,
+   0x0B, 0x78, 0xB1, 0x20, 0xFB,
+   0x18, 0xE2
+};
+
+static void pcg_load_program(unsigned count, int bursts)
+{
+   pcg_prog[6]  = (unsigned char)(count & 0xff);
+   pcg_prog[10] = (unsigned char)(count >> 8);
+   pcg_prog[17] = bursts ? 0x01 : 0x18;	/* JR $ when held on */
+   pcg_prog[18] = bursts ? 0xD0 : 0xFE;
+   memcpy(main_rom, pcg_prog, sizeof(pcg_prog));
+   memcpy(main_rom_n, pcg_prog, sizeof(pcg_prog));
+   retro_reset();
+}
+
+static int pcg_scenario(void)
+{
+   static const unsigned ultrasonic[] = { 40, 20, 16, 10, 2 };
+   size_t size = retro_serialize_size();
+   void  *s0   = malloc(size);
+   void  *tmp  = malloc(size);
+   short *pass[3];
+   long   n[3];
+   long   k, last = -1, since = 0, lo = 1L << 30, hi = 0;
+   int    p, i, bursts = 0, ok = 1;
+
+   pcg_load_program(3994, 1);
+   if (!s0 || !tmp || !retro_serialize(s0, size))
+      return 0;
+   for (p = 0; p < 3; p++)
+   {
+      pass[p]  = (short*)malloc(PCG_MAX_SAMPLES * sizeof(short));
+      pcg_pcm  = pass[p];
+      pcg_npcm = 0;
+      retro_unserialize(s0, size);
+      for (i = 0; i < PCG_RUNS; i++)
+      {
+         if (p == 1)
+            retro_serialize(tmp, size);
+         if (p == 2 && (!retro_serialize(tmp, size) || !retro_unserialize(tmp, size)))
+            return 0;
+         retro_run();
+      }
+      n[p] = pcg_npcm;
+   }
+   pcg_pcm = NULL;
+
+   /* A burst starts at the first rising edge after a quiet stretch */
+   for (k = PCG_FIRST_COMPARED + 1; k < n[0]; k++)
+   {
+      if (pass[0][k] - pass[0][k - 1] > 1000)
+      {
+         if (since > 300)
+         {
+            if (last >= 0)
+            {
+               if (k - last < lo) lo = k - last;
+               if (k - last > hi) hi = k - last;
+            }
+            last = k;
+            bursts++;
+         }
+         since = 0;
+      }
+      else
+         since++;
+   }
+   if (bursts < 200 || hi - lo > 1)
+   {
+      printf("FAIL pcg: %d bursts, start spacing %ld..%ld samples\n", bursts, lo, hi);
+      ok = 0;
+   }
+
+   for (p = 1; p < 3; p++)
+   {
+      long diff = 0, first = -1;
+      for (k = PCG_FIRST_COMPARED; k < n[0] && k < n[p]; k++)
+         if (pass[0][k] != pass[p][k])
+         {
+            if (first < 0)
+               first = k;
+            diff++;
+         }
+      if (diff || n[p] != n[0])
+      {
+         printf("FAIL pcg: %ld samples differ (first at %ld) when a state is %s before every frame\n",
+               diff, first, p == 1 ? "saved" : "saved and loaded");
+         ok = 0;
+      }
+      free(pass[p]);
+   }
+   free(pass[0]);
+
+   for (i = 0; i < (int)(sizeof(ultrasonic) / sizeof(ultrasonic[0])); i++)
+   {
+      short buf_lo = 32767, buf_hi = -32768;
+      short *pcm = (short*)malloc(PCG_MAX_SAMPLES * sizeof(short));
+
+      pcg_load_program(ultrasonic[i], 0);
+      pcg_pcm  = pcm;
+      pcg_npcm = 0;
+      for (k = 0; k < 310; k++)
+         retro_run();
+      pcg_pcm = NULL;
+      for (k = 300 * 796; k < 310 * 796 && k < pcg_npcm; k++)
+      {
+         if (pcm[k] < buf_lo) buf_lo = pcm[k];
+         if (pcm[k] > buf_hi) buf_hi = pcm[k];
+      }
+      if (buf_lo < -256 || buf_hi > 256)
+      {
+         printf("FAIL pcg: count %u settles to %d..%d instead of near 0\n",
+               ultrasonic[i], buf_lo, buf_hi);
+         ok = 0;
+      }
+      free(pcm);
+   }
+
+   free(tmp);
+   free(s0);
+   return ok;
+}
+
 static int state_bytes_stable(void)
 {
    size_t         size = retro_serialize_size();
@@ -400,10 +557,11 @@ int main(int argc, char **argv)
    if (argc > 1)
       scenario = argv[1];
    if ((strcmp(scenario, "boot") && strcmp(scenario, "main") && strcmp(scenario, "dual")
-         && strcmp(scenario, "input") && strcmp(scenario, "disk") && strcmp(scenario, "tape"))
+         && strcmp(scenario, "input") && strcmp(scenario, "disk") && strcmp(scenario, "tape")
+         && strcmp(scenario, "pcg"))
          || ((!strcmp(scenario, "disk") || !strcmp(scenario, "tape")) && argc < 3))
    {
-      printf("usage: %s boot|main|dual|input|disk <image>|tape <image>\n", argv[0]);
+      printf("usage: %s boot|main|dual|input|pcg|disk <image>|tape <image>\n", argv[0]);
       return 2;
    }
 
@@ -484,6 +642,16 @@ int main(int argc, char **argv)
       printf("FAIL: sample_rate %.3f / fps %.3f = %.4f samples per frame\n",
             av.timing.sample_rate, av.timing.fps, spf);
       ok = 0;
+   }
+
+   if (!strcmp(scenario, "pcg"))
+   {
+      ok &= pcg_scenario();
+      ok &= state_bytes_stable();
+      retro_unload_game();
+      retro_deinit();
+      printf("%s %s\n", ok ? "PASS" : "FAIL", scenario);
+      return ok ? 0 : 1;
    }
 
    if (!strcmp(scenario, "input"))

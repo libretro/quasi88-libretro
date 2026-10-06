@@ -2754,8 +2754,7 @@ void	pc88main_init( int init )
 
   if( init == INIT_POWERON ){
     power_on_ram_init();
-    if( use_pcg )
-      pcg8100_reset();
+    pcg8100_reset();
   }
 
 

@@ -9,9 +9,8 @@ void	pcg8100_reset(void);
 
 void	pcg8100_out(unsigned char port, unsigned char data);
 
-void	pcg8100_out_at(unsigned char port, unsigned char data, int cpu_state);
-
-void	pcg8100_mix(short *stereo, int frames, int sample_rate);
+/* Adds the window that just ended to a snddrv mix of as many frames */
+void	pcg8100_update(short *stereo, int frames);
 
 int	statesave_pcg8100(void);
 int	stateload_pcg8100(void);

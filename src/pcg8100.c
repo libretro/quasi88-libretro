@@ -1,6 +1,13 @@
 /************************************************************************/
 /*									*/
-/* PCG-8100 音声 (8253 compatible PIT, event-driven)			*/
+/* PCG-8100 sound: 8253 compatible PIT, three square/pulse outputs	*/
+/*									*/
+/* The PIT runs in whole PIT clocks. Audio is produced per sound	*/
+/* window: the stretch of emulated time snddrv mixes into one		*/
+/* osd_update_audio_stream() call. A port write first renders the	*/
+/* outputs up to its position in the window, then takes effect, so	*/
+/* nothing is queued and everything the next sample depends on is in	*/
+/* the savestate.							*/
 /*									*/
 /************************************************************************/
 
@@ -9,25 +16,28 @@
 #include "quasi88.h"
 #include "pcg8100.h"
 
-#include "pc88cpu.h"
 #include "intr.h"
 #include "memory.h"
 #include "suspend.h"
 
-#define	PCG8100_CLOCK		3993600.0
+/* snddrv: position within the current sound window, scaled to value */
+int	sound_scalebufferpos(int value);
 
-#define	PCG8100_EVT_MAX		512
-
-#define	PCG8100_CH_LEVEL	3584
-
-#define	PCG_MIX_BUDGET		8192
+#define	PCG8100_CLOCK		3993600.0	/* PIT clock, Hz	*/
+#define	PCG8100_CH_LEVEL	3584		/* one output, high	*/
 
 #define	PCG8100_EN0		0x08	/* Port 02h D3 */
 #define	PCG8100_EN1		0x40	/* Port 02h D6 */
 #define	PCG8100_EN2		0x80	/* Port 02h D7 */
 
-#define	PCG_NO_EVENT		1.0e30
-#define	PCG_EPS			1.0e-9
+/* Longest window: 44100 / 10 Hz VSYNC */
+#define	PCG_MAX_SAMPLES		4410
+
+/* Window length in PIT clocks, fixed point */
+#define	PCG_WIN_FRAC_BITS	12
+
+/* DC blocker pole, Q15 (about 20 Hz at 44.1 kHz) */
+#define	PCG_DC_POLE		32674
 
 
 typedef struct {
@@ -36,10 +46,10 @@ typedef struct {
 	int		bcd;
 
 	int		write_phase;
-	byte		write_lsb;
+	int		write_lsb;
 
-	unsigned int	reload;
-	unsigned int	pending_reload;
+	int		reload;
+	int		pending_reload;
 
 	int		pending_valid;
 	int		null_count;
@@ -48,7 +58,7 @@ typedef struct {
 	int		gate;
 	int		counting;
 
-	double		clocks_to_transition;
+	int		remain;		/* PIT clocks to the next transition */
 
 	int		trigger_pending;
 	int		pulse_state;
@@ -58,116 +68,91 @@ typedef struct {
 } PCG8253_CHANNEL;
 
 
-typedef struct {
-	PCG8253_CHANNEL	ch[3];
+static	PCG8253_CHANNEL	pcg_ch[3];
+static	int		pcg_enable;
 
-	byte		output_enable;
+/* The current sound window */
+static	int		pcg_win_clocks;		/* length, PIT clocks	*/
+static	int		pcg_win_carry;		/* fraction carried over */
+static	int		pcg_win_samples;	/* length, samples	*/
+static	int		pcg_t;			/* rendered up to	*/
+static	int		pcg_sample;		/* sample holding pcg_t	*/
+static	int		pcg_sample_end;		/* where that sample ends */
+static	int		pcg_acc[PCG_MAX_SAMPLES];	/* high clocks	*/
 
-	int		programmed;
-} PCG8100_STATE;
-
-
-typedef struct {
-	byte		port;
-	byte		data;
-	double		frac;
-	double		pit_time;
-	int		mapped;
-} PCG8100_EVENT;
-
-
-static	PCG8100_STATE	pcg;
-
-static	PCG8100_EVENT	pcg_evt[PCG8100_EVT_MAX];
-static	int		pcg_evt_r;
-static	int		pcg_evt_w;
-
-static	double		pcg_render_pit;
-static	int		pcg_mix_budget;
-static	byte		pcg_queued_enable;
+/* DC blocker */
+static	int		pcg_dc_x;
+static	int		pcg_dc_y;
 
 
-static unsigned pcg_bcd_to_bin(unsigned v)
+/*----------------------------------------------------------------------*/
+/* 8253 channel								*/
+/*----------------------------------------------------------------------*/
+
+static int pcg_bcd_to_bin(int v)
 {
-	unsigned n;
-
-	n  =  (v        & 0x0f);
-	n += ((v >>  4) & 0x0f) * 10;
-	n += ((v >>  8) & 0x0f) * 100;
-	n += ((v >> 12) & 0x0f) * 1000;
-	return n;
+	return  (v        & 0x0f)
+	     + ((v >>  4) & 0x0f) * 10
+	     + ((v >>  8) & 0x0f) * 100
+	     + ((v >> 12) & 0x0f) * 1000;
 }
 
-static unsigned pcg_effective_count(const PCG8253_CHANNEL *ch, unsigned reload)
+static int pcg_effective_count(const PCG8253_CHANNEL *ch, int reload)
 {
-	unsigned n;
-
-	if (ch->bcd)
-		n = pcg_bcd_to_bin(reload);
-	else
-		n = reload;
+	int n = ch->bcd ? pcg_bcd_to_bin(reload) : reload;
 
 	if (n == 0)
 		n = ch->bcd ? 10000 : 65536;
-
 	return n;
 }
 
 static void pcg_schedule_mode3_half(PCG8253_CHANNEL *ch)
 {
-	unsigned n, half;
+	int n = pcg_effective_count(ch, ch->reload);
 
-	n = pcg_effective_count(ch, ch->reload);
 	if (n < 2)
 		n = 2;
-
-	if (n & 1) {
-		if (ch->output)
-			half = (n + 1) / 2;
-		else
-			half = (n - 1) / 2;
-		if (half < 1)
-			half = 1;
-	} else {
-		half = n / 2;
-	}
-
-	ch->clocks_to_transition = (double)half;
+	if (n & 1)
+		ch->remain = ch->output ? (n + 1) / 2 : (n - 1) / 2;
+	else
+		ch->remain = n / 2;
+	if (ch->remain < 1)
+		ch->remain = 1;
 	ch->counting = 1;
 }
 
 static void pcg_load_ce(PCG8253_CHANNEL *ch)
 {
-	unsigned n;
+	int n;
 
 	if (ch->pending_valid) {
 		ch->reload = ch->pending_reload;
 		ch->pending_valid = 0;
 	}
 
-	ch->null_count = 0;
+	ch->null_count   = 0;
 	ch->load_pending = 0;
-	ch->counting = 1;
+	ch->counting     = 1;
 
 	n = pcg_effective_count(ch, ch->reload);
 
 	switch (ch->mode) {
 	case 0:
-		ch->output = 0;
+		ch->output      = 0;
 		ch->pulse_state = 0;
-		ch->clocks_to_transition = (double)n;
+		ch->remain      = n;
 		break;
 
 	case 1:
-		ch->output = 0;
+		ch->output      = 0;
 		ch->pulse_state = 1;
-		ch->clocks_to_transition = (double)n;
+		ch->remain      = n;
 		break;
 
 	case 2:
-		ch->output = 1;
+		ch->output      = 1;
 		ch->pulse_state = 0;
-		ch->clocks_to_transition = (n > 1) ? (double)(n - 1) : 1.0;
+		ch->remain      = (n > 1) ? n - 1 : 1;
 		break;
 
 	case 3:
@@ -177,27 +162,28 @@ static void pcg_load_ce(PCG8253_CHANNEL *ch)
 
 	case 4:
 	case 5:
-		ch->output = 1;
+		ch->output      = 1;
 		ch->pulse_state = 0;
-		ch->clocks_to_transition = (double)n;
+		ch->remain      = n;
 		break;
 
 	default:
 		ch->counting = 0;
-		ch->clocks_to_transition = 0.0;
+		ch->remain   = 0;
 		break;
 	}
 }
 
+/* The channel's next transition is due */
 static void pcg_update_channel(PCG8253_CHANNEL *ch)
 {
-	unsigned n;
+	int n;
 
 	if (ch->load_pending) {
 		if (ch->mode == 1 || ch->mode == 5) {
 			if (!ch->trigger_pending && ch->gate == 0) {
 				ch->load_pending = 0;
-				ch->clocks_to_transition = 0.0;
+				ch->remain       = 0;
 				return;
 			}
 			ch->trigger_pending = 0;
@@ -208,42 +194,40 @@ static void pcg_update_channel(PCG8253_CHANNEL *ch)
 
 	switch (ch->mode) {
 	case 0:
-		ch->output = 1;
+		ch->output   = 1;
 		ch->counting = 0;
-		ch->clocks_to_transition = 0.0;
+		ch->remain   = 0;
 		break;
 
 	case 1:
-		ch->output = 1;
-		ch->counting = 0;
+		ch->output      = 1;
+		ch->counting    = 0;
 		ch->pulse_state = 0;
-		ch->clocks_to_transition = 0.0;
+		ch->remain      = 0;
 		break;
 
 	case 2:
 		if (ch->pulse_state == 0) {
-			ch->output = 0;
+			ch->output      = 0;
 			ch->pulse_state = 1;
-			ch->clocks_to_transition = 1.0;
-		} else {
-			if (ch->pending_valid)
-				pcg_load_ce(ch);
-			else {
-				ch->output = 1;
-				ch->pulse_state = 0;
-				n = pcg_effective_count(ch, ch->reload);
-				ch->clocks_to_transition = (n > 1) ? (double)(n - 1) : 1.0;
-				ch->counting = 1;
-			}
+			ch->remain      = 1;
+		} else if (ch->pending_valid)
+			pcg_load_ce(ch);
+		else {
+			ch->output      = 1;
+			ch->pulse_state = 0;
+			n               = pcg_effective_count(ch, ch->reload);
+			ch->remain      = (n > 1) ? n - 1 : 1;
+			ch->counting    = 1;
 		}
 		break;
 
 	case 3:
 		ch->output = ch->output ? 0 : 1;
 		if (ch->pending_valid) {
-			ch->reload = ch->pending_reload;
+			ch->reload        = ch->pending_reload;
 			ch->pending_valid = 0;
-			ch->null_count = 0;
+			ch->null_count    = 0;
 		}
 		pcg_schedule_mode3_half(ch);
 		break;
@@ -251,97 +235,134 @@ static void pcg_update_channel(PCG8253_CHANNEL *ch)
 	case 4:
 	case 5:
 		if (ch->pulse_state == 0) {
-			ch->output = 0;
+			ch->output      = 0;
 			ch->pulse_state = 1;
-			ch->clocks_to_transition = 1.0;
-			ch->counting = 1;
+			ch->remain      = 1;
+			ch->counting    = 1;
 		} else {
-			ch->output = 1;
+			ch->output      = 1;
 			ch->pulse_state = 0;
-			ch->counting = 0;
-			ch->clocks_to_transition = 0.0;
+			ch->counting    = 0;
+			ch->remain      = 0;
 			if (ch->mode == 5 && ch->pending_valid) {
-				ch->load_pending = 1;
+				ch->load_pending    = 1;
 				ch->trigger_pending = 1;
-				ch->clocks_to_transition = 1.0;
+				ch->remain          = 1;
 			}
 		}
 		break;
 
 	default:
 		ch->counting = 0;
-		ch->clocks_to_transition = 0.0;
+		ch->remain   = 0;
 		break;
 	}
 }
 
-static void pcg_write_control(PCG8253_CHANNEL *ch, byte data)
+/* Advances a channel by d PIT clocks; returns the clocks its output was
+ * high. A running mode 2 or 3 square skips whole periods at once. */
+static int pcg_advance(PCG8253_CHANNEL *ch, int d)
 {
-	int rw, mode;
+	int high = 0;
 
-	rw = (data >> 4) & 3;
-	if (rw == 0) {
-		/* Counter Latch: 音声経路では未使用 */
-		return;
+	while (d > 0) {
+		if (!(ch->counting || ch->load_pending) || ch->remain <= 0) {
+			if (ch->output)
+				high += d;
+			break;
+		}
+		if (d < ch->remain) {
+			if (ch->output)
+				high += d;
+			ch->remain -= d;
+			break;
+		}
+
+		if (ch->output)
+			high += ch->remain;
+		d         -= ch->remain;
+		ch->remain = 0;
+
+		pcg_update_channel(ch);
+		if ((ch->counting || ch->load_pending) && ch->remain < 1)
+			ch->remain = 1;
+
+		if (d > 0 && ch->counting && !ch->load_pending && !ch->pending_valid
+		 && (ch->mode == 2 || ch->mode == 3)) {
+			int n      = pcg_effective_count(ch, ch->reload);
+			int period = (ch->mode == 3 && n < 2) ? 2 : n;
+
+			if (period >= 2 && d >= period) {
+				int k     = d / period;
+				int phigh = (ch->mode == 3) ? (period + 1) / 2 : period - 1;
+
+				high += k * phigh;
+				d    -= k * period;
+			}
+		}
 	}
+	return high;
+}
 
-	mode = (data >> 1) & 7;
+static void pcg_write_control(PCG8253_CHANNEL *ch, int data)
+{
+	int rw   = (data >> 4) & 3;
+	int mode = (data >> 1) & 7;
+
+	if (rw == 0)		/* counter latch: nothing reads the counters */
+		return;
 	if (mode >= 6)
 		mode -= 4;
 
-	ch->rw_mode = rw;
-	ch->mode = mode;
-	ch->bcd = data & 1;
-	ch->write_phase = 0;
-	ch->write_lsb = 0;
-	ch->pending_valid = 0;
-	ch->null_count = 1;
-	ch->counting = 0;
-	ch->load_pending = 0;
+	ch->rw_mode         = rw;
+	ch->mode            = mode;
+	ch->bcd             = data & 1;
+	ch->write_phase     = 0;
+	ch->write_lsb       = 0;
+	ch->pending_valid   = 0;
+	ch->null_count      = 1;
+	ch->counting        = 0;
+	ch->load_pending    = 0;
 	ch->trigger_pending = 0;
-	ch->pulse_state = 0;
-	ch->clocks_to_transition = 0.0;
-	ch->programmed = 1;
-
-	if (mode == 0)
-		ch->output = 0;
-	else
-		ch->output = 1;
+	ch->pulse_state     = 0;
+	ch->remain          = 0;
+	ch->programmed      = 1;
+	ch->output          = (mode == 0) ? 0 : 1;
 }
 
-static void pcg_commit_count(PCG8253_CHANNEL *ch, unsigned value)
+static void pcg_commit_count(PCG8253_CHANNEL *ch, int value)
 {
 	ch->pending_reload = value & 0xffff;
-	ch->pending_valid = 1;
-	ch->null_count = 1;
-	ch->programmed = 1;
+	ch->pending_valid  = 1;
+	ch->null_count     = 1;
+	ch->programmed     = 1;
 
 	switch (ch->mode) {
 	case 0:
-		ch->output = 0;
-		ch->counting = 0;
+		ch->output       = 0;
+		ch->counting     = 0;
 		ch->load_pending = 1;
-		ch->clocks_to_transition = 1.0;
+		ch->remain       = 1;
 		break;
 
 	case 1:
 	case 5:
 		ch->trigger_pending = 1;
-		ch->load_pending = 1;
-		ch->clocks_to_transition = 1.0;
+		ch->load_pending    = 1;
+		ch->remain          = 1;
 		break;
 
 	case 2:
 	case 3:
 		if (!ch->counting) {
 			ch->load_pending = 1;
-			ch->clocks_to_transition = 1.0;
+			ch->remain       = 1;
 		}
 		break;
 
 	case 4:
 		ch->load_pending = 1;
-		ch->clocks_to_transition = 1.0;
+		ch->remain       = 1;
 		break;
 
 	default:
@@ -349,30 +370,27 @@ static void pcg_commit_count(PCG8253_CHANNEL *ch, unsigned value)
 	}
 }
 
-static void pcg_write_count(PCG8253_CHANNEL *ch, byte data)
+static void pcg_write_count(PCG8253_CHANNEL *ch, int data)
 {
-	unsigned v;
-
 	if (!ch->programmed && ch->rw_mode == 0)
 		return;
 
 	switch (ch->rw_mode) {
 	case 1:
-		pcg_commit_count(ch, (unsigned)data);
+		pcg_commit_count(ch, data);
 		break;
 
 	case 2:
-		pcg_commit_count(ch, ((unsigned)data) << 8);
+		pcg_commit_count(ch, data << 8);
 		break;
 
 	case 3:
 		if (ch->write_phase == 0) {
-			ch->write_lsb = data;
+			ch->write_lsb   = data;
 			ch->write_phase = 1;
 		} else {
-			v = (unsigned)ch->write_lsb | (((unsigned)data) << 8);
 			ch->write_phase = 0;
-			pcg_commit_count(ch, v);
+			pcg_commit_count(ch, ch->write_lsb | (data << 8));
 		}
 		break;
 
@@ -381,597 +399,242 @@ static void pcg_write_count(PCG8253_CHANNEL *ch, byte data)
 	}
 }
 
-static void pcg_apply_io(byte port, byte data)
+
+/*----------------------------------------------------------------------*/
+/* Sound window								*/
+/*----------------------------------------------------------------------*/
+
+static int pcg_window_samples(void)
 {
-	int sc;
+	int n = (int)(44100 / vsync_freq_hz);
 
-	switch (port) {
-	case 0x02:
-		pcg.output_enable = (byte)(data & (PCG8100_EN0 | PCG8100_EN1 | PCG8100_EN2));
-		break;
+	if (n < 1)
+		n = 1;
+	if (n > PCG_MAX_SAMPLES)
+		n = PCG_MAX_SAMPLES;
+	return n;
+}
 
-	case 0x0c:
-		pcg_write_count(&pcg.ch[0], data);
-		pcg.programmed = 1;
-		break;
+/* Where sample i of the window starts, in PIT clocks */
+static int pcg_sample_start(int i)
+{
+	return (int)(((unsigned long)pcg_win_clocks * (unsigned long)i)
+		     / (unsigned long)pcg_win_samples);
+}
 
-	case 0x0d:
-		pcg_write_count(&pcg.ch[1], data);
-		pcg.programmed = 1;
-		break;
+static void pcg_start_window(void)
+{
+	int step = (int)(PCG8100_CLOCK * (double)(1 << PCG_WIN_FRAC_BITS)
+			 / vsync_freq_hz + 0.5);
+	int len  = pcg_win_carry + step;
 
-	case 0x0e:
-		pcg_write_count(&pcg.ch[2], data);
-		pcg.programmed = 1;
-		break;
+	pcg_win_clocks  = len >> PCG_WIN_FRAC_BITS;
+	pcg_win_carry   = len & ((1 << PCG_WIN_FRAC_BITS) - 1);
+	pcg_win_samples = pcg_window_samples();
+	pcg_t           = 0;
+	pcg_sample      = 0;
+	pcg_sample_end  = pcg_sample_start(1);
+	memset(pcg_acc, 0, sizeof(pcg_acc));
+}
 
-	case 0x0f:
-		sc = (data >> 6) & 3;
-		if (sc <= 2) {
-			pcg_write_control(&pcg.ch[sc], data);
-			pcg.programmed = 1;
+/* Renders the outputs up to PIT clock t of the window */
+static void pcg_render_to(int t)
+{
+	static const int enable_bit[3] = { PCG8100_EN0, PCG8100_EN1, PCG8100_EN2 };
+	int i, end, high;
+
+	if (t > pcg_win_clocks)
+		t = pcg_win_clocks;
+
+	while (pcg_t < t) {
+		end = (t < pcg_sample_end) ? t : pcg_sample_end;
+
+		for (i = 0; i < 3; i++) {
+			high = pcg_advance(&pcg_ch[i], end - pcg_t);
+			if (pcg_enable & enable_bit[i])
+				pcg_acc[pcg_sample] += high;
 		}
-		break;
+		pcg_t = end;
 
-	default:
-		break;
-	}
-}
-
-static int pcg_mix_level(void)
-{
-	int level = 0;
-
-	if ((pcg.output_enable & PCG8100_EN0) && pcg.ch[0].output)
-		level++;
-	if ((pcg.output_enable & PCG8100_EN1) && pcg.ch[1].output)
-		level++;
-	if ((pcg.output_enable & PCG8100_EN2) && pcg.ch[2].output)
-		level++;
-
-	return level;
-}
-
-static int pcg_channel_pending(const PCG8253_CHANNEL *ch)
-{
-	return (ch->clocks_to_transition > PCG_EPS);
-}
-
-static int pcg_any_pending(void)
-{
-	return pcg_channel_pending(&pcg.ch[0])
-	    || pcg_channel_pending(&pcg.ch[1])
-	    || pcg_channel_pending(&pcg.ch[2]);
-}
-
-static void pcg_advance_channels(double dt)
-{
-	int i;
-
-	for (i = 0; i < 3; i++) {
-		if (pcg.ch[i].clocks_to_transition > 0.0) {
-			pcg.ch[i].clocks_to_transition -= dt;
-			if (pcg.ch[i].clocks_to_transition < 0.0)
-				pcg.ch[i].clocks_to_transition = 0.0;
+		if (pcg_t == pcg_sample_end && pcg_sample + 1 < pcg_win_samples) {
+			pcg_sample++;
+			pcg_sample_end = pcg_sample_start(pcg_sample + 1);
 		}
 	}
 }
 
-static double pcg_next_channel_time(double now)
+/* Removes the DC level the outputs sit at, as the board's output
+ * capacitor does */
+static int pcg_dc_block(int x)
 {
-	int i;
-	double next, t;
+	long t = (long)pcg_dc_y * PCG_DC_POLE;
+	int  y = x - pcg_dc_x + (int)(t >= 0 ? t >> 15 : -((-t) >> 15));
 
-	next = PCG_NO_EVENT;
-	for (i = 0; i < 3; i++) {
-		if (pcg.ch[i].clocks_to_transition > PCG_EPS) {
-			t = now + pcg.ch[i].clocks_to_transition;
-			if (t < next)
-				next = t;
-		}
-	}
-	return next;
+	pcg_dc_x = x;
+	pcg_dc_y = y;
+	return y;
 }
 
-static double pcg_io_frac(void)
-{
-	int den;
-	double frac;
 
-	den = boost * state_of_vsync;
-	if (den < 1)
-		den = 1;
-
-	frac = (double)(state_of_cpu + z80main_cpu.state0 + boost_cnt * state_of_vsync)
-	     / (double)den;
-	if (frac < 0.0)
-		frac = 0.0;
-	if (frac > 1.0)
-		frac = 1.0;
-	return frac;
-}
-
-static void pcg_evt_clear(void)
-{
-	pcg_evt_r = 0;
-	pcg_evt_w = 0;
-}
-
-static void pcg_evt_push(byte port, byte data, double frac)
-{
-	int next;
-
-	next = (pcg_evt_w + 1) % PCG8100_EVT_MAX;
-	if (next == pcg_evt_r)
-		return;
-
-	pcg_evt[pcg_evt_w].port = port;
-	pcg_evt[pcg_evt_w].data = data;
-	pcg_evt[pcg_evt_w].frac = frac;
-	pcg_evt[pcg_evt_w].pit_time = 0.0;
-	pcg_evt[pcg_evt_w].mapped = 0;
-	pcg_evt_w = next;
-}
-
-static void pcg_map_io_events(double start, double span)
-{
-	int i;
-	double prev, f;
-
-	prev = -1.0;
-	i = pcg_evt_r;
-	while (i != pcg_evt_w) {
-		f = pcg_evt[i].frac;
-		if (prev >= 0.0 && f + 0.02 < prev)
-			break;
-		pcg_evt[i].pit_time = start + f * span;
-		pcg_evt[i].mapped = 1;
-		prev = f;
-		i = (i + 1) % PCG8100_EVT_MAX;
-	}
-}
-
-static double pcg_next_io_time(void)
-{
-	if (pcg_evt_r == pcg_evt_w || !pcg_evt[pcg_evt_r].mapped)
-		return PCG_NO_EVENT;
-	return pcg_evt[pcg_evt_r].pit_time;
-}
-
-static void pcg_apply_due_io(double time)
-{
-	while (pcg_evt_r != pcg_evt_w) {
-		if (!pcg_evt[pcg_evt_r].mapped)
-			break;
-		if (pcg_evt[pcg_evt_r].pit_time > time + PCG_EPS)
-			break;
-		pcg_apply_io(pcg_evt[pcg_evt_r].port, pcg_evt[pcg_evt_r].data);
-		pcg_evt_r = (pcg_evt_r + 1) % PCG8100_EVT_MAX;
-	}
-}
-
-static void pcg_fire_due_channels(void)
-{
-	int i;
-
-	for (i = 0; i < 3; i++) {
-		if ((pcg.ch[i].counting || pcg.ch[i].load_pending)
-		 && pcg.ch[i].clocks_to_transition <= PCG_EPS) {
-			pcg_update_channel(&pcg.ch[i]);
-			/* 1 PIT clock 未満の残りは切り上げ、ゼロ進行の無限ループを防ぐ */
-			if ((pcg.ch[i].counting || pcg.ch[i].load_pending)
-			 && pcg.ch[i].clocks_to_transition < 1.0)
-				pcg.ch[i].clocks_to_transition = 1.0;
-		}
-	}
-}
-
-static double pcg_integrate(double t0, double t1)
-{
-	double time, next, acc, dt, ch_t, io_t;
-
-	acc = 0.0;
-	time = t0;
-
-	if (t1 <= t0)
-		return 0.0;
-
-	while (time < t1) {
-		if (pcg_mix_budget <= 0)
-			break;
-		pcg_mix_budget--;
-
-		next = t1;
-		io_t = pcg_next_io_time();
-		if (io_t < next)
-			next = io_t;
-		ch_t = pcg_next_channel_time(time);
-		if (ch_t < next)
-			next = ch_t;
-		if (next < time)
-			next = time;
-
-		dt = next - time;
-		if (dt > 0.0) {
-			acc += (double)pcg_mix_level() * dt;
-			pcg_advance_channels(dt);
-			time = next;
-		}
-
-		pcg_apply_due_io(time);
-		pcg_fire_due_channels();
-
-		if (dt <= 0.0) {
-			if (pcg_evt_r != pcg_evt_w
-			 && pcg_evt[pcg_evt_r].mapped
-			 && pcg_evt[pcg_evt_r].pit_time <= time + PCG_EPS) {
-				pcg_apply_io(pcg_evt[pcg_evt_r].port, pcg_evt[pcg_evt_r].data);
-				pcg_evt_r = (pcg_evt_r + 1) % PCG8100_EVT_MAX;
-			} else {
-				time += 1.0;
-				if (time > t1)
-					time = t1;
-			}
-		}
-	}
-
-	if (time < t1) {
-		dt = t1 - time;
-		acc += (double)pcg_mix_level() * dt;
-		pcg_advance_channels(dt);
-		pcg_apply_due_io(t1);
-	}
-
-	return acc;
-}
-
-static void pcg_add_sample(short *stereo, int pcm)
-{
-	int samp;
-
-	samp = (int)stereo[0] + pcm;
-	if (samp > 32767)
-		samp = 32767;
-	else if (samp < -32768)
-		samp = -32768;
-	stereo[0] = (short)samp;
-
-	samp = (int)stereo[1] + pcm;
-	if (samp > 32767)
-		samp = 32767;
-	else if (samp < -32768)
-		samp = -32768;
-	stereo[1] = (short)samp;
-}
-
+/*----------------------------------------------------------------------*/
+/* Interface								*/
+/*----------------------------------------------------------------------*/
 
 void pcg8100_reset(void)
 {
 	int i;
 
-	memset(&pcg, 0, sizeof(pcg));
-	pcg_evt_clear();
-	pcg_render_pit = 0.0;
-	pcg_queued_enable = 0;
-
-	for (i = 0; i < 3; i++) {
-		pcg.ch[i].gate = 1;
-		pcg.ch[i].output = 0;
-	}
-}
-
-void pcg8100_out_at(unsigned char port, unsigned char data, int cpu_state)
-{
-	byte en;
-
-	(void)cpu_state;
-
-	if (!use_pcg)
-		return;
-
-	if (port != 0x02 && port != 0x0c && port != 0x0d
-	 && port != 0x0e && port != 0x0f)
-		return;
-
-	/* グラフィック用 02h 書き込みは enable ビットが変わったときだけ記録する */
-	if (port == 0x02) {
-		en = (byte)(data & (PCG8100_EN0 | PCG8100_EN1 | PCG8100_EN2));
-		if (en == pcg_queued_enable)
-			return;
-		pcg_queued_enable = en;
-	}
-
-	pcg_evt_push((byte)port, (byte)data, pcg_io_frac());
-
-	if (port != 0x02)
-		pcg.programmed = 1;
+	memset(pcg_ch, 0, sizeof(pcg_ch));
+	for (i = 0; i < 3; i++)
+		pcg_ch[i].gate = 1;
+	pcg_enable    = 0;
+	pcg_win_carry = 0;
+	pcg_dc_x      = 0;
+	pcg_dc_y      = 0;
+	pcg_start_window();
 }
 
 void pcg8100_out(unsigned char port, unsigned char data)
 {
-	pcg8100_out_at(port, data, 0);
+	int t;
+
+	if (!use_pcg)
+		return;
+
+	switch (port) {
+	case 0x02:
+	case 0x0c:
+	case 0x0d:
+	case 0x0e:
+	case 0x0f:
+		break;
+	default:
+		return;
+	}
+
+	if (pcg_win_samples < 1)
+		pcg8100_reset();
+
+	/* The write's place in the window, as the snddrv streams place theirs */
+	t = sound_scalebufferpos(pcg_win_clocks);
+	if (t > pcg_t)
+		pcg_render_to(t);
+
+	switch (port) {
+	case 0x02:
+		pcg_enable = data & (PCG8100_EN0 | PCG8100_EN1 | PCG8100_EN2);
+		break;
+
+	case 0x0c:
+	case 0x0d:
+	case 0x0e:
+		pcg_write_count(&pcg_ch[port - 0x0c], data);
+		break;
+
+	case 0x0f:
+		if (((data >> 6) & 3) <= 2)
+			pcg_write_control(&pcg_ch[(data >> 6) & 3], data);
+		break;
+	}
 }
 
-void pcg8100_mix(short *stereo, int frames, int sample_rate)
+void pcg8100_update(short *stereo, int frames)
 {
-	double start, end, span, t0, t1, acc, sample_len;
-	int i, pcm, level;
-	static int reentry;
+	int i, len, x, y, s;
 
 	if (!use_pcg || stereo == NULL || frames <= 0)
 		return;
+	if (pcg_win_samples < 1)
+		pcg8100_reset();
 
-	if (sample_rate < 1)
-		sample_rate = 44100;
+	pcg_render_to(pcg_win_clocks);
 
-	if (frames > 4096)
-		frames = 4096;
+	if (frames > pcg_win_samples)
+		frames = pcg_win_samples;
 
-	if (reentry)
-		return;
-	reentry = 1;
-
-	pcg_mix_budget = PCG_MIX_BUDGET;
-
-	/* 可聴時間は PCM バッファ長。CPU の VSYNC 内カウンタは巻き戻るので使わない */
-	span = PCG8100_CLOCK * (double)frames / (double)sample_rate;
-	start = pcg_render_pit;
-	end = start + span;
-
-	pcg_map_io_events(start, span);
-
-	if (!pcg.programmed) {
-		pcg_apply_due_io(end);
-		pcg_render_pit = end;
-		reentry = 0;
-		return;
-	}
-
-	if (span <= PCG_EPS) {
-		pcg_render_pit = end;
-		reentry = 0;
-		return;
-	}
-
-	if (!pcg_any_pending() && pcg_next_io_time() >= PCG_NO_EVENT) {
-		level = pcg_mix_level();
-		if (level == 0) {
-			pcg_apply_due_io(end);
-			pcg_render_pit = end;
-			reentry = 0;
-			return;
-		}
-		pcm = level * PCG8100_CH_LEVEL;
-		for (i = 0; i < frames; i++)
-			pcg_add_sample(&stereo[i * 2], pcm);
-		pcg_apply_due_io(end);
-		pcg_render_pit = end;
-		reentry = 0;
-		return;
-	}
-
-	sample_len = span / (double)frames;
-	t0 = start;
 	for (i = 0; i < frames; i++) {
-		if (pcg_mix_budget <= 0) {
-			pcm = pcg_mix_level() * PCG8100_CH_LEVEL;
-			for (; i < frames; i++)
-				pcg_add_sample(&stereo[i * 2], pcm);
-			break;
-		}
-		if (i == frames - 1)
-			t1 = end;
-		else
-			t1 = start + sample_len * (double)(i + 1);
+		len = pcg_sample_start(i + 1) - pcg_sample_start(i);
+		x   = (len > 0) ? (pcg_acc[i] * PCG8100_CH_LEVEL + len / 2) / len : 0;
+		y   = pcg_dc_block(x);
 
-		acc = pcg_integrate(t0, t1);
-		if (sample_len > 0.0)
-			pcm = (int)(acc / sample_len * (double)PCG8100_CH_LEVEL + 0.5);
-		else
-			pcm = 0;
-		pcg_add_sample(&stereo[i * 2], pcm);
-		t0 = t1;
+		s = stereo[i * 2] + y;
+		stereo[i * 2]     = (short)(s > 32767 ? 32767 : s < -32768 ? -32768 : s);
+		s = stereo[i * 2 + 1] + y;
+		stereo[i * 2 + 1] = (short)(s > 32767 ? 32767 : s < -32768 ? -32768 : s);
 	}
 
-	pcg_render_pit = end;
-	reentry = 0;
+	pcg_start_window();
 }
 
 
-#define	SID	"PCG "
+/*----------------------------------------------------------------------*/
+/* Savestate								*/
+/*----------------------------------------------------------------------*/
 
-static	int	sv_ch_rw_mode[3];
-static	int	sv_ch_mode[3];
-static	int	sv_ch_bcd[3];
-static	int	sv_ch_write_phase[3];
-static	int	sv_ch_write_lsb[3];
-static	int	sv_ch_reload[3];
-static	int	sv_ch_pending_reload[3];
-static	int	sv_ch_pending_valid[3];
-static	int	sv_ch_null_count[3];
-static	int	sv_ch_output[3];
-static	int	sv_ch_gate[3];
-static	int	sv_ch_counting[3];
-static	int	sv_ch_clocks_int[3];
-static	int	sv_ch_clocks_frac[3];
-static	int	sv_ch_trigger_pending[3];
-static	int	sv_ch_pulse_state[3];
-static	int	sv_ch_load_pending[3];
-static	int	sv_ch_programmed[3];
-static	int	sv_output_enable;
-static	int	sv_programmed;
-static	int	sv_queued_enable;
+#define	SID		"PCG "
+#define	SID_ACC		"PCGA"
 
+#define	PCG_CH_WORK(n)	\
+	{ TYPE_INT,	&pcg_ch[n].rw_mode		},	\
+	{ TYPE_INT,	&pcg_ch[n].mode			},	\
+	{ TYPE_INT,	&pcg_ch[n].bcd			},	\
+	{ TYPE_INT,	&pcg_ch[n].write_phase		},	\
+	{ TYPE_INT,	&pcg_ch[n].write_lsb		},	\
+	{ TYPE_INT,	&pcg_ch[n].reload		},	\
+	{ TYPE_INT,	&pcg_ch[n].pending_reload	},	\
+	{ TYPE_INT,	&pcg_ch[n].pending_valid	},	\
+	{ TYPE_INT,	&pcg_ch[n].null_count		},	\
+	{ TYPE_INT,	&pcg_ch[n].output		},	\
+	{ TYPE_INT,	&pcg_ch[n].gate			},	\
+	{ TYPE_INT,	&pcg_ch[n].counting		},	\
+	{ TYPE_INT,	&pcg_ch[n].remain		},	\
+	{ TYPE_INT,	&pcg_ch[n].trigger_pending	},	\
+	{ TYPE_INT,	&pcg_ch[n].pulse_state		},	\
+	{ TYPE_INT,	&pcg_ch[n].load_pending		},	\
+	{ TYPE_INT,	&pcg_ch[n].programmed		}
 
 static	T_SUSPEND_W	suspend_pcg8100_work[]=
 {
-	{ TYPE_INT,	&sv_ch_rw_mode[0],		},
-	{ TYPE_INT,	&sv_ch_mode[0],			},
-	{ TYPE_INT,	&sv_ch_bcd[0],			},
-	{ TYPE_INT,	&sv_ch_write_phase[0],		},
-	{ TYPE_INT,	&sv_ch_write_lsb[0],		},
-	{ TYPE_INT,	&sv_ch_reload[0],		},
-	{ TYPE_INT,	&sv_ch_pending_reload[0],	},
-	{ TYPE_INT,	&sv_ch_pending_valid[0],	},
-	{ TYPE_INT,	&sv_ch_null_count[0],		},
-	{ TYPE_INT,	&sv_ch_output[0],		},
-	{ TYPE_INT,	&sv_ch_gate[0],			},
-	{ TYPE_INT,	&sv_ch_counting[0],		},
-	{ TYPE_INT,	&sv_ch_clocks_int[0],		},
-	{ TYPE_INT,	&sv_ch_clocks_frac[0],		},
-	{ TYPE_INT,	&sv_ch_trigger_pending[0],	},
-	{ TYPE_INT,	&sv_ch_pulse_state[0],		},
-	{ TYPE_INT,	&sv_ch_load_pending[0],		},
-	{ TYPE_INT,	&sv_ch_programmed[0],		},
+	PCG_CH_WORK(0),
+	PCG_CH_WORK(1),
+	PCG_CH_WORK(2),
 
-	{ TYPE_INT,	&sv_ch_rw_mode[1],		},
-	{ TYPE_INT,	&sv_ch_mode[1],			},
-	{ TYPE_INT,	&sv_ch_bcd[1],			},
-	{ TYPE_INT,	&sv_ch_write_phase[1],		},
-	{ TYPE_INT,	&sv_ch_write_lsb[1],		},
-	{ TYPE_INT,	&sv_ch_reload[1],		},
-	{ TYPE_INT,	&sv_ch_pending_reload[1],	},
-	{ TYPE_INT,	&sv_ch_pending_valid[1],	},
-	{ TYPE_INT,	&sv_ch_null_count[1],		},
-	{ TYPE_INT,	&sv_ch_output[1],		},
-	{ TYPE_INT,	&sv_ch_gate[1],			},
-	{ TYPE_INT,	&sv_ch_counting[1],		},
-	{ TYPE_INT,	&sv_ch_clocks_int[1],		},
-	{ TYPE_INT,	&sv_ch_clocks_frac[1],		},
-	{ TYPE_INT,	&sv_ch_trigger_pending[1],	},
-	{ TYPE_INT,	&sv_ch_pulse_state[1],		},
-	{ TYPE_INT,	&sv_ch_load_pending[1],		},
-	{ TYPE_INT,	&sv_ch_programmed[1],		},
+	{ TYPE_INT,	&pcg_enable		},
+	{ TYPE_INT,	&pcg_win_clocks		},
+	{ TYPE_INT,	&pcg_win_carry		},
+	{ TYPE_INT,	&pcg_win_samples	},
+	{ TYPE_INT,	&pcg_t			},
+	{ TYPE_INT,	&pcg_sample		},
+	{ TYPE_INT,	&pcg_dc_x		},
+	{ TYPE_INT,	&pcg_dc_y		},
 
-	{ TYPE_INT,	&sv_ch_rw_mode[2],		},
-	{ TYPE_INT,	&sv_ch_mode[2],			},
-	{ TYPE_INT,	&sv_ch_bcd[2],			},
-	{ TYPE_INT,	&sv_ch_write_phase[2],		},
-	{ TYPE_INT,	&sv_ch_write_lsb[2],		},
-	{ TYPE_INT,	&sv_ch_reload[2],		},
-	{ TYPE_INT,	&sv_ch_pending_reload[2],	},
-	{ TYPE_INT,	&sv_ch_pending_valid[2],	},
-	{ TYPE_INT,	&sv_ch_null_count[2],		},
-	{ TYPE_INT,	&sv_ch_output[2],		},
-	{ TYPE_INT,	&sv_ch_gate[2],			},
-	{ TYPE_INT,	&sv_ch_counting[2],		},
-	{ TYPE_INT,	&sv_ch_clocks_int[2],		},
-	{ TYPE_INT,	&sv_ch_clocks_frac[2],		},
-	{ TYPE_INT,	&sv_ch_trigger_pending[2],	},
-	{ TYPE_INT,	&sv_ch_pulse_state[2],		},
-	{ TYPE_INT,	&sv_ch_load_pending[2],		},
-	{ TYPE_INT,	&sv_ch_programmed[2],		},
-
-	{ TYPE_INT,	&sv_output_enable,		},
-	{ TYPE_INT,	&sv_programmed,			},
-	{ TYPE_INT,	&sv_queued_enable,		},
-
-	{ TYPE_END,	0				},
+	{ TYPE_END,	0			},
 };
-
-static void pcg_flush_io(void)
-{
-	while (pcg_evt_r != pcg_evt_w) {
-		pcg_apply_io(pcg_evt[pcg_evt_r].port, pcg_evt[pcg_evt_r].data);
-		pcg_evt_r = (pcg_evt_r + 1) % PCG8100_EVT_MAX;
-	}
-	pcg_evt_clear();
-}
-
-static void pcg_pack_state(void)
-{
-	int i;
-	double clk;
-	int clocks_int;
-
-	pcg_flush_io();
-
-	for (i = 0; i < 3; i++) {
-		sv_ch_rw_mode[i] = pcg.ch[i].rw_mode;
-		sv_ch_mode[i] = pcg.ch[i].mode;
-		sv_ch_bcd[i] = pcg.ch[i].bcd;
-		sv_ch_write_phase[i] = pcg.ch[i].write_phase;
-		sv_ch_write_lsb[i] = (int)pcg.ch[i].write_lsb;
-		sv_ch_reload[i] = (int)pcg.ch[i].reload;
-		sv_ch_pending_reload[i] = (int)pcg.ch[i].pending_reload;
-		sv_ch_pending_valid[i] = pcg.ch[i].pending_valid;
-		sv_ch_null_count[i] = pcg.ch[i].null_count;
-		sv_ch_output[i] = pcg.ch[i].output;
-		sv_ch_gate[i] = pcg.ch[i].gate;
-		sv_ch_counting[i] = pcg.ch[i].counting;
-		clk = pcg.ch[i].clocks_to_transition;
-		if (clk < 0.0)
-			clk = 0.0;
-		clocks_int = (int)clk;
-		sv_ch_clocks_int[i] = clocks_int;
-		sv_ch_clocks_frac[i] = (int)((clk - (double)clocks_int) * 1000000.0 + 0.5);
-		sv_ch_trigger_pending[i] = pcg.ch[i].trigger_pending;
-		sv_ch_pulse_state[i] = pcg.ch[i].pulse_state;
-		sv_ch_load_pending[i] = pcg.ch[i].load_pending;
-		sv_ch_programmed[i] = pcg.ch[i].programmed;
-	}
-	sv_output_enable = (int)pcg.output_enable;
-	sv_programmed = pcg.programmed;
-	sv_queued_enable = (int)pcg_queued_enable;
-}
-
-static void pcg_unpack_state(void)
-{
-	int i;
-	double clk;
-
-	for (i = 0; i < 3; i++) {
-		pcg.ch[i].rw_mode = sv_ch_rw_mode[i];
-		pcg.ch[i].mode = sv_ch_mode[i];
-		pcg.ch[i].bcd = sv_ch_bcd[i];
-		pcg.ch[i].write_phase = sv_ch_write_phase[i];
-		pcg.ch[i].write_lsb = (byte)sv_ch_write_lsb[i];
-		pcg.ch[i].reload = (unsigned int)sv_ch_reload[i];
-		pcg.ch[i].pending_reload = (unsigned int)sv_ch_pending_reload[i];
-		pcg.ch[i].pending_valid = sv_ch_pending_valid[i];
-		pcg.ch[i].null_count = sv_ch_null_count[i];
-		pcg.ch[i].output = sv_ch_output[i] ? 1 : 0;
-		pcg.ch[i].gate = sv_ch_gate[i] ? 1 : 0;
-		pcg.ch[i].counting = sv_ch_counting[i];
-		clk = (double)sv_ch_clocks_int[i] + (double)sv_ch_clocks_frac[i] / 1000000.0;
-		if (clk < 0.0)
-			clk = 0.0;
-		pcg.ch[i].clocks_to_transition = clk;
-		pcg.ch[i].trigger_pending = sv_ch_trigger_pending[i];
-		pcg.ch[i].pulse_state = sv_ch_pulse_state[i];
-		pcg.ch[i].load_pending = sv_ch_load_pending[i];
-		pcg.ch[i].programmed = sv_ch_programmed[i];
-	}
-	pcg.output_enable = (byte)sv_output_enable;
-	pcg.programmed = sv_programmed;
-	pcg_queued_enable = (byte)sv_queued_enable;
-
-	pcg_evt_clear();
-	pcg_render_pit = 0.0;
-}
 
 int statesave_pcg8100(void)
 {
-	pcg_pack_state();
 	if (statesave_table(SID, suspend_pcg8100_work) != STATE_OK)
+		return FALSE;
+	if (statesave_block(SID_ACC, pcg_acc, sizeof(pcg_acc)) != STATE_OK)
 		return FALSE;
 	return TRUE;
 }
 
 int stateload_pcg8100(void)
 {
-	int s;
-
-	s = stateload_table(SID, suspend_pcg8100_work);
-	if (s == STATE_OK) {
-		pcg_unpack_state();
+	if (stateload_table(SID, suspend_pcg8100_work) != STATE_OK
+	 || stateload_block(SID_ACC, pcg_acc, sizeof(pcg_acc)) != STATE_OK) {
+		/* A state without the PCG-8100 starts it from power-on */
+		pcg8100_reset();
 		return TRUE;
 	}
 
-	/* 旧 state に PCG 音声ブロックが無くても本体ロードは継続する */
-	pcg8100_reset();
+	if (pcg_win_samples < 1 || pcg_win_samples > PCG_MAX_SAMPLES
+	 || pcg_win_clocks < 1 || pcg_t < 0 || pcg_t > pcg_win_clocks
+	 || pcg_sample < 0 || pcg_sample >= pcg_win_samples) {
+		pcg8100_reset();
+		return TRUE;
+	}
+	pcg_sample_end = pcg_sample_start(pcg_sample + 1);
 	return TRUE;
 }
-
-
-
