@@ -655,6 +655,40 @@ static void autotype_load(const struct autotype_state *in)
       quasi88_key(autotype_held, 1);
 }
 
+/* A PC-8801 has two drives, and a game on several disks can want its second
+ * disk in drive 2 from the start, as it gets from an M3U. The first disk of a
+ * set named "(Disk A)" or "(Disk 1)" brings the others along by name. */
+static bool load_disk_set(const char *path)
+{
+   char name[OSD_MAX_FILENAME];
+   const char *mark = strstr(path_basename(path), "(Disk ");
+   size_t at;
+   char first;
+   int i;
+
+   if (!mark)
+      return false;
+   at    = (size_t)(mark - path) + strlen("(Disk ");
+   first = path[at];
+   if ((first != 'A' && first != '1') || (path[at + 1] != ')' && path[at + 1] != ' '))
+      return false;
+   strlcpy(name, path, sizeof(name));
+   name[at] = first + 1;
+   if (!filestream_exists(name))
+      return false;
+
+   retro_disks_append(path);
+   for (i = 1; i < (first == 'A' ? 26 : 9); i++)
+   {
+      name[at] = first + i;
+      if (!filestream_exists(name))
+         break;
+      retro_disks_append(name);
+   }
+   retro_disks_ready();
+   return true;
+}
+
 static bool is_tape(const char *path)
 {
    const char *ext = path_get_extension(path);
@@ -1235,8 +1269,11 @@ bool retro_load_game(const struct retro_game_info *info)
       else
       {
          autotype_plan(info->path, false);
-         retro_disks_append(info->path);
-         quasi88_disk_insert(DRIVE_1, info->path, 0, 0);
+         if (!load_disk_set(info->path))
+         {
+            retro_disks_append(info->path);
+            quasi88_disk_insert(DRIVE_1, info->path, 0, 0);
+         }
       }
    }
    apply_braces();
