@@ -1237,7 +1237,6 @@ Q8List	*q8tk_radio_button_get_list(Q8tkWidget *group)
 
 /* ポップアップウインドウで、LIST ITEM 選択 or ESCキー押下 or ウインドウ外を
    マウスクリックした時のコールバック関数。ポップアップウインドウを削除する */
-static	void	combo_fake_callback(UNUSED_WIDGET, Q8tkWidget *parent)
 static	void	combo_fake_callback(UNUSED_WIDGET, void *p)
 {
     Q8tkWidget *parent = (Q8tkWidget *)p;
@@ -1263,7 +1262,6 @@ static	void	combo_fake_callback(UNUSED_WIDGET, void *p)
 
 /* ポップアップウインドウの LIST ITEM をマウスクリックした時のコールバック */
 static	void	combo_event_list_callback(Q8tkWidget *list_item,
-					  Q8tkWidget *parent)
 					  void *p)
 {
     Q8tkWidget *parent = (Q8tkWidget *)p;
@@ -1465,13 +1463,11 @@ static	void	combo_event_key_on(Q8tkWidget *widget, int key)
 }
 
 /* エントリ部に入力があったとき、シグナル発生 */
-static	void	combo_event_entry_activate(UNUSED_WIDGET, Q8tkWidget *parent)
 static	void	combo_event_entry_activate(UNUSED_WIDGET, void *p)
 {
     Q8tkWidget *parent = (Q8tkWidget *)p;
     widget_signal_do(parent, "activate");
 }
-static	void	combo_event_entry_changed(UNUSED_WIDGET, Q8tkWidget *parent)
 static	void	combo_event_entry_changed(UNUSED_WIDGET, void *p)
 {
     Q8tkWidget *parent = (Q8tkWidget *)p;
