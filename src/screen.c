@@ -1914,16 +1914,33 @@ static	T_SUSPEND_W	suspend_screen_work[]=
 };
 
 
+#define	SID2	"SCR2"
+
+static	T_SUSPEND_W	suspend_screen_work2[]=
+{
+    { TYPE_INT,		&blink_ctrl_counter,	},
+
+    { TYPE_END,		0			},
+};
+
+
 int	statesave_screen(void)
 {
-    if (statesave_table(SID, suspend_screen_work) == STATE_OK) return TRUE;
-    else                                                       return FALSE;
+    if (statesave_table(SID,  suspend_screen_work)  != STATE_OK) return FALSE;
+    if (statesave_table(SID2, suspend_screen_work2) != STATE_OK) return FALSE;
+    return TRUE;
 }
 
 int	stateload_screen(void)
 {
-    if (stateload_table(SID, suspend_screen_work) == STATE_OK) return TRUE;
-    else                                                       return FALSE;
+    if (stateload_table(SID, suspend_screen_work) != STATE_OK) return FALSE;
+
+    /* blink_cycle (CRTC) and frameskip_rate are loaded by now; older state
+       files carry no SCR2 section and start the blink phase afresh */
+    frameskip_blink_reset();
+    stateload_table(SID2, suspend_screen_work2);
+
+    return TRUE;
 }
 
 

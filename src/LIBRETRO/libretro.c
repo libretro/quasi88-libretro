@@ -901,9 +901,12 @@ bool retro_unserialize(const void *data, size_t size)
 
    osd_fclose(fp);
 
-   screen_update_immidiate();
    pc88main_init(INIT_STATELOAD);
    pc88sub_init(INIT_STATELOAD);
+
+   /* Redraw everything on the next frame without advancing display state */
+   screen_set_dirty_frame();
+   screen_set_dirty_palette();
 
    return success;
 }

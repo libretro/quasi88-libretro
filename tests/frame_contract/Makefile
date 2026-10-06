@@ -1,4 +1,4 @@
-# Frame contract test, run by hand:
+# Frame contract and savestate determinism test, run by hand:
 #   make check
 # Builds the core, then links the test against the core's own objects.
 # Works on Linux and MSYS2 MINGW64.

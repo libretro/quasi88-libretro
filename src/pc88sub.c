@@ -25,6 +25,7 @@
 z80arch	z80sub_cpu;			/* Z80 CPU ( sub system )	*/
 
 int	sub_load_rate = 6;		/*				*/
+static	int	sub_total_state = 0;	/* sub-CPU states since the last paced frame */
 
 /************************************************************************/
 /* メモリアクセス							*/
@@ -200,6 +201,7 @@ byte	sub_io_in( byte port )
 void	sub_INT_init( void )
 {
   FDC_flag = FALSE;
+  sub_total_state = 0;
 }
 
 /*----------------------------------------------------------------------*/
@@ -208,7 +210,6 @@ void	sub_INT_init( void )
 /*----------------------------------------------------------------------*/
 void	sub_INT_update( void )
 {
-  static int sub_total_state = 0;	/* サブCPUが処理した命令数      */
   int icount;
 
   icount = fdc_ctrl( z80sub_cpu.state0 );
@@ -437,15 +438,30 @@ static	T_SUSPEND_W	suspend_pc88sub_work[]=
   { TYPE_END,	0			},
 };
 
+#define	SID2	"SUB2"
+
+static	T_SUSPEND_W	suspend_pc88sub_work2[]=
+{
+  { TYPE_INT,	&sub_total_state,	},
+
+  { TYPE_END,	0			},
+};
+
 
 int	statesave_pc88sub( void )
 {
-  if( statesave_table( SID, suspend_pc88sub_work ) == STATE_OK ) return TRUE;
-  else                                                           return FALSE;
+  if( statesave_table( SID,  suspend_pc88sub_work  ) != STATE_OK ) return FALSE;
+  if( statesave_table( SID2, suspend_pc88sub_work2 ) != STATE_OK ) return FALSE;
+  return TRUE;
 }
 
 int	stateload_pc88sub( void )
 {
-  if( stateload_table( SID, suspend_pc88sub_work ) == STATE_OK ) return TRUE;
-  else                                                           return FALSE;
+  if( stateload_table( SID, suspend_pc88sub_work ) != STATE_OK ) return FALSE;
+
+  /* Older state files carry no SUB2 section */
+  if( stateload_table( SID2, suspend_pc88sub_work2 ) != STATE_OK )
+    sub_total_state = 0;
+
+  return TRUE;
 }

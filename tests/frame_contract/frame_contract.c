@@ -1,10 +1,13 @@
-/* Frame contract test for the quasi88 core.
+/* Frame contract and savestate determinism test for the quasi88 core.
  *
  * Links the core's objects statically and checks, for every retro_run:
  *   - exactly one video frame is pushed;
  *   - every audio mix produced during the run is pushed once, in order
  *     (samples pushed == mixes * samples per frame);
  *   - fps and sample_rate describe a whole number of samples per frame.
+ * It then checks that replaying from a savestate reproduces video, audio
+ * and the per-run mix/VSYNC cadence, both after a single load and with a
+ * save+load before every frame.
  *
  * Scenarios, selected on the command line:
  *   boot  power-on without media: the sub-CPU paces frames
@@ -33,7 +36,8 @@ void __wrap_sound_frame_update(void)
 }
 
 #define WARMUP 40
-#define FRAMES 350
+#define SAVE_AT 200
+#define REPLAY 150
 
 struct run_rec
 {
@@ -46,6 +50,7 @@ struct run_rec
 };
 
 static struct run_rec cur;
+static struct run_rec straight[REPLAY];
 static const char *scenario = "boot";
 static unsigned samples_per_frame;
 
@@ -147,10 +152,58 @@ static int run_frame(int frame)
    return 1;
 }
 
+static int same_run(const struct run_rec *a, const struct run_rec *b)
+{
+   return a->vhash == b->vhash && a->ahash == b->ahash && a->samples == b->samples
+       && a->vsyncs == b->vsyncs && a->mixes == b->mixes;
+}
+
+static int replay(const void *state, size_t size, int load_every_frame)
+{
+   int   i;
+   int   bad = 0;
+   void *tmp = malloc(size);
+
+   if (!tmp || !retro_unserialize(state, size))
+   {
+      printf("FAIL %s: unserialize\n", scenario);
+      free(tmp);
+      return 0;
+   }
+   for (i = 0; i < REPLAY; i++)
+   {
+      if (load_every_frame)
+      {
+         if (!retro_serialize(tmp, size) || !retro_unserialize(tmp, size))
+         {
+            printf("FAIL %s: serialize round trip at +%d\n", scenario, i);
+            bad++;
+            break;
+         }
+      }
+      if (!run_frame(SAVE_AT + i))
+         bad++;
+      else if (!same_run(&cur, &straight[i]))
+      {
+         if (bad < 4)
+            printf("FAIL %s %s +%d: vsync %d/%d mixes %u/%u video %s audio %s\n",
+                  scenario, load_every_frame ? "save/load every frame" : "replay", i,
+                  straight[i].vsyncs, cur.vsyncs, straight[i].mixes, cur.mixes,
+                  straight[i].vhash == cur.vhash ? "same" : "differs",
+                  straight[i].ahash == cur.ahash ? "same" : "differs");
+         bad++;
+      }
+   }
+   free(tmp);
+   return bad == 0;
+}
+
 int main(int argc, char **argv)
 {
    struct retro_system_av_info av;
    double spf;
+   size_t size;
+   void  *state;
    int    i;
    int    ok = 1;
 
@@ -185,9 +238,26 @@ int main(int argc, char **argv)
       ok = 0;
    }
 
-   for (i = 0; i < FRAMES; i++)
+   for (i = 0; i < SAVE_AT; i++)
       ok &= run_frame(i);
 
+   size  = retro_serialize_size();
+   state = malloc(size);
+   if (!state || !retro_serialize(state, size))
+   {
+      printf("FAIL %s: serialize\n", scenario);
+      return 1;
+   }
+   for (i = 0; i < REPLAY; i++)
+   {
+      ok &= run_frame(SAVE_AT + i);
+      straight[i] = cur;
+   }
+
+   ok &= replay(state, size, 0);
+   ok &= replay(state, size, 1);
+
+   free(state);
    retro_unload_game();
    retro_deinit();
 

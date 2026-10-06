@@ -39,5 +39,5 @@ void	wait_vsync_setup(long vsync_cycle_us, int do_sleep)
  *****************************************************************************/
 int	wait_vsync_update(void)
 {
-    return WAIT_OVER;
+    return WAIT_JUST;
 }

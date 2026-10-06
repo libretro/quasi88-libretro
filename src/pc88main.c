@@ -2853,7 +2853,7 @@ void	pc88main_init( int init )
 
   /* CRTC/DMAC関連による初期化 */
   set_text_display();
-  frameskip_blink_reset();
+  if( init != INIT_STATELOAD ) frameskip_blink_reset();
 
   /* シリアルマウス初期化 */
   if (use_siomouse) {
