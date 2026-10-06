@@ -170,38 +170,49 @@ static void handle_pad(uint8_t key, uint16_t retro_button, uint8_t pad)
    }
 }
 
-static bool handle_disk_swap(bool is_first_drive, uint8_t key)
+/* Disk swapper button state, kept apart from the emulated key state so
+   that a savestate load (which releases every emulated key) leaves it alone */
+static bool swap_drive_held[2];
+static bool swap_left_held;
+static bool swap_right_held;
+
+static bool handle_disk_swap(bool is_first_drive, unsigned button)
 {
-   if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, key))
+   bool *held = &swap_drive_held[is_first_drive ? 0 : 1];
+
+   if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, button))
    {
+      bool right = input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT) != 0;
+      bool left  = input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT) != 0;
+
       /* On press, start swapper */
-      if (!pad_buffer[key])
+      if (!*held)
       {
          retro_disks_start(environ_cb, is_first_drive);
-         pad_buffer[key] = true;
+         *held = true;
       }
-      else if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT) && !pad_buffer[RETRO_DEVICE_ID_JOYPAD_RIGHT])
+      else if (right && !swap_right_held)
       {
          retro_disks_cycle(environ_cb, true);
-         pad_buffer[RETRO_DEVICE_ID_JOYPAD_RIGHT] = true;
+         swap_right_held = true;
       }
-      else if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT) && !pad_buffer[RETRO_DEVICE_ID_JOYPAD_LEFT])
+      else if (left && !swap_left_held)
       {
          retro_disks_cycle(environ_cb, false);
-         pad_buffer[RETRO_DEVICE_ID_JOYPAD_LEFT] = true;
+         swap_left_held = true;
       }
-      else if (!input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT) && !input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
+      else if (!right && !left)
       {
-         pad_buffer[RETRO_DEVICE_ID_JOYPAD_LEFT] = false;
-         pad_buffer[RETRO_DEVICE_ID_JOYPAD_RIGHT] = false;
+         swap_left_held  = false;
+         swap_right_held = false;
       }
 
       return true;
    }
-   else if (pad_buffer[key])
+   else if (*held)
    {
       /* On release, set the new disk */
-      pad_buffer[key] = false;
+      *held = false;
       retro_disks_set(environ_cb);
 
       return true;

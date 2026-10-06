@@ -1,4 +1,5 @@
-# Frame contract and savestate determinism test, run by hand:
+# Frame contract, savestate determinism and input-across-load test,
+# run by hand:
 #   make check
 # Builds the core, then links the test against the core's own objects.
 # Works on Linux and MSYS2 MINGW64.
@@ -25,12 +26,13 @@ frame_contract.o: frame_contract.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(TEST): frame_contract.o core
-	$(CXX) -o $@ frame_contract.o $(CORE_OBJS) -Wl,--wrap=sound_frame_update $(LDFLAGS) -lm
+	$(CXX) -o $@ frame_contract.o $(CORE_OBJS) -Wl,--wrap=sound_frame_update -Wl,--wrap=retro_disks_start -Wl,--wrap=retro_disks_cycle -Wl,--wrap=retro_disks_set $(LDFLAGS) -lm
 
 check: $(TEST)
 	./$(TEST) boot
 	./$(TEST) main
 	./$(TEST) dual
+	./$(TEST) input
 
 clean:
 	rm -f frame_contract.o $(TEST)
