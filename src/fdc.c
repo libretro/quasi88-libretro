@@ -461,14 +461,14 @@ int	drive_check_empty( int drv )
 
 void	discover_index_params( int drv )
 {
-  // Floppies have only 2 surfaces (heads) but some disk imaging software
-  // pretends the have 4 for the index layout. Detect those.
+  /* Floppies have only 2 surfaces (heads) but some disk imaging software
+     pretends they have 4 for the index layout. Detect those. */
 
   int trk;
   long full_size;
   Uchar c[4];
 
-  // Fallback (standard) value
+  /* Fallback (standard) value */
   drive[drv].index_heads = 2;
 
   if( osd_fseek( drive[ drv ].fp,
@@ -3417,9 +3417,8 @@ static	T_SUSPEND_W	suspend_fdc_work2[]=
 };
 
 
-/* Where each drive's head is in its image. Loading a state used to leave the
-   heads where they were, so a read in progress went on from the wrong sector
-   when a state was loaded without reopening the images, as run-ahead does. */
+/* Where each drive's head is in its image, so a read in progress resumes
+   from the saved sector when a state is loaded without reopening the images */
 static	T_SUSPEND_W	suspend_fdc_work3[]=
 {
   { TYPE_INT,	&drive[0].track		},
@@ -3488,7 +3487,7 @@ int	stateload_fdc( void )
 
   /* An older state leaves the heads where they are */
   if( stateload_table( SID3, suspend_fdc_work3 ) == STATE_OK ){
-    if( sec_buf.drv >= 0 && drive[ sec_buf.drv ].fp )
+    if( sec_buf.drv >= 0 && sec_buf.drv < NR_DRIVE && drive[ sec_buf.drv ].fp )
       disk_now_sec( sec_buf.drv );	/* the sector ID under the head */
   }
 

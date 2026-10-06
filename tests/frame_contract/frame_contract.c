@@ -14,6 +14,10 @@
  *   main  main CPU only: VSYNC paces frames
  *   dual  sub-CPU mode 1 with both CPUs stepping: VSYNC and the sub-CPU
  *         load counter both end frames
+ *   input a pad direction held across frames, then the disk swapper
+ *         driven by L + Right: the keyboard matrix after every frame and
+ *         the swapper calls must match between a straight run and one
+ *         with a save+load before every frame
  *
  * No content or system files are needed. */
 #include <stdio.h>
@@ -25,6 +29,28 @@ extern int quasi88_info_vsync_count(void);
 extern int select_main_cpu;
 extern int cpu_timing;
 extern int dual_cpu_count;
+extern unsigned char key_scan[0x10];
+
+void __real_retro_disks_start(retro_environment_t cb, bool is_first_drive);
+void __real_retro_disks_cycle(retro_environment_t cb, bool right);
+void __real_retro_disks_set(retro_environment_t cb);
+
+static unsigned swap_starts, swap_cycles, swap_sets;
+void __wrap_retro_disks_start(retro_environment_t cb, bool is_first_drive)
+{
+   swap_starts++;
+   __real_retro_disks_start(cb, is_first_drive);
+}
+void __wrap_retro_disks_cycle(retro_environment_t cb, bool right)
+{
+   swap_cycles++;
+   __real_retro_disks_cycle(cb, right);
+}
+void __wrap_retro_disks_set(retro_environment_t cb)
+{
+   swap_sets++;
+   __real_retro_disks_set(cb);
+}
 
 void __real_sound_frame_update(void);
 
@@ -52,6 +78,7 @@ struct run_rec
 static struct run_rec cur;
 static struct run_rec straight[REPLAY];
 static const char *scenario = "boot";
+static int input_frame;
 static unsigned samples_per_frame;
 
 static unsigned long fnv(unsigned long h, const unsigned char *p, size_t n)
@@ -107,8 +134,84 @@ static void audio_cb(int16_t l, int16_t r) { (void)l; (void)r; }
 static void poll_cb(void) { }
 static int16_t input_cb(unsigned port, unsigned dev, unsigned idx, unsigned id)
 {
-   (void)port; (void)dev; (void)idx; (void)id;
+   (void)idx;
+   if (strcmp(scenario, "input") || port != 0 || dev != RETRO_DEVICE_JOYPAD)
+      return 0;
+   switch (id)
+   {
+      case RETRO_DEVICE_ID_JOYPAD_RIGHT:
+         /* held 50..89; tapped 120..124 while L is down */
+         return (input_frame >= 50 && input_frame < 90)
+             || (input_frame >= 120 && input_frame < 125);
+      case RETRO_DEVICE_ID_JOYPAD_L:
+         return input_frame >= 110 && input_frame < 140;
+      default:
+         break;
+   }
    return 0;
+}
+
+#define INPUT_FRAMES 160
+
+static unsigned char key_trace[2][INPUT_FRAMES][0x10];
+
+static int input_scenario(void)
+{
+   unsigned starts[2], cycles[2], sets[2];
+   size_t   size = retro_serialize_size();
+   void    *state = malloc(size);
+   void    *tmp   = malloc(size);
+   int      pass, bad = 0;
+
+   if (!state || !tmp || !retro_serialize(state, size))
+   {
+      printf("FAIL input: serialize\n");
+      return 0;
+   }
+   for (pass = 0; pass < 2; pass++)
+   {
+      if (!retro_unserialize(state, size))
+      {
+         printf("FAIL input: unserialize\n");
+         return 0;
+      }
+      swap_starts = swap_cycles = swap_sets = 0;
+      for (input_frame = 0; input_frame < INPUT_FRAMES; input_frame++)
+      {
+         if (pass && (!retro_serialize(tmp, size) || !retro_unserialize(tmp, size)))
+         {
+            printf("FAIL input: serialize round trip at %d\n", input_frame);
+            return 0;
+         }
+         retro_run();
+         memcpy(key_trace[pass][input_frame], key_scan, sizeof(key_scan));
+      }
+      starts[pass] = swap_starts;
+      cycles[pass] = swap_cycles;
+      sets[pass]   = swap_sets;
+   }
+   for (input_frame = 0; input_frame < INPUT_FRAMES; input_frame++)
+      if (memcmp(key_trace[0][input_frame], key_trace[1][input_frame], sizeof(key_scan)))
+      {
+         if (!bad)
+            printf("FAIL input: keyboard matrix differs from frame %d with a load before every frame\n", input_frame);
+         bad++;
+      }
+   if (starts[0] != starts[1] || cycles[0] != cycles[1] || sets[0] != sets[1])
+   {
+      printf("FAIL input: disk swapper start/cycle/set %u/%u/%u straight, %u/%u/%u with a load before every frame\n",
+            starts[0], cycles[0], sets[0], starts[1], cycles[1], sets[1]);
+      bad++;
+   }
+   if (starts[0] != 1 || cycles[0] != 1 || sets[0] != 1)
+   {
+      printf("FAIL input: disk swapper start/cycle/set %u/%u/%u, expected 1/1/1\n",
+            starts[0], cycles[0], sets[0]);
+      bad++;
+   }
+   free(tmp);
+   free(state);
+   return bad == 0;
 }
 
 static void apply_scenario(int frame)
@@ -209,9 +312,10 @@ int main(int argc, char **argv)
 
    if (argc > 1)
       scenario = argv[1];
-   if (strcmp(scenario, "boot") && strcmp(scenario, "main") && strcmp(scenario, "dual"))
+   if (strcmp(scenario, "boot") && strcmp(scenario, "main") && strcmp(scenario, "dual")
+         && strcmp(scenario, "input"))
    {
-      printf("usage: %s boot|main|dual\n", argv[0]);
+      printf("usage: %s boot|main|dual|input\n", argv[0]);
       return 2;
    }
 
@@ -236,6 +340,15 @@ int main(int argc, char **argv)
       printf("FAIL: sample_rate %.3f / fps %.3f = %.4f samples per frame\n",
             av.timing.sample_rate, av.timing.fps, spf);
       ok = 0;
+   }
+
+   if (!strcmp(scenario, "input"))
+   {
+      ok &= input_scenario();
+      retro_unload_game();
+      retro_deinit();
+      printf("%s %s\n", ok ? "PASS" : "FAIL", scenario);
+      return ok ? 0 : 1;
    }
 
    for (i = 0; i < SAVE_AT; i++)
