@@ -22,6 +22,7 @@
 #endif
 
 #include <file/file_path.h>
+#include <compat/strl.h>
 #include <streams/file_stream.h>
 #include <string/stdstring.h>
 #include <vfs/vfs_implementation.h>
@@ -249,13 +250,13 @@ OSD_FILE *osd_fopen(int type, const char *path, const char *mode)
 				   char save_name[OSD_MAX_FILENAME];
 				   char temp_name[OSD_MAX_FILENAME];
 
-				   strncpy(temp_name, path_basename(path), OSD_MAX_FILENAME - 1);
-				   strncpy(temp_name, path_remove_extension(temp_name), OSD_MAX_FILENAME - 1);
+				   strlcpy(temp_name, path_basename(path), sizeof(temp_name));
+				   path_remove_extension(temp_name);
 				   snprintf(save_name, OSD_MAX_FILENAME, "%s%c%s.srm", save_path, SLASH, temp_name);
 
 				   /* Create diff file if it does not already exist */
 				   if (osd_file_stat(save_name) != FILE_STAT_FILE)
-					   filestream_write_file(save_name, 0, 0);
+					   filestream_write_file(save_name, "", 0);
 
 				   current_stream->sfp = filestream_open(save_name, retro_mode, 0);
 			   }
@@ -563,7 +564,6 @@ int osd_path_normalize(const char *path, char resolved_path[], int size)
 	{
 
 		is_abs = (path[0]     == '/') ? TRUE : FALSE;
-		//is_dir = (path[len-1] == '/') ? TRUE : FALSE;
 
 		buf = (char *)malloc((len+3) * 2);  /* path と同サイズ位の */
 		if (buf) {        /* バッファを2個分 確保  */
